@@ -1,17 +1,15 @@
 term,type,definition,business_alias
-P2P Inward Transactions,Category,Peer-to-peer payment transactions received by the organization from external sources via VPA (Virtual Payment Address),VPA2VPA Transactions
-VPA,Metric,Virtual Payment Address used for digital payments in UPI (Unified Payments Interface) system,Virtual Payment Address
-PSP,Metric,Payment Service Provider that facilitates digital payment transactions,Payment Service Provider
-Yesterdays Txns,Metric,Count of transactions that occurred on the previous day (current_date - 1 day),
-Todays Txns,Metric,Count of transactions that occurred on the current date,
-Last month same day Txns,Metric,Count of transactions that occurred on the same day of the previous month (current_date - 1 month),
-today Vs Yesterday,Metric / Calculated Field,"Percentage change in transaction count from yesterday to today, calculated as (Today's Txns / Yesterday's Txns) - 1",
-Today vs Last month Same Day,Metric / Calculated Field,"Percentage change in transaction count from same day last month to today, calculated as (Today's Txns / Last Month Same Day Txns) - 1",
-Payee Psp,Category,Payment Service Provider associated with the transaction recipient (payee),
-Payer PsP,Category,Payment Service Provider associated with the transaction sender (payer),
-HDFC,Metric,HDFC Bank Payment Service Provider transactions identified by 'pthdfc' handle,pthdfc
-AXIS,Metric,Axis Bank Payment Service Provider transactions identified by 'ptaxis' handle,ptaxis
-SBI,Metric,State Bank of India Payment Service Provider transactions identified by 'ptsbi' handle,ptsbi
-yes,Metric,Paytm Yes Bank Payment Service Provider transactions identified by 'ptyes' handle,ptyes
-Txns,Synonym,Transactions,Transactions
-txn_id,Metric,Unique identifier for each transaction record in the system,Transaction ID
+P2P Inward Transaction,Category,"Peer-to-peer payment transactions received by users, specifically VPA to VPA transfers where the payee's Payment Service Provider is SBI","P2P Inward Txns, VPA2VPA Transaction"
+VPA2VPA,Category,"Virtual Payment Address to Virtual Payment Address transactions, representing direct peer-to-peer transfers between UPI addresses","P2P Inward Transaction, P2P Inward, VPA to VPA, P2P Transaction"
+Payee PSP,Metric,"Payment System Provider handling the payee side of the transaction, filtered to 'yes' indicating transactions processed by the primary PSP","Payee Payment Service Provider, Payment Service Provider, Payee Payment System Provider"
+Yesterdays Txns,Metric,Total count of P2P inward transactions that occurred on the previous day,"Yesterday's Transactions, Previous Day Transactions, Yesterday Transactions"
+Last month same day Txns,Metric,Total count of P2P inward transactions that occurred on the same day in the previous month,"Last month same day Transactions, Last Month Same Day Transactions, Prior Month Same Day Transactions"
+Todays Txns,Metric,Total count of P2P inward transactions that occurred on the current date,"Today's Transactions, Current Day Transactions, Today Transactions"
+today Vs Yesterday,Metric / Calculated Field,"Growth rate calculated as (Today's Transactions / Yesterday's Transactions) - 1, showing the percentage change in transaction volume","Day-over-Day Growth Rate, Today vs Yesterday Growth Rate, Daily Growth Rate"
+Today vs Last month Same Day,Metric / Calculated Field,"Growth rate calculated as (Today's Transactions / Last Month Same Day Transactions) - 1, showing percentage change from same day last month","Monthly Growth Rate, MoM Growth Rate, Month-over-Month Growth Rate"
+txn_id,Metric,Unique transaction identifier used for counting individual P2P inward transactions,Transaction ID
+P2P Inward Transactions,Category,"Peer-to-peer payment transactions received by users, specifically VPA to VPA transfers",VPA2VPA Transactions
+Txns,Synonym,Transactions,Transaction count
+PSP,Synonym,"Payment Service Provider, the financial institution facilitating the transaction",Payee PSP
+Payee Handle,Category,"Identifier for the payment service provider receiving the transaction, filtered for HDFC (pthdfc)",PSP Handle
+Payer PSP,Category,Payment Service Provider classification distinguishing between Paytm and other PSPs based on payer handle,Payment Service Provider

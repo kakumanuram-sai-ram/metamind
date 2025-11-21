@@ -1,0 +1,396 @@
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { dashboardAPI } from '../services/api';
+
+const SectionContainer = styled.div`
+  background: white;
+  border-radius: ${props => props.theme.borderRadius.lg};
+  padding: ${props => props.theme.spacing.xl};
+  box-shadow: ${props => props.theme.shadows.md};
+`;
+
+const DashboardHeader = styled.h3`
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: ${props => props.theme.spacing.lg};
+  font-size: ${props => props.theme.typography.fontSize['2xl']};
+  font-weight: ${props => props.theme.typography.fontWeight.bold};
+`;
+
+const MetadataSections = styled.div`
+  display: flex;
+  gap: ${props => props.theme.spacing.md};
+  overflow-x: auto;
+  padding-bottom: ${props => props.theme.spacing.sm};
+  
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.colors.gray[100]};
+    border-radius: ${props => props.theme.borderRadius.md};
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.colors.gray[400]};
+    border-radius: ${props => props.theme.borderRadius.md};
+    
+    &:hover {
+      background: ${props => props.theme.colors.gray[500]};
+    }
+  }
+`;
+
+const MetadataCard = styled.div`
+  min-width: 200px;
+  padding: ${props => props.theme.spacing.md};
+  border: 1px solid ${props => props.theme.colors.gray[300]};
+  border-radius: ${props => props.theme.borderRadius.md};
+  background: ${props => props.theme.colors.gray[50]};
+`;
+
+const MetadataTitle = styled.div`
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.gray[900]};
+  margin-bottom: ${props => props.theme.spacing.sm};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  text-transform: capitalize;
+`;
+
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: ${props => props.theme.colors.gray[200]};
+  border-radius: ${props => props.theme.borderRadius.full};
+  overflow: hidden;
+  margin-bottom: ${props => props.theme.spacing.sm};
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  background: ${props => {
+    if (props.status === 'completed') return props.theme.colors.success;
+    if (props.status === 'processing') return props.theme.colors.primary;
+    return props.theme.colors.gray[300];
+  }};
+  transition: width 0.3s;
+  width: ${props => props.progress}%;
+`;
+
+const StatusText = styled.div`
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => {
+    if (props.status === 'completed') return props.theme.colors.success;
+    if (props.status === 'processing') return props.theme.colors.primary;
+    return props.theme.colors.gray[600];
+  }};
+  margin-bottom: ${props => props.theme.spacing.xs};
+`;
+
+const DownloadButtons = styled.div`
+  display: flex;
+  gap: ${props => props.theme.spacing.xs};
+  justify-content: center;
+  margin-top: ${props => props.theme.spacing.sm};
+`;
+
+const DownloadButton = styled.button`
+  background: transparent;
+  border: 1.5px solid ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.primary};
+  padding: ${props => props.theme.spacing.xs} ${props => props.theme.spacing.sm};
+  border-radius: ${props => props.theme.borderRadius.md};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.xs};
+  
+  &:hover:not(:disabled) {
+    background: ${props => props.theme.colors.primary};
+    color: white;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+// SVG Icons as React components (outline style)
+const DownloadIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="7 10 12 15 17 10"></polyline>
+    <line x1="12" y1="15" x2="12" y2="3"></line>
+  </svg>
+);
+
+const FileIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <polyline points="14 2 14 8 20 8"></polyline>
+    <line x1="16" y1="13" x2="8" y2="13"></line>
+    <line x1="16" y1="17" x2="8" y2="17"></line>
+    <polyline points="10 9 9 9 8 9"></polyline>
+  </svg>
+);
+
+const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, currentStep, useExisting = false }) => {
+  const [fileAvailable, setFileAvailable] = useState(false);
+
+  useEffect(() => {
+    // If using existing metadata, files should already be available
+    if (useExisting) {
+      const checkFile = async () => {
+        try {
+          const files = await dashboardAPI.getDashboardFiles(dashboardId);
+          const hasFile = files.files?.some(f => f.type === fileType);
+          setFileAvailable(hasFile);
+        } catch (error) {
+          console.error(`Error checking file availability for ${fileType}:`, error);
+          setFileAvailable(false);
+        }
+      };
+      checkFile();
+      return;
+    }
+
+    // Check if file is available
+    const checkFile = async () => {
+      try {
+        const files = await dashboardAPI.getDashboardFiles(dashboardId);
+        const hasFile = files.files?.some(f => f.type === fileType);
+        setFileAvailable(hasFile);
+      } catch (error) {
+        console.error(`Error checking file availability for ${fileType}:`, error);
+        setFileAvailable(false);
+      }
+    };
+
+    if (status === 'completed') {
+      checkFile();
+    } else {
+      setFileAvailable(false);
+    }
+  }, [dashboardId, fileType, status, useExisting]);
+
+  const handleDownload = async (format) => {
+    try {
+      let blob;
+      let filename;
+      
+      if (format === 'json' && fileType === 'json') {
+        blob = await dashboardAPI.downloadDashboardFile(dashboardId, 'json');
+        filename = `${dashboardId}_json.json`;
+      } else if (format === 'csv') {
+        blob = await dashboardAPI.downloadDashboardFile(dashboardId, fileType);
+        const extension = fileType === 'filter_conditions' ? 'txt' : 'csv';
+        filename = `${dashboardId}_${fileType}.${extension}`;
+      } else {
+        return;
+      }
+      
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error(`Error downloading ${fileType}:`, error);
+      alert(`Failed to download ${fileType}. Please try again.`);
+    }
+  };
+
+  const isCompleted = (useExisting && fileAvailable) || (status === 'completed' && fileAvailable);
+  const progressPercent = isCompleted ? 100 : (progress || 0);
+
+  return (
+    <MetadataCard>
+      <MetadataTitle>{title}</MetadataTitle>
+      <ProgressBar>
+        <ProgressFill progress={progressPercent} status={status} />
+      </ProgressBar>
+      <StatusText status={status}>
+        {currentStep || (isCompleted ? 'Completed' : status === 'processing' ? 'Processing...' : 'Pending')}
+      </StatusText>
+      {isCompleted && (
+        <DownloadButtons>
+          {fileType !== 'filter_conditions' && (
+            <>
+              <DownloadButton onClick={() => handleDownload('csv')} title="Download CSV">
+                <FileIcon size={14} />
+                CSV
+              </DownloadButton>
+              {fileType === 'json' && (
+                <DownloadButton onClick={() => handleDownload('json')} title="Download JSON">
+                  <FileIcon size={14} />
+                  JSON
+                </DownloadButton>
+              )}
+            </>
+          )}
+          {fileType === 'filter_conditions' && (
+            <DownloadButton onClick={() => handleDownload('csv')} title="Download TXT">
+              <DownloadIcon size={14} />
+              TXT
+            </DownloadButton>
+          )}
+        </DownloadButtons>
+      )}
+    </MetadataCard>
+  );
+};
+
+const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
+  const metadataTypes = [
+    { key: 'table_metadata', title: 'Table Metadata', fileType: 'table_metadata', phase: 'Phase 4: Table Metadata' },
+    { key: 'columns_metadata', title: 'Column Metadata', fileType: 'columns_metadata', phase: 'Phase 5: Column Metadata' },
+    { key: 'joining_conditions', title: 'Joining Conditions', fileType: 'joining_conditions', phase: 'Phase 6: Joining Conditions' },
+    { key: 'filter_conditions', title: 'Filter Conditions', fileType: 'filter_conditions', phase: 'Phase 7: Filter Conditions' },
+    { key: 'definitions', title: 'Definitions', fileType: 'definitions', phase: 'Phase 8: Term Definitions' },
+  ];
+
+  // Map phase names to metadata types
+  const phaseToMetadataMap = {
+    'Phase 1: Dashboard Extraction': null,
+    'Phase 2: Tables & Columns': null,
+    'Phase 3: Schema Enrichment': null,
+    'Phase 4: Table Metadata': 'table_metadata',
+    'Phase 5: Column Metadata': 'columns_metadata',
+    'Phase 6: Joining Conditions': 'joining_conditions',
+    'Phase 7: Filter Conditions': 'filter_conditions',
+    'Phase 8: Term Definitions': 'definitions',
+    'Phase 9: Quality Judging': null,
+    'Initializing': null,
+    'Completed': null,
+  };
+
+  const getStatus = (fileType, phase) => {
+    // If using existing metadata, mark as completed immediately
+    if (useExisting) {
+      return { status: 'completed', step: 'Using Existing' };
+    }
+    
+    if (!progress) return { status: 'pending', step: 'Waiting to start' };
+    
+    const completedFiles = progress.completed_files || [];
+    const fileName = `${dashboardId}_${fileType}.${fileType === 'filter_conditions' ? 'txt' : 'csv'}`;
+    const isCompleted = completedFiles.includes(fileName);
+    
+    if (isCompleted) {
+      return { status: 'completed', step: 'Completed' };
+    }
+    
+    // Check if current phase matches this metadata type
+    const currentPhase = progress.current_phase || '';
+    const currentFile = progress.current_file || '';
+    
+    // If current file matches, it's actively processing
+    if (currentFile === fileName) {
+      return { status: 'processing', step: getStepFromPhase(currentPhase) };
+    }
+    
+    // If current phase matches this metadata type, it's processing
+    if (phaseToMetadataMap[currentPhase] === fileType) {
+      return { status: 'processing', step: getStepFromPhase(currentPhase) };
+    }
+    
+    // If dashboard is processing, show the current phase name
+    if (progress.status === 'processing' && currentPhase) {
+      // Check if we're past this phase
+      const phaseOrder = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6', 'Phase 7', 'Phase 8'];
+      const currentPhaseIndex = phaseOrder.findIndex(p => currentPhase.includes(p));
+      const thisPhaseIndex = phaseOrder.findIndex(p => phase.includes(p));
+      
+      if (currentPhaseIndex > thisPhaseIndex) {
+        // We've moved past this phase, but file not completed - might be error or skipped
+        return { status: 'pending', step: 'Skipped or error' };
+      }
+      
+      if (currentPhaseIndex < thisPhaseIndex) {
+        // Still waiting for this phase, but show current phase being processed
+        return { status: 'pending', step: `Current: ${getStepFromPhase(currentPhase)}` };
+      }
+      
+      // Show current phase if we're at or before this phase
+      return { status: 'pending', step: getStepFromPhase(currentPhase) };
+    }
+    
+    return { status: 'pending', step: 'Waiting to start' };
+  };
+
+  const getStepFromPhase = (phase) => {
+    if (!phase) return 'Initializing';
+    if (phase.includes('Phase 1')) return 'Extraction';
+    if (phase.includes('Phase 2')) return 'Tables & Columns';
+    if (phase.includes('Phase 3')) return 'Schema Enrichment';
+    if (phase.includes('Phase 4')) return 'Table Metadata';
+    if (phase.includes('Phase 5')) return 'Column Metadata';
+    if (phase.includes('Phase 6')) return 'Joining Conditions';
+    if (phase.includes('Phase 7')) return 'Filter Conditions';
+    if (phase.includes('Phase 8')) return 'Term Definitions';
+    if (phase.includes('Phase 9')) return 'Quality Judging';
+    if (phase === 'Completed') return 'Completed';
+    return phase;
+  };
+
+  const getProgress = (fileType, phase) => {
+    // If using existing metadata, always return 100%
+    if (useExisting) return 100;
+    
+    const statusInfo = getStatus(fileType, phase);
+    if (statusInfo.status === 'completed') return 100;
+    if (statusInfo.status === 'processing') return 50;
+    return 0;
+  };
+
+  // If using existing, all files should show as completed
+  React.useEffect(() => {
+    if (useExisting) {
+      // Files are already available, no need to check
+    }
+  }, [useExisting]);
+
+  return (
+    <SectionContainer>
+      <DashboardHeader>
+        Dashboard ID: {dashboardId}
+        {useExisting && (
+          <span style={{ 
+            marginLeft: '1rem', 
+            fontSize: '0.875rem', 
+            color: '#10B981', 
+            fontWeight: 'normal' 
+          }}>
+            (Using Existing Metadata)
+          </span>
+        )}
+      </DashboardHeader>
+      <MetadataSections>
+        {metadataTypes.map(({ key, title, fileType, phase }) => {
+          const statusInfo = getStatus(fileType, phase);
+          return (
+            <MetadataCardContent
+              key={key}
+              title={title}
+              fileType={fileType}
+              dashboardId={dashboardId}
+              progress={getProgress(fileType, phase)}
+              status={statusInfo.status}
+              currentStep={statusInfo.step}
+              useExisting={useExisting}
+            />
+          );
+        })}
+      </MetadataSections>
+    </SectionContainer>
+  );
+};
+
+export default DashboardSection;
+

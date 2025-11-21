@@ -1,0 +1,147 @@
+{
+  "dashboard_id": 511,
+  "timestamp": "2025-11-21T12:42:26.701589",
+  "summary": {
+    "overall_confidence": 91.2,
+    "status": "EXCELLENT",
+    "average_scores": {
+      "completeness": 91.4,
+      "accuracy": 93.0
+    },
+    "total_issues": {
+      "missing_items": 20,
+      "quality_issues": 11,
+      "recommendations": 20
+    }
+  },
+  "detailed_reports": {
+    "table_metadata": {
+      "metadata_type": "table_metadata",
+      "scores": {
+        "completeness": 100.0,
+        "accuracy": 95.0,
+        "confidence": 95.0,
+        "clarity": 90.0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Schema prefix inconsistency between SQL (cdo.fact_upi_transactions_snapshot_v3) and metadata (hive.cdo.fact_upi_transactions_snapshot_v3)"
+      ],
+      "recommendations": [
+        "Standardize schema naming convention to match exactly with SQL queries (use either cdo.fact_upi_transactions_snapshot_v3 or hive.cdo.fact_upi_transactions_snapshot_v3 consistently)",
+        "Consider adding specific details about the incremental loading process mentioned in dl_last_updated field usage"
+      ],
+      "status": "EXCELLENT"
+    },
+    "column_metadata": {
+      "metadata_type": "column_metadata",
+      "scores": {
+        "completeness": 94.0,
+        "accuracy": 95.0,
+        "confidence": 92.0,
+        "business_context": 88.0
+      },
+      "missing_items": [
+        "virtual_table.Day",
+        "virtual_table.Month",
+        "virtual_table.customer_id",
+        "virtual_table.created_on",
+        "virtual_table.Error_code",
+        "virtual_table.payer_psp",
+        "virtual_table.payee_psp",
+        "virtual_table.final_category",
+        "virtual_table.P2P_P2M"
+      ],
+      "quality_issues": [
+        "Missing derived columns used in SELECT and GROUP BY clauses",
+        "Some descriptions could use more UPI-specific terminology",
+        "Error_code field (coalesced from app_resp_code and npci_resp_code) not documented",
+        "Calculated fields like payer_psp, payee_psp categorizations missing"
+      ],
+      "recommendations": [
+        "Add metadata for derived columns Day, Month, customer_id, created_on, Error_code, payer_psp, payee_psp, final_category, and P2P_P2M that appear in chart queries",
+        "Include business definitions for PSP categorization logic (Paytm vs Others)",
+        "Document the Error_code coalesce logic combining app and NPCI response codes",
+        "Add explanation of success rate calculation methodology using DEEMED and SUCCESS statuses",
+        "Use more UPI domain-specific terminology in descriptions (e.g., VPA, PSP, NPCI network)"
+      ],
+      "status": "EXCELLENT"
+    },
+    "joining_conditions": {
+      "metadata_type": "joining_conditions",
+      "scores": {
+        "completeness": 100.0,
+        "accuracy": 100.0,
+        "confidence": 99.0,
+        "context": 90.0
+      },
+      "missing_items": [],
+      "quality_issues": [],
+      "recommendations": [
+        "Consider adding documentation about the single-table architecture",
+        "Add metadata explaining why no joins are needed for this dataset",
+        "Document the virtual table/subquery pattern used in the SQL queries"
+      ],
+      "status": "EXCELLENT"
+    },
+    "filter_conditions": {
+      "metadata_type": "filter_conditions",
+      "scores": {
+        "completeness": 85.0,
+        "accuracy": 90.0,
+        "confidence": 88.0,
+        "clarity": 95.0
+      },
+      "missing_items": [
+        "payer_handle filter for Overall SR_511 chart"
+      ],
+      "quality_issues": [
+        "Date interval formatting inconsistency between metadata and SQL (interval '01' day vs interval '1' day)",
+        "Missing payer_handle IN filter for Overall SR_511 chart which is present in SQL query"
+      ],
+      "recommendations": [
+        "Add the missing payer_handle IN filter for Overall SR_511 chart to achieve complete coverage",
+        "Standardize date interval formatting to match exact SQL syntax",
+        "Consider adding brief explanations for why specific PSP handles are grouped together in business context"
+      ],
+      "status": "GOOD"
+    },
+    "definitions": {
+      "metadata_type": "definitions",
+      "scores": {
+        "completeness": 78.0,
+        "accuracy": 85.0,
+        "confidence": 82.0,
+        "usefulness": 82.0
+      },
+      "missing_items": [
+        "final_category",
+        "Error_code",
+        "purpose_code",
+        "payer_psp",
+        "payee_psp",
+        "transaction_type",
+        "amount",
+        "VPA2ACCOUNT",
+        "VPA2VPA",
+        "VPA2MERCHANT"
+      ],
+      "quality_issues": [
+        "Category term defined twice with different meanings",
+        "Missing definition for final_category which is a key calculated field",
+        "Error_code and purpose_code not defined despite being important for transaction analysis",
+        "Payer_psp and payee_psp classification logic not fully explained"
+      ],
+      "recommendations": [
+        "Add definition for final_category explaining the business logic mapping flow categories to simplified categories",
+        "Define Error_code as the coalesced app or NPCI response code used for failure analysis",
+        "Add purpose_code definition explaining transaction purpose classifications",
+        "Clarify payer_psp and payee_psp as calculated fields that classify PSP roles",
+        "Remove duplicate Category definition and consolidate into one clear definition",
+        "Add definitions for specific UPI transaction types VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT",
+        "Include business impact context for key metrics like why SR is important for business monitoring"
+      ],
+      "status": "GOOD"
+    }
+  }
+}

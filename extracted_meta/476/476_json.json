@@ -1,0 +1,1926 @@
+{
+  "dashboard_id": 476,
+  "dashboard_title": "UPI Profile wise MAU Distribution",
+  "dashboard_url": "https://cdp-dataview.platform.mypaytm.com/superset/dashboard/476/",
+  "owner": "Unknown",
+  "created_on": "",
+  "changed_on": "2025-11-03T11:05:07.501684",
+  "charts": [
+    {
+      "chart_id": 2458,
+      "chart_name": "#back acc wise MAU distribution",
+      "chart_type": "table",
+      "dataset_id": 863,
+      "dataset_name": "RR - Use_case_n_profile_metric",
+      "database_name": "Trino",
+      "sql_query": "SELECT accounts AS accounts, sum(users) AS \"#Users\", sum(users) filter(where use_case_mtd >0 ) AS \"MAU\", format('%.2f%%',\n(sum(users) filter(where use_case_mtd >0 )*1.0000)/\n(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100) AS \"%\" \nFROM (with  all_accounts AS (\n    SELECT user_id, created_on,--a.account_type,\n    detail_2,\n    account_type\n    FROM hive.tpap_pms.account_snapshot_v3\n    WHERE dl_last_updated IS NOT NULL \n    and status = 'ACTIVE'\n      AND DATE(created_on) <= current_date+interval '-1' day \n),\nusers AS (\n    SELECT customer_id,id,psp_id\n    FROM hive.tpap_pms.user_snapshot_v3\n    WHERE dl_last_updated IS NOT NULL\n      AND psp_id IN (6, 7, 8, 9)\n      AND (\n        status = 'ACTIVE'\n        OR (status = 'DORMANT' AND comments IS NOT NULL)\n      )\n      AND type = 'PERSON'\n),\nout as(\nselect customer_id,count(distinct account_key) accounts\nfrom(\n        select customer_id,dt,account_key\n        -- ,row_number() over (partition by account_key order by dt asc) rn\n            from( SELECT customer_id,\n                        -- if(a.status = 'ACTIVE' AND mpin_set = 1,1 ,0) active_flag,\n                        date(a.created_on) dt,--a.account_type,\n                        CONCAT(u.customer_id, '-', a.detail_2, '-', a.account_type) AS account_key\n                    FROM all_accounts a \n                    JOIN users u ON u.id = a.user_id \n\n    )   \n)x \n-- where rn=1   \ngroup by 1\n),\n\nuse_cases_mtd as (\nselect payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day))\nand (current_Date - interval '01' day)\ngroup by 1\n),\n\nuse_cases_lmtd as (\nselect payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day - interval '01' month))\nand (current_Date - interval '01' day - interval '01' month)\ngroup by 1\n)\n\n\nSELECT a.handles,b.accounts,c.use_case use_case_mtd,d.use_case use_case_lmtd, count(a.customer_id) users\nfrom \n(select customer_id,count(distinct psp_id) handles from users GROUP by 1) a\n\nleft join \n(\nselect customer_id, case when accounts<2 then 'a.=1_acc'\n                        when accounts=2 then 'b.=2_acc' \n                        when accounts>2 then 'c.>2_acc' \n                        else null end accounts\nfrom out\n\n)b on a.customer_id = b.customer_id\nleft join use_cases_mtd c on a.customer_id = c.customer_id\nleft join use_cases_lmtd d on a.customer_id = d.customer_id\ngroup by 1,2,3,4\n) AS virtual_table \nWHERE accounts IS NOT NULL GROUP BY accounts ORDER BY \"#Users\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 19894,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "#Users",
+          "optionName": "metric_5sdw2tq9gs8_r4fbv3bmlx",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_jbczi58xezl_sd4jpjhre1i",
+          "sqlExpression": "sum(users) filter(where use_case_mtd >0 )"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "%",
+          "optionName": "metric_p37jjnd32a_ag1y6dk9n3",
+          "sqlExpression": "format('%.2f%%',\n(sum(users) filter(where use_case_mtd >0 )*1.0000)/\n(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100)"
+        }
+      ],
+      "columns": [
+        "handles",
+        "accounts",
+        "use_case_mtd",
+        "use_case_lmtd",
+        "users",
+        "LMTD_Users",
+        "MTD_Users",
+        "Use_case_Flag"
+      ],
+      "groupby_columns": [
+        "accounts"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "accounts",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_xtwttvhnc3i_xhfzqjbq3ts"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2459,
+      "chart_name": "#Handle wise MAU distribution",
+      "chart_type": "table",
+      "dataset_id": 863,
+      "dataset_name": "RR - Use_case_n_profile_metric",
+      "database_name": "Trino",
+      "sql_query": "SELECT handles AS handles, sum(users) AS \"#Users\", sum(users) filter(where use_case_mtd >0 ) AS \"MAU\", format('%.2f%%',\n(sum(users) filter(where use_case_mtd >0 )*1.0000)/\n(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100) AS \"%\" \nFROM (with  all_accounts AS (\n    SELECT user_id, created_on,--a.account_type,\n    detail_2,\n    account_type\n    FROM hive.tpap_pms.account_snapshot_v3\n    WHERE dl_last_updated IS NOT NULL \n    and status = 'ACTIVE'\n      AND DATE(created_on) <= current_date+interval '-1' day \n),\nusers AS (\n    SELECT customer_id,id,psp_id\n    FROM hive.tpap_pms.user_snapshot_v3\n    WHERE dl_last_updated IS NOT NULL\n      AND psp_id IN (6, 7, 8, 9)\n      AND (\n        status = 'ACTIVE'\n        OR (status = 'DORMANT' AND comments IS NOT NULL)\n      )\n      AND type = 'PERSON'\n),\nout as(\nselect customer_id,count(distinct account_key) accounts\nfrom(\n        select customer_id,dt,account_key\n        -- ,row_number() over (partition by account_key order by dt asc) rn\n            from( SELECT customer_id,\n                        -- if(a.status = 'ACTIVE' AND mpin_set = 1,1 ,0) active_flag,\n                        date(a.created_on) dt,--a.account_type,\n                        CONCAT(u.customer_id, '-', a.detail_2, '-', a.account_type) AS account_key\n                    FROM all_accounts a \n                    JOIN users u ON u.id = a.user_id \n\n    )   \n)x \n-- where rn=1   \ngroup by 1\n),\n\nuse_cases_mtd as (\nselect payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day))\nand (current_Date - interval '01' day)\ngroup by 1\n),\n\nuse_cases_lmtd as (\nselect payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day - interval '01' month))\nand (current_Date - interval '01' day - interval '01' month)\ngroup by 1\n)\n\n\nSELECT a.handles,b.accounts,c.use_case use_case_mtd,d.use_case use_case_lmtd, count(a.customer_id) users\nfrom \n(select customer_id,count(distinct psp_id) handles from users GROUP by 1) a\n\nleft join \n(\nselect customer_id, case when accounts<2 then 'a.=1_acc'\n                        when accounts=2 then 'b.=2_acc' \n                        when accounts>2 then 'c.>2_acc' \n                        else null end accounts\nfrom out\n\n)b on a.customer_id = b.customer_id\nleft join use_cases_mtd c on a.customer_id = c.customer_id\nleft join use_cases_lmtd d on a.customer_id = d.customer_id\ngroup by 1,2,3,4\n) AS virtual_table GROUP BY handles ORDER BY \"#Users\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 19894,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "#Users",
+          "optionName": "metric_5sdw2tq9gs8_r4fbv3bmlx",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_jbczi58xezl_sd4jpjhre1i",
+          "sqlExpression": "sum(users) filter(where use_case_mtd >0 )"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "%",
+          "optionName": "metric_p37jjnd32a_ag1y6dk9n3",
+          "sqlExpression": "format('%.2f%%',\n(sum(users) filter(where use_case_mtd >0 )*1.0000)/\n(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100)"
+        }
+      ],
+      "columns": [
+        "handles",
+        "accounts",
+        "use_case_mtd",
+        "use_case_lmtd",
+        "users",
+        "LMTD_Users",
+        "MTD_Users",
+        "Use_case_Flag"
+      ],
+      "groupby_columns": [
+        "handles"
+      ],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 2464,
+      "chart_name": "MAU by Usecase Distribution",
+      "chart_type": "table",
+      "dataset_id": 864,
+      "dataset_name": "RR - MAU by usecase",
+      "database_name": "Trino",
+      "sql_query": "SELECT use_case AS use_case, SUM(users)filter(where MTD_flag = 'LMTD') AS \"LMTD - MAU\", SUM(users)filter(where MTD_flag = 'MTD') AS \"MTD - MAU\", SUM(users)filter(where MTD_flag = 'LMTD') AS \"LMTD % cont.\", SUM(users)filter(where MTD_flag = 'MTD') AS \"MTD % Cont.\" \nFROM (with use_cases_ as (\nselect\ncase \nwhen date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'\nwhen date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' \nend as MTD_flag,\npayer_cust_id customer_id,\ncount(Distinct final_category) use_case \nfrom\n(\n\nselect day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base_partitioned\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day - interval '01' month))\nand (current_Date - interval '01' day)\nand day(day_id)<= day(current_Date - interval '01' day)\n\n-- select day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base\n-- where final_category not in('Others','others')\n-- and day_id \n-- between date_trunc('month',(current_Date - interval '01' day - interval '01' month))\n-- and (current_Date - interval '01' day)\n-- and day(day_id)<= day(current_Date - interval '01' day)\nunion all\nselect day_id,payer_cust_id,final_category from  user_paytm_payments.upi_flow_wise_base_cm\nwhere final_category not in('Others','others')\nand day_id \nbetween date_trunc('month',(current_Date - interval '01' day - interval '01' month))\nand (current_Date - interval '01' day)\nand day(day_id)<= day(current_Date - interval '01' day)\n)\ngroup by 1,2\n)\n\nSELECT MTD_flag,use_case , count(customer_id) users\nfrom  use_cases_ c\ngroup by 1,2\n) AS virtual_table GROUP BY use_case ORDER BY \"LMTD % cont.\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "LMTD - MAU",
+          "optionName": "metric_cli5vh8wo48_ku7fvj32g7",
+          "sqlExpression": "SUM(users)filter(where MTD_flag = 'LMTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "MTD - MAU",
+          "optionName": "metric_5u9lecuqm3v_okdrxrbanq",
+          "sqlExpression": "SUM(users)filter(where MTD_flag = 'MTD')"
+        }
+      ],
+      "columns": [
+        "MTD_flag",
+        "use_case",
+        "users"
+      ],
+      "groupby_columns": [
+        "use_case"
+      ],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 2583,
+      "chart_name": "DAU MAU Txns by NRR",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 911,
+      "dataset_name": "DAU MAU Txns by NRR & T20n City",
+      "database_name": "Trino",
+      "sql_query": "SELECT lifecycle AS lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum(\"Dau\") AS \"DAU__\", sum(\"Mau\") AS \"MAU\", sum(txns) AS \"TXNs\", sum(txns)*1.00/sum(DAU) AS \"TPU\" \nFROM (-- Users (DAU,MAU), Txns split by states and top 20 cities\n-- Users (DAU,MAU), Txns split by NRR\n-- Retention & TPU split by NRR\nwith top20 as(select\n        customer_id,\n        max(case when upper(popular_city) in (\n        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',\n        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'\n        ) then popular_city else 'Other' end) as popular_city,\n        max(popular_state)state\n        from hive.midgar.engage_data_snapshot_v3 \n        where customer_id is not NULL \n        group by 1\n),\nupi as( --select * from hive.user_paytm_payments.temp_upi_test2\n-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  \n--     select day_id, payer_cust_id, count(distinct txn_id)txns\n--         from hive.user_paytm_payments.upi_abhay\n--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n-- and  day_id<current_date\n-- group by 1,2\n\nselect transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns\n from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month\n  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\nand  transaction_date_key<current_date\nand transaction_type in ('PAY','COLLECT')\n and a.status in('SUCCESS','DEEMED')\n and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1,2\n\n),\nnrr as (select date_trunc('month',dt) mt,cust_id custid,            \n                user_type lifecycle\n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1\n                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n            and  dt<current_date\n                group by 1,2,3\n),\nout as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,\n              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,\n              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,\n              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,\n              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,\n              sum(txns) txns\n            from upi a\n            left join top20 b on a.payer_cust_id=b.customer_id\n            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)\n            group by 1,2,3,4,5   \n)           \n\nselect day_id,lifecycle, state,t20city,\n                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,\n                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,\n                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,\n                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,\n                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,\n                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,\n                sum(txns) txns\nfrom out \ngroup by 1,2,3,4\norder by 1\n) AS virtual_table \nWHERE lifecycle IS NOT NULL GROUP BY lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum(\"Dau\") DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Dau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21526,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "DAU",
+          "optionName": "metric_p2tvv8ytvxb_2vhxfsohnv6",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Mau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21527,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_fysenvhh19r_jlha5yt2irc",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txns",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21528,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "TXNs",
+          "optionName": "metric_j8xaitj86z_xptiz9fkoj",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "TPU",
+          "optionName": "metric_yortbg7e0r_mfcjuz5e9k",
+          "sqlExpression": "sum(txns)*1.00/sum(DAU)"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "state",
+        "day_id",
+        "t20city",
+        "Dau",
+        "Mau",
+        "txns"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_92743qcl0sf_phb0oqncuw8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "day_id"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_3a1bvgpedo2_stpz7lbdbb",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "sqlExpression": null,
+          "subject": "lifecycle"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2587,
+      "chart_name": "DAU MAU Txns by T20 Cities",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 911,
+      "dataset_name": "DAU MAU Txns by NRR & T20n City",
+      "database_name": "Trino",
+      "sql_query": "SELECT t20city AS t20city, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum(\"Dau\") AS \"DAU__\", sum(\"Mau\") AS \"MAU\", sum(txns) AS \"TXNs\", sum(txns)*1.00/sum(DAU) AS \"TPU\" \nFROM (-- Users (DAU,MAU), Txns split by states and top 20 cities\n-- Users (DAU,MAU), Txns split by NRR\n-- Retention & TPU split by NRR\nwith top20 as(select\n        customer_id,\n        max(case when upper(popular_city) in (\n        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',\n        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'\n        ) then popular_city else 'Other' end) as popular_city,\n        max(popular_state)state\n        from hive.midgar.engage_data_snapshot_v3 \n        where customer_id is not NULL \n        group by 1\n),\nupi as( --select * from hive.user_paytm_payments.temp_upi_test2\n-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  \n--     select day_id, payer_cust_id, count(distinct txn_id)txns\n--         from hive.user_paytm_payments.upi_abhay\n--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n-- and  day_id<current_date\n-- group by 1,2\n\nselect transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns\n from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month\n  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\nand  transaction_date_key<current_date\nand transaction_type in ('PAY','COLLECT')\n and a.status in('SUCCESS','DEEMED')\n and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1,2\n\n),\nnrr as (select date_trunc('month',dt) mt,cust_id custid,            \n                user_type lifecycle\n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1\n                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n            and  dt<current_date\n                group by 1,2,3\n),\nout as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,\n              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,\n              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,\n              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,\n              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,\n              sum(txns) txns\n            from upi a\n            left join top20 b on a.payer_cust_id=b.customer_id\n            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)\n            group by 1,2,3,4,5   \n)           \n\nselect day_id,lifecycle, state,t20city,\n                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,\n                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,\n                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,\n                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,\n                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,\n                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,\n                sum(txns) txns\nfrom out \ngroup by 1,2,3,4\norder by 1\n) AS virtual_table \nWHERE lifecycle IS NOT NULL GROUP BY t20city, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum(\"Dau\") DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Dau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21526,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "DAU",
+          "optionName": "metric_p2tvv8ytvxb_2vhxfsohnv6",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Mau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21527,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_fysenvhh19r_jlha5yt2irc",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txns",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21528,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "TXNs",
+          "optionName": "metric_j8xaitj86z_xptiz9fkoj",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "TPU",
+          "optionName": "metric_yortbg7e0r_mfcjuz5e9k",
+          "sqlExpression": "sum(txns)*1.00/sum(DAU)"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "state",
+        "day_id",
+        "t20city",
+        "Dau",
+        "Mau",
+        "txns"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_92743qcl0sf_phb0oqncuw8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "day_id"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_3a1bvgpedo2_stpz7lbdbb",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "sqlExpression": null,
+          "subject": "lifecycle"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2588,
+      "chart_name": "DAU MAU Txns by States",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 911,
+      "dataset_name": "DAU MAU Txns by NRR & T20n City",
+      "database_name": "Trino",
+      "sql_query": "SELECT state AS state, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum(\"Dau\") AS \"DAU__\", sum(\"Mau\") AS \"MAU\", sum(txns) AS \"TXNs\", sum(txns)*1.00/sum(DAU) AS \"TPU\" \nFROM (-- Users (DAU,MAU), Txns split by states and top 20 cities\n-- Users (DAU,MAU), Txns split by NRR\n-- Retention & TPU split by NRR\nwith top20 as(select\n        customer_id,\n        max(case when upper(popular_city) in (\n        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',\n        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'\n        ) then popular_city else 'Other' end) as popular_city,\n        max(popular_state)state\n        from hive.midgar.engage_data_snapshot_v3 \n        where customer_id is not NULL \n        group by 1\n),\nupi as( --select * from hive.user_paytm_payments.temp_upi_test2\n-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  \n--     select day_id, payer_cust_id, count(distinct txn_id)txns\n--         from hive.user_paytm_payments.upi_abhay\n--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n-- and  day_id<current_date\n-- group by 1,2\n\nselect transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns\n from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month\n  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\nand  transaction_date_key<current_date\nand transaction_type in ('PAY','COLLECT')\n and a.status in('SUCCESS','DEEMED')\n and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1,2\n\n),\nnrr as (select date_trunc('month',dt) mt,cust_id custid,            \n                user_type lifecycle\n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1\n                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month\n            and  dt<current_date\n                group by 1,2,3\n),\nout as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,\n              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,\n              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,\n              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,\n              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,\n              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,\n              sum(txns) txns\n            from upi a\n            left join top20 b on a.payer_cust_id=b.customer_id\n            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)\n            group by 1,2,3,4,5   \n)           \n\nselect day_id,lifecycle, state,t20city,\n                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,\n                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,\n                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,\n                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,\n                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,\n                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,\n                sum(txns) txns\nfrom out \ngroup by 1,2,3,4\norder by 1\n) AS virtual_table \nWHERE lifecycle IS NOT NULL GROUP BY state, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum(\"Dau\") ASC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Dau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21526,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "DAU",
+          "optionName": "metric_p2tvv8ytvxb_2vhxfsohnv6",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Mau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21527,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_fysenvhh19r_jlha5yt2irc",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txns",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21528,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "TXNs",
+          "optionName": "metric_j8xaitj86z_xptiz9fkoj",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "TPU",
+          "optionName": "metric_yortbg7e0r_mfcjuz5e9k",
+          "sqlExpression": "sum(txns)*1.00/sum(DAU)"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "state",
+        "day_id",
+        "t20city",
+        "Dau",
+        "Mau",
+        "txns"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_92743qcl0sf_phb0oqncuw8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "day_id"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_3a1bvgpedo2_stpz7lbdbb",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "sqlExpression": null,
+          "subject": "lifecycle"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2611,
+      "chart_name": "UPI Overall Retention: Monthly",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 941,
+      "dataset_name": "UPI Overall Retention",
+      "database_name": "Trino",
+      "sql_query": "SELECT diff AS diff, date_format(cast(base_month as date), '%Y- %m') AS base_month, sum(\"Retention\") AS \"Retention__\" \nFROM (with cc as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten as (\nselect -- a.lifecycle, \ndate_diff('month',a.mt,b.mt) as diff,\n        a.mt base_month, b.mt retention_month,\n        count(distinct b.scope_cust_id) users \n        from cc a\n        left  join  cc b on b.scope_cust_id=a.scope_cust_id\n        where  b.mt>=a.mt\n        group by 1,2,3)\n        \n        SELECT base_month, diff,users*1.0000/MAX(users) over (partition by base_month order by base_month) Retention\nfrom reten\n) AS virtual_table GROUP BY diff, date_format(cast(base_month as date), '%Y- %m') ORDER BY sum(\"Retention\") DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Retention",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 21943,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(22, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_c1ayyngcgd_fd4eysnf0f5",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "base_month",
+        "diff",
+        "Retention"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE",
+          "operator": "TEMPORAL_RANGE",
+          "subject": "base_month"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2626,
+      "chart_name": "UPI Retention-New",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 954,
+      "dataset_name": "UPI Retention NRR wise",
+      "database_name": "Trino",
+      "sql_query": "SELECT diff AS diff, date_format(base_month,'%Y-%m') AS \"Base_month\", sum(\"NRR_retention\") AS \"Retention\" \nFROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten AS (\n    SELECT \n        a.lifecycle, \n        date_diff('month', a.mt, b.mt) AS diff,\n        a.mt AS base_month, \n        b.mt AS retention_month,\n        COUNT(DISTINCT b.scope_cust_id) AS users \n    FROM upi a\n    LEFT JOIN upi b \n        ON b.scope_cust_id = a.scope_cust_id\n       AND b.mt >= a.mt\n    GROUP BY a.lifecycle, a.mt, b.mt\n)\nSELECT \n    base_month,\n    lifecycle,\n    diff,\n    users,\n    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,\n    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,\n    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth\nFROM reten \nORDER BY 2,1\n) AS virtual_table \nWHERE lifecycle = 'a:new' AND ((base_month is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY \"Retention\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "NRR_retention",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22880,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(22, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_g1d7tjwgz9_ea31s8kuvx",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "prev_month_users",
+        "mom_growth",
+        "NRR_retention",
+        "diff",
+        "users",
+        "base_month"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "base_month is not null",
+          "clause": "WHERE",
+          "subject": "base_month",
+          "operator": "TEMPORAL_RANGE",
+          "operatorId": "TEMPORAL_RANGE",
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_7peblalit6x_e9qbpgz4d6n"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "lifecycle",
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "comparator": "a:new",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_0z7zs2vglrcp_cnzofl2llht"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2627,
+      "chart_name": "UPI Retention-Repeat",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 954,
+      "dataset_name": "UPI Retention NRR wise",
+      "database_name": "Trino",
+      "sql_query": "SELECT diff AS diff, date_format(base_month,'%Y-%m') AS \"Base_month\", sum(\"NRR_retention\") AS \"Retention\" \nFROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten AS (\n    SELECT \n        a.lifecycle, \n        date_diff('month', a.mt, b.mt) AS diff,\n        a.mt AS base_month, \n        b.mt AS retention_month,\n        COUNT(DISTINCT b.scope_cust_id) AS users \n    FROM upi a\n    LEFT JOIN upi b \n        ON b.scope_cust_id = a.scope_cust_id\n       AND b.mt >= a.mt\n    GROUP BY a.lifecycle, a.mt, b.mt\n)\nSELECT \n    base_month,\n    lifecycle,\n    diff,\n    users,\n    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,\n    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,\n    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth\nFROM reten \nORDER BY 2,1\n) AS virtual_table \nWHERE ((Base_month is not null) AND (lifecycle = 'b:repeat') AND (diff is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY \"Retention\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "NRR_retention",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22880,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(22, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_ezs63ohmul_0th3sair8t4n",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "prev_month_users",
+        "mom_growth",
+        "NRR_retention",
+        "diff",
+        "users",
+        "base_month"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "Base_month is not null",
+          "clause": "WHERE",
+          "subject": "Base_month",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_7peblalit6x_e9qbpgz4d6n"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "lifecycle = 'b:repeat'",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_kwgg6hgz34_fv1y2edl9ff"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "diff is not null",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_1hxtmcvkbvj_3g9iosztmf8"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2630,
+      "chart_name": "UPI Retention-Reactivated",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 954,
+      "dataset_name": "UPI Retention NRR wise",
+      "database_name": "Trino",
+      "sql_query": "SELECT diff AS diff, date_format(base_month,'%Y-%m') AS \"Base_month\", sum(\"NRR_retention\") AS \"Retention\" \nFROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten AS (\n    SELECT \n        a.lifecycle, \n        date_diff('month', a.mt, b.mt) AS diff,\n        a.mt AS base_month, \n        b.mt AS retention_month,\n        COUNT(DISTINCT b.scope_cust_id) AS users \n    FROM upi a\n    LEFT JOIN upi b \n        ON b.scope_cust_id = a.scope_cust_id\n       AND b.mt >= a.mt\n    GROUP BY a.lifecycle, a.mt, b.mt\n)\nSELECT \n    base_month,\n    lifecycle,\n    diff,\n    users,\n    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,\n    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,\n    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth\nFROM reten \nORDER BY 2,1\n) AS virtual_table \nWHERE lifecycle = 'c:react' AND ((Base_month is not null) AND (diff is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY \"Retention\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "NRR_retention",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22880,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(22, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_jop66wm5z_nydmbobwg7",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "prev_month_users",
+        "mom_growth",
+        "NRR_retention",
+        "diff",
+        "users",
+        "base_month"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "Base_month is not null",
+          "clause": "WHERE",
+          "subject": "Base_month",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_7peblalit6x_e9qbpgz4d6n"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "lifecycle",
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "comparator": "c:react",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_kwgg6hgz34_fv1y2edl9ff"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "diff is not null",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_t7s7vs2wxc_aj4cvmbs2gk"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2639,
+      "chart_name": "UPI flow Wise SR",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 980,
+      "dataset_name": "UPI SR DoD Flow wise ",
+      "database_name": "Trino",
+      "sql_query": "SELECT \"Flow_category\" AS \"Flow_category\", date_trunc('day', CAST(\"Date\" AS TIMESTAMP)) AS \"Date\", sum(\"Success_txn\") AS \"Success\", sum(\"Overall_txn\") AS \"Overall\",  cast(round(SUM(success_txn)*100/SUM(overall_txn),2) as varchar)||'%' AS \"SR\" \nFROM (select transaction_date_key Date, Flow_category, \nCOUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id\n    END\n  ) AS Success_txn,\n  COUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id\n    END\n  ) AS Overall_txn\n  from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and current_date+interval'-1' day\nand transaction_type in ('PAY','COLLECT') \n  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1 ,2\n) AS virtual_table GROUP BY \"Flow_category\", date_trunc('day', CAST(\"Date\" AS TIMESTAMP)) ORDER BY Date DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Success_txn",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22323,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Success",
+          "optionName": "metric_9pqntz05yh_ywlpk7kz0b",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Overall_txn",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22324,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Overall",
+          "optionName": "metric_vg5b6oa5e8_wmwt1u79o7r",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "SR",
+          "optionName": "metric_mimq1hzi2h_dup7fcg77jf",
+          "sqlExpression": " cast(round(SUM(success_txn)*100/SUM(overall_txn),2) as varchar)||'%'"
+        }
+      ],
+      "columns": [
+        "Date",
+        "Flow_category",
+        "Success_txn",
+        "Overall_txn"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE",
+          "operator": "TEMPORAL_RANGE",
+          "subject": "Date"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2640,
+      "chart_name": "UPI SR DoD Overall Line Trend",
+      "chart_type": "echarts_area",
+      "dataset_id": 980,
+      "dataset_name": "UPI SR DoD Flow wise ",
+      "database_name": "Trino",
+      "sql_query": "SELECT \"Date\" AS \"Date\", sum(\"Success_txn\") AS \"Success\", sum(\"Overall_txn\") AS \"Overall\",  cast(round(SUM(success_txn*1.00)*100/SUM(overall_txn),2) as int) AS \"SR\" \nFROM (select transaction_date_key Date, Flow_category, \nCOUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id\n    END\n  ) AS Success_txn,\n  COUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id\n    END\n  ) AS Overall_txn\n  from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and current_date+interval'-1' day\nand transaction_type in ('PAY','COLLECT') \n  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1 ,2\n) AS virtual_table \nWHERE \"Date\" >= DATE '2025-10-01' AND \"Date\" < DATE '2025-11-21' GROUP BY \"Date\" ORDER BY \"Success\" DESC\nLIMIT 100;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Success_txn",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22323,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Success",
+          "optionName": "metric_9pqntz05yh_ywlpk7kz0b"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Overall_txn",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22324,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Overall",
+          "optionName": "metric_vg5b6oa5e8_wmwt1u79o7r"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": " cast(round(SUM(success_txn*1.00)*100/SUM(overall_txn),2) as int)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "SR",
+          "optionName": "metric_mimq1hzi2h_dup7fcg77jf"
+        }
+      ],
+      "columns": [
+        "Date",
+        "Flow_category",
+        "Success_txn",
+        "Overall_txn"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "Date",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "datetrunc(dateadd(datetime(\"today\"), -1, month),month) : datetime(\"today\") ",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_uzowkfbl65s_971mrsyvfm"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2654,
+      "chart_name": "UPI SR Flow wise DoD Overall Line Trend",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 980,
+      "dataset_name": "UPI SR DoD Flow wise ",
+      "database_name": "Trino",
+      "sql_query": "SELECT \"Date\" AS \"Date\", \"Flow_category\" AS \"Flow_category\",  SUM(success_txn*1.0000)/SUM(overall_txn) AS \"SR\" \nFROM (select transaction_date_key Date, Flow_category, \nCOUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id\n    END\n  ) AS Success_txn,\n  COUNT(  CASE\n      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id\n    END\n  ) AS Overall_txn\n  from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month\n  and current_date+interval'-1' day\nand transaction_type in ('PAY','COLLECT') \n  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1 ,2\n) AS virtual_table \nWHERE \"Date\" >= DATE '2025-10-01' AND \"Date\" < DATE '2025-11-21' AND (\"Flow_category\" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY \"Date\", \"Flow_category\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": " SUM(success_txn*1.0000)/SUM(overall_txn)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "SR",
+          "optionName": "metric_mimq1hzi2h_dup7fcg77jf"
+        }
+      ],
+      "columns": [
+        "Date",
+        "Flow_category",
+        "Success_txn",
+        "Overall_txn"
+      ],
+      "groupby_columns": [
+        "Flow_category"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "datetrunc(dateadd(datetime(\"today\"), -1, month),month) : datetime(\"today\") ",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_uzowkfbl65s_971mrsyvfm",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "Date"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": [
+            "Mandate_Onus",
+            "Onus_ExcMandates",
+            "Mandate_Online",
+            "Other P2M"
+          ],
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_o2mqhr2mcg_9oo3v6vzfit",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "NOT IN",
+          "operatorId": "NOT_IN",
+          "sqlExpression": null,
+          "subject": "Flow_category"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2687,
+      "chart_name": "UPI Retention- M0 MAU",
+      "chart_type": "table",
+      "dataset_id": 1003,
+      "dataset_name": "UPI Retention M0",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_format(base_month,'%Y-%m') AS \"Base_month\", sum(users) AS \"MAU\", SUM(mom_growth*1.0000)/SUM(users)  AS \"% Growth\" \nFROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                a.user_type user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten AS (\n    SELECT \n        a.lifecycle, \n        date_diff('month', a.mt, b.mt) AS diff,\n        a.mt AS base_month, \n        b.mt AS retention_month,\n        COUNT(DISTINCT b.scope_cust_id) AS users \n    FROM upi a\n    LEFT JOIN upi b \n        ON b.scope_cust_id = a.scope_cust_id\n       AND b.mt >= a.mt\n    GROUP BY a.lifecycle, a.mt, b.mt\n)\nSELECT \n    base_month,\n    lifecycle,\n    diff,\n    users,\n    users * 1.00 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,\n    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,\n    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth\nFROM reten \nwhere diff=0\nORDER BY 2,1\n) AS virtual_table \nWHERE diff = 0 GROUP BY date_format(base_month,'%Y-%m') ORDER BY base_month ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22906,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_hpthax4c8bs_8skjptjgjqj",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "% Growth",
+          "optionName": "metric_ufvynbpy4wa_frqp0047mn",
+          "sqlExpression": "SUM(mom_growth*1.0000)/SUM(users) "
+        }
+      ],
+      "columns": [
+        "base_month",
+        "lifecycle",
+        "diff",
+        "users",
+        "NRR_retention",
+        "prev_month_users",
+        "mom_growth"
+      ],
+      "groupby_columns": [
+        {
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "label": "Base_month",
+          "sqlExpression": "date_format(base_month,'%Y-%m')"
+        }
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "0",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_2t4jvri9rr3_aisiz0hkkr",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "sqlExpression": null,
+          "subject": "diff"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE",
+          "operator": "TEMPORAL_RANGE",
+          "subject": "base_month"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2690,
+      "chart_name": "UPI Retention NRR MAU",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 954,
+      "dataset_name": "UPI Retention NRR wise",
+      "database_name": "Trino",
+      "sql_query": "SELECT lifecycle AS lifecycle, date_format(base_month,'%Y-%m') AS \"Base_month\", sum(users) AS \"MAU\" \nFROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (\n            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type \n                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   \n            )  where mt<current_date\n),\nreten AS (\n    SELECT \n        a.lifecycle, \n        date_diff('month', a.mt, b.mt) AS diff,\n        a.mt AS base_month, \n        b.mt AS retention_month,\n        COUNT(DISTINCT b.scope_cust_id) AS users \n    FROM upi a\n    LEFT JOIN upi b \n        ON b.scope_cust_id = a.scope_cust_id\n       AND b.mt >= a.mt\n    GROUP BY a.lifecycle, a.mt, b.mt\n)\nSELECT \n    base_month,\n    lifecycle,\n    diff,\n    users,\n    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,\n    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,\n    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth\nFROM reten \nORDER BY 2,1\n) AS virtual_table \nWHERE diff = 0 AND ((base_month is not null)) GROUP BY lifecycle, date_format(base_month,'%Y-%m') ORDER BY \"MAU\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 22114,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_irq2dmvsosb_d3i1jvq1poc"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "prev_month_users",
+        "mom_growth",
+        "NRR_retention",
+        "diff",
+        "users",
+        "base_month"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "base_month is not null",
+          "clause": "WHERE",
+          "subject": "base_month",
+          "operator": "TEMPORAL_RANGE",
+          "operatorId": "TEMPORAL_RANGE",
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_7peblalit6x_e9qbpgz4d6n"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "diff",
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "comparator": "0",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_n0rvdsbbc9s_dsa76r2e2uc"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2755,
+      "chart_name": "UPI LMTD Retention",
+      "chart_type": "table",
+      "dataset_id": 1069,
+      "dataset_name": "UPI Retention LMTD",
+      "database_name": "Trino",
+      "sql_query": "SELECT lifecycle AS lifecycle, sum(\"Base_users\") AS \"LM Users\", sum(\"Reatined_users\") AS \"Retained Users\", SUM(Reatined_users)*1.0000/SUM(Base_users) AS \"Retention\" \nFROM (--lmtd retention\nwith\nlm as (select mt,cast(scope_cust_id as varchar)scope_cust_id,lifecycle \n        from (select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle \n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>=date_trunc('month',current_date +interval '-1' day) +interval '-2' month\n                      and  a.dt<=date_trunc('month',current_date +interval '-1' day) +interval '-1' month +interval '-1' day\n            )   \n),\nCMTD as (select scope_cust_id\n        from ( select customer_id_payer scope_cust_id\n                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a \n                        where a.dl_last_updated between date_trunc('month', current_date + interval '-1' day) + interval '-1' month\n                            and current_date + interval '-1' day + interval '-1' month\n                        and transaction_date_key between   date_trunc('month', current_date + interval '-1' day) + interval '-1' month\n                            and current_date + interval '-1' day + interval '-1' month\n                        and transaction_type in ('PAY','COLLECT')\n                        and a.status in('SUCCESS','DEEMED')\n                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') \n                            group by 1\n            )   \n)\n\nselect a.lifecycle,\ncount(distinct a.scope_cust_id) Base_users,\n        count(distinct b.scope_cust_id) Reatined_users \n        from lm a \n        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id \n        group by 1\n) AS virtual_table GROUP BY lifecycle ORDER BY \"LM Users\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Base_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23707,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "LM Users",
+          "optionName": "metric_nakcxr9xk3_e861rnyqja5",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Reatined_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23708,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retained Users",
+          "optionName": "metric_scf6dwpftc_6uurk1dkt2l",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_4gg0wo98d7i_0bhkfe7vf1zd",
+          "sqlExpression": "SUM(Reatined_users)*1.0000/SUM(Base_users)"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "Base_users",
+        "Reatined_users"
+      ],
+      "groupby_columns": [
+        "lifecycle"
+      ],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 2757,
+      "chart_name": "UPI MTD Retention",
+      "chart_type": "table",
+      "dataset_id": 1088,
+      "dataset_name": "UPI Retention MTD",
+      "database_name": "Trino",
+      "sql_query": "SELECT lifecycle AS \"Lifecycle\", sum(\"Base_users\") AS \"Base Users\", sum(\"Reatined_users\") AS \"Retention Users\", SUM(Reatined_users*1.0000)/SUM(Base_users) AS \"Retention\" \nFROM (--mtd retention\nwith\nlm as (select mt,scope_cust_id,lifecycle \n        from (select date_trunc('month',a.dt) mt ,cast(a.cust_id as varchar) scope_cust_id,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle \n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                where a.dt>= date_trunc('month',current_date +interval '-1' day) +interval '-1' month\n                 and  a.dt<= date_trunc('month',current_date +interval '-1' day) +interval '-1' day\n            )   \n),\nCMTD as (select scope_cust_id\n        from ( select customer_id_payer scope_cust_id\n                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a \n                        where a.dl_last_updated between date_trunc('month',current_date +interval '-1' day)   \n                       and   current_date +interval '-1' day\n                        and transaction_date_key between  date_trunc('month',current_date +interval '-1' day)   \n                       and  current_date +interval '-1' day\n                        and transaction_type in ('PAY','COLLECT')\n                        and a.status in('SUCCESS','DEEMED')\n                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') \n                            group by 1\n            )   \n)\n\nselect a.lifecycle,\ncount(distinct a.scope_cust_id) Base_users,\n        count(distinct b.scope_cust_id) Reatined_users \n        from lm a \n        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id \n        group by 1\n) AS virtual_table GROUP BY lifecycle ORDER BY \"Base Users\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Base_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23859,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Base Users",
+          "optionName": "metric_q9cpo7nf4md_24d1fkd68pr",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Reatined_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23860,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retention Users",
+          "optionName": "metric_nmc4z5c7du_gnvj123kiha",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_ov983if9ry9_mv57w4w6xee",
+          "sqlExpression": "SUM(Reatined_users*1.0000)/SUM(Base_users)"
+        }
+      ],
+      "columns": [
+        "lifecycle",
+        "Base_users",
+        "Reatined_users"
+      ],
+      "groupby_columns": [
+        {
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "label": "Lifecycle",
+          "sqlExpression": "lifecycle"
+        }
+      ],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 2955,
+      "chart_name": "RMG Retentions",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 1205,
+      "dataset_name": "RMG Retentions",
+      "database_name": "Trino",
+      "sql_query": "SELECT \"Month\" AS \"Month\", gm AS gm, lifecycle AS lifecycle, sum(users) AS \"MAU Users\", sum(\"Reatined_users\") AS \"Retained users\", sum(Reatined_users*1.0000)*100/SUM(users)*1.0000 AS \"Retention In %\" \nFROM (--combined\nselect * from (\nwith  category as (\nselect \n--a.mnt,\na.payer_cust_id customer_id\nfrom user_paytm_payments.gaming_merchant_5816_analysis a\nwhere  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'\nand a.gaming_merc = 'Gaming merc'\ngroup by 1--,2\n ),\nlm as (select mt,scope_cust_id,lifecycle,gm \n        from (select date_trunc('month',date(dt)) mt ,a.cust_id scope_cust_id ,\n        if(b.customer_id is not null,1,0)gm,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle \n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                left join category b on --date_trunc('month',date(a.dt))=date_trunc('month',mnt) and\n                 a.cust_id=b.customer_id\n                where date(a.dt)>=date'2025-08-01'   and  date(a.dt)<=date'2025-08-31' \n            )   \n),\nCMTD as (select scope_cust_id\n        from ( select customer_id_payer scope_cust_id\n                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a \n                        where a.dl_last_updated between date'2025-09-01'  \n                       and  date'2025-09-30' \n                        and transaction_type in ('PAY','COLLECT')\n                        and a.status in('SUCCESS','DEEMED')\n                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') \n                        and transaction_date_key>=date'2025-09-01'      \n                        and  transaction_date_key<=date'2025-09-30' \n                        and day(transaction_date_key)<day(current_date)\n                            group by 1\n            )   \n)\n\nselect 'Aug to Sep' Month, a.lifecycle,a.gm, \n        count(distinct a.scope_cust_id) users,\n        count(distinct b.scope_cust_id) Reatined_users \n        from lm a\n        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id \n        group by 1,2,3\n)\nunion all\n--mtd retention\nselect * from(\nwith  category as (\n        select \n       -- a.mnt,\n        a.payer_cust_id customer_id\n        from user_paytm_payments.gaming_merchant_5816_analysis a\n        where  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'\n        and a.gaming_merc = 'Gaming merc'\n        group by 1--,2\n        ),\nlm as (select mt,scope_cust_id,lifecycle ,gm\n        from (select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id,if(b.customer_id is not null,1,0)gm,\n                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle \n                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a \n                left join category b on --date_trunc('month',dt)=date_trunc('month',mnt) and\n                          a.cust_id=b.customer_id\n                where  date(a.dt)>=date'2025-09-01'   and  date(a.dt)<=date'2025-09-30' \n            )   \n),\nCMTD as (select scope_cust_id\n        from ( select customer_id_payer scope_cust_id\n                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a \n                        where a.dl_last_updated between date'2025-10-01'  \n                       and  date'2025-10-31' \n                        and transaction_date_key between  date'2025-10-01'  \n                       and  date'2025-10-31' \n                        and day(transaction_date_key)<day(current_date)\n                        and transaction_type in ('PAY','COLLECT')\n                        and a.status in('SUCCESS','DEEMED')\n                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') \n                            group by 1\n            )   \n)\n\nselect 'Sep to Oct' Month, a.lifecycle,gm,\ncount(distinct a.scope_cust_id) Base_users,\n        count(distinct b.scope_cust_id) Reatined_users \n        from lm a \n        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id \n        group by 1,2,3\n)\n) AS virtual_table GROUP BY \"Month\", gm, lifecycle ORDER BY \"MAU Users\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 26643,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "MAU Users",
+          "optionName": "metric_x6rdhlnhkip_18uxdqwpktl",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Reatined_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 26646,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retained users",
+          "optionName": "metric_hpsyz1yyplt_d94l7j8etor",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Retention In %",
+          "optionName": "metric_ld1lg05kcg_bpxyfhv40v",
+          "sqlExpression": "sum(Reatined_users*1.0000)*100/SUM(users)*1.0000"
+        }
+      ],
+      "columns": [
+        "Reatined_users",
+        "Retention",
+        "Month",
+        "lifecycle",
+        "users",
+        "gm"
+      ],
+      "groupby_columns": [],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 3058,
+      "chart_name": "State n catg wise dod dump",
+      "chart_type": "table",
+      "dataset_id": 1254,
+      "dataset_name": "State n catg wise dod dump",
+      "database_name": "Trino",
+      "sql_query": "SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, \"Dau\" AS \"Dau\", txns AS txns, amount AS amount \nFROM (-- Users (DAU,MAU), Txns split by states  \n-- Retention & TPU split by NRR\nwith top20 as(select\n        customer_id,\n        max( upper(popular_city))  as popular_city,\n        max(popular_state)state\n        from hive.midgar.engage_data_snapshot_v3 \n        where customer_id is not NULL \n        group by 1\n),\nupi as( --select * from hive.user_paytm_payments.temp_upi_test2\n-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  \n--     select day_id, payer_cust_id, count(distinct txn_id)txns\n--         from hive.user_paytm_payments.upi_abhay\n--     where day_id>=current_date+interval'-5' day\n-- and  day_id<current_date\n-- group by 1,2\n\nselect transaction_date_key day_id,customer_id_payer payer_cust_id,\n  case when is_p2p=True then 'P2P'\n        when is_p2m=True then 'P2M' else flow_category\n        end as p2m_p2p_flag,flow_category,\n count(distinct txn_id)txns,sum(amount) amount\n from  hive.cdo.fact_upi_transactions_snapshot_v3 a \nwhere a.dl_last_updated>= current_date+interval'-3' day\n  and transaction_date_key>=current_date+interval'-3' day\nand  transaction_date_key<current_date\nand transaction_type in ('PAY','COLLECT')\n and a.status in('SUCCESS','DEEMED')\n and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\ngroup by 1,2,3,4\n\n), \nout as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,\n             p2m_p2p_flag,flow_category,\n              sum(txns) txns,\n              sum(amount) amount\n            from upi a\n            left join top20 b on a.payer_cust_id=b.customer_id \n            group by 1,2,3,4,5   \n)           \n\nselect day_id, state,p2m_p2p_flag,flow_category,\n                count(Distinct  payer_cust_id ) Dau, \n                sum(txns) txns,\n                sum(amount) amount\nfrom out \ngroup by 1,2,3,4\norder by 1\n) AS virtual_table ORDER BY day_id DESC\nLIMIT 5000;\n\n",
+      "metrics": [],
+      "columns": [
+        "day_id",
+        "state",
+        "p2m_p2p_flag",
+        "flow_category",
+        "Dau",
+        "txns",
+        "amount"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3072,
+      "chart_name": "RMG TPU GPU",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 1260,
+      "dataset_name": "RMG Use_case data",
+      "database_name": "Trino",
+      "sql_query": "SELECT use_case AS use_case, \"Month\" AS \"Month\", \"Gaming_flag\" AS \"Gaming_flag\", sum(users) AS \"Users__\" \nFROM (with rmg as (\nselect \na.mnt,\na.payer_cust_id customer_id\nfrom user_paytm_payments.gaming_merchant_5816_analysis a\nwhere  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'\nand a.gaming_merc = 'Gaming merc'\ngroup by 1,2\n ),\n \n use_case as(\n              SELECT payer_cust_id customer_id,month(day_id) Month,\n              count(Distinct final_category) use_case \n              from (select transaction_date_key day_id,customer_id_payer payer_cust_id,txn_id,amount,\n                                  case  WHEN flow_category IN ('P2P') THEN 'P2P' WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n                                        WHEN flow_category IN ('Intent', 'P2M Collect', 'Mandate_Online') THEN 'Online' \n                                        WHEN flow_category IN ('Onus_ExcMandates', 'Mandate_Onus') THEN 'Onus' else null end as final_category\n                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a \n                       where a.dl_last_updated between date_trunc('month',(current_Date - interval '01' day - interval '01' month)) and current_date \n                                and transaction_type in ('PAY','COLLECT')\n                                and a.status in('SUCCESS','DEEMED')\n                                and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n                                and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')   \n                            -- and final_category not in('Others','others')\n                            and transaction_date_key \n                            between date_trunc('month',(current_Date - interval '01' day - interval '01' month)) and (current_Date - interval '01' day) \n                    )\n            group by 1,2\n            )\n\nSELECT if(rmg.customer_id is null, 'Non_gaming', 'Gaming' )Gaming_flag,\n        Month,\n        if(use_case=1,'1','2+') use_case, \n        count(c.customer_id) users \nfrom  use_case c\nleft join rmg on rmg.customer_id=c.customer_id\nwhere use_case!=0\ngroup by 1,2,3\n) AS virtual_table GROUP BY use_case, \"Month\", \"Gaming_flag\" ORDER BY sum(users) DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "changed_on": "2025-09-25T11:03:39.264931",
+            "column_name": "users",
+            "created_on": "2025-09-25T11:01:06.704266",
+            "description": null,
+            "expression": "",
+            "extra": "{}",
+            "filterable": true,
+            "groupby": true,
+            "id": 27601,
+            "is_active": true,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "uuid": "c048990c-685e-467e-9567-a67ae815dffc",
+            "verbose_name": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Users",
+          "optionName": "metric_cxahrgjmryf_hc4vi2uh8fp",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "Month",
+        "Gaming_flag",
+        "use_case",
+        "users"
+      ],
+      "groupby_columns": [],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 3238,
+      "chart_name": "[Growth]TG CG tracking feature for New PTS Banner 2.0",
+      "chart_type": "table",
+      "dataset_id": 1364,
+      "dataset_name": "[Growth]TG CG tracking feature for New PTS Banner 2.0",
+      "database_name": "Trino",
+      "sql_query": "SELECT dt AS dt, property AS property, feature AS feature, users_viewed_banner AS users_viewed_banner, converted_post_viewing AS converted_post_viewing, users_clicked_banner AS users_clicked_banner, converted_post_clicking AS converted_post_clicking \nFROM (--TG\nwith ftr as (   \n    -- 1. Bank Linking\n    SELECT 'Bank Linking' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.bank_link\n    WHERE  dt < current_date\n\n    UNION ALL\n     -- x. Mapper\n    SELECT 'Mapper' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.mapper\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 2. RuPay CC Linking\n    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.cc_all_linkages\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 3. Lite Activation\n    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt\n    FROM hive.user_paytm_payments.lite_active\n    WHERE  lite_dt < current_date\n\n    UNION ALL\n    -- 4. UPI Statement\n    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.upi_statement_download_V1\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 5. Receive Money widget\n    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt\n    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily\n    WHERE  dl_last_updated < current_date\n\n    UNION ALL\n    -- 6. Scan & Pay widget\n    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt\n    FROM hive.user_paytm_payments.widget_added_snp_ER_daily\n    WHERE  dl_last_updated < current_date\n\n    UNION ALL\n    -- 7. Spends Analytics\n    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.spend_analytics\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 8. Lite auto top-up\n    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.lite_auto_topup\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 9. Total Balance\n    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt\n    FROM hive.user_paytm_payments.check_balance\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 10. Custom VPA\n    SELECT 'Custom VPA' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.customer_vpa\n    WHERE  dt < current_date\n\n    UNION ALL\n    -- 11. Hide Payments\n    SELECT 'Hide Payments' AS type, customer_id AS custid, dt\n    FROM hive.user_paytm_payments.hide_payments\n    WHERE  dt < current_date\n),\n  banner AS (\n  SELECT dt,\n       customer_id,\n       CASE \n    WHEN banner_id IN (\n        '3159810','3159843','3159842','3159841','3159987',\n        '3159988','3159989','3160634','3159986','3041990',\n        '3159992','3159993','3159994','3159995'\n    ) THEN 'PTS Banner 2.0'\n\n    WHEN banner_id IN (\n        '3136301','3135794','3137732','3135803','3135814',\n        '3137499','3135812','3135813','3137500','3136333',\n        '3136337','3135809'\n    ) THEN 'PTS Curtain widget'\nEND AS property,\n     CASE \n    WHEN banner_id = '3159810' THEN 'Mapper'\n    WHEN banner_id = '3136301' THEN 'Mapper'\n    WHEN banner_id = '3159843' THEN 'UPI Lite Auto Top UP'\n    WHEN banner_id = '3137500' THEN 'UPI Lite Auto Top UP'\n    WHEN banner_id = '3159842' THEN 'Spends Analytics'\n    WHEN banner_id = '3135813' THEN 'Spends Analytics'\n    WHEN banner_id = '3159841' THEN 'RuPay CC Linking'\n    WHEN banner_id = '3137732' THEN 'RuPay CC Linking'\n    WHEN banner_id = '3159987' THEN 'Scan & Pay widget'\n    WHEN banner_id = '3135812' THEN 'Scan & Pay widget'\n    WHEN banner_id = '3159988' THEN 'Receive Money widget'\n    WHEN banner_id = '3137499' THEN 'Receive Money widget'\n    WHEN banner_id = '3159989' THEN 'Download UPI Statement'\n    WHEN banner_id = '3135814' THEN 'Download UPI Statement'\n    WHEN banner_id = '3160634' THEN 'UPI Lite Activation'\n    WHEN banner_id = '3135803' THEN 'UPI Lite Activation'\n    WHEN banner_id = '3159986' THEN 'Bank Linking'\n    WHEN banner_id = '3135794' THEN 'Bank Linking'\n    WHEN banner_id = '3041990' THEN 'Self Transfer'\n    WHEN banner_id = '3159992' THEN 'Total Balance'\n    WHEN banner_id = '3136333' THEN 'Total Balance'\n    WHEN banner_id = '3159993' THEN 'Custom VPA'\n    WHEN banner_id = '3136337' THEN 'Custom VPA'\n    WHEN banner_id = '3159994' THEN 'Hide Payments'\n    WHEN banner_id = '3135809' THEN 'Hide Payments'\n    WHEN banner_id = '3159995' THEN 'Handle Creation'\nEND AS feature,\n       SUM(impressions) AS impressions,\n       SUM(clicks) AS clicks\nFROM team_measurement.banner_campaigns_customer_v1\nWHERE dt >=  current_date- interval '35' day\n  AND dt < CURRENT_DATE\n  AND try_cast(banner_id as varchar) IN (\n    '3159810','3136301',   -- Mapper\n    '3159843','3137500',   -- UPI Lite Auto Top UP\n    '3159842','3135813',   -- Spends Analytics\n    '3159841','3137732',   -- RuPay CC Linking\n    '3159987','3135812',   -- Scan & Pay widget\n    '3159988','3137499',   -- Receive Money widget\n    '3159989','3135814',   -- Download UPI Statement\n    '3160634','3135803',   -- UPI Lite Activation\n    '3159986','3135794',   -- Bank Linking\n    '3041990',             -- Self Transfer\n    '3159992','3136333',   -- Total Balance\n    '3159993','3136337',   -- Custom VPA\n    '3159994','3135809',   -- Hide Payments\n    '3159995'              -- Handle Creation\n)\nGROUP BY 1,2,3,4\n\n)\n\n    select b.dt,property,\n        b.feature, \n        count(distinct case when b.impressions>0 then b.customer_id end) as users_viewed_banner,\n        count(distinct case when b.impressions>0 and f.custid is not null then b.customer_id end) as converted_post_viewing,\n        count(distinct case when b.clicks>0 then b.customer_id end) as users_clicked_banner,\n        count(distinct case when b.clicks>0 and f.custid is not null then b.customer_id end) as converted_post_clicking\n    from banner b \n    -- left join (select custid,type, min(dt)dt from  ftr group by 1,2 having min(dt)>=DATE '2025-08-11' ) f\n    --         on b.customer_id=f.custid and b.feature=f.type and b.dt=f.dt\n      left join (select custid,type feature,  date(dt) dt from  ftr where dt>= current_date-interval '35' day group by 1,2,3  ) f\n            on b.customer_id=f.custid and b.feature=f.feature and b.dt=f.dt\n    group by 1,2,3\n) AS virtual_table ORDER BY dt DESC, users_clicked_banner DESC\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "changed_on": "2025-09-29T12:45:49.837772",
+            "column_name": "users_viewed_banner",
+            "created_on": "2025-09-29T12:45:49.837770",
+            "description": null,
+            "expression": null,
+            "extra": "{}",
+            "filterable": true,
+            "groupby": true,
+            "id": 29720,
+            "is_active": true,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "uuid": "f3bc2ea8-f629-4a41-b4b7-b99581624137",
+            "verbose_name": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": false,
+          "label": "SUM(users_viewed_banner)",
+          "optionName": "metric_ku3m4ft9m2_6fx5oy8w2ic"
+        }
+      ],
+      "columns": [
+        "dt",
+        "property",
+        "feature",
+        "users_viewed_banner",
+        "converted_post_viewing",
+        "users_clicked_banner",
+        "converted_post_clicking"
+      ],
+      "groupby_columns": [
+        "dt",
+        "property",
+        "feature"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 5971,
+      "chart_name": "UPI Retention TPU wise MTD",
+      "chart_type": "table",
+      "dataset_id": 2648,
+      "dataset_name": "UPI Retention TPU wise MTD",
+      "database_name": "Trino",
+      "sql_query": "SELECT \"TPU_bucket\" AS \"TPU_bucket\", sum(\"Base_users\") AS \"Base users\", sum(\"Retained_users\") AS \"Retained users\", SUM(Retained_users*1.0000)/SUM(Base_users) AS \"Retention\" \nFROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)\nWITH\n-- Current MTD users with TPU\nCMTD AS (\n    SELECT \n        customer_id_payer AS scope_cust_id \n    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a\n    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day)\n                                 AND current_date + interval '-1' day\n      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)\n                                 AND current_date + interval '-1' day\n      AND a.transaction_type IN ('PAY','COLLECT')\n      AND a.status IN ('SUCCESS','DEEMED')\n      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\n    GROUP BY 1\n),\n-- Last month users with TPU\nLM AS (\n    SELECT \n        customer_id_payer AS scope_cust_id,\n        COUNT(DISTINCT txn_id) AS tpu\n    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a\n    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day\n      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day\n      AND a.transaction_type IN ('PAY','COLLECT')\n      AND a.status IN ('SUCCESS','DEEMED')\n      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\n    GROUP BY 1\n)\n\nSELECT \n    CASE \n        WHEN a.tpu = 1 THEN 'a.1'\n        WHEN a.tpu = 2 THEN 'b.2'\n        WHEN a.tpu = 3 THEN 'c.3'\n        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'\n        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'\n        WHEN a.tpu > 20 THEN 'f.20+'\n    END AS TPU_bucket,\n    COUNT(DISTINCT a.scope_cust_id) AS Base_users,\n    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users\nFROM lm a\nLEFT JOIN cmtd b\n    ON b.scope_cust_id = a.scope_cust_id\nGROUP BY 1\nORDER BY \n    CASE \n        WHEN tpu_bucket = 'a.1' THEN 1\n        WHEN tpu_bucket = 'b.2' THEN 2\n        WHEN tpu_bucket = 'c.3' THEN 3\n        WHEN tpu_bucket = 'd.4-10' THEN 4\n        WHEN tpu_bucket = 'e.11-20' THEN 5\n        WHEN tpu_bucket = 'f.20+' THEN 6\n    END\n) AS virtual_table GROUP BY \"TPU_bucket\" ORDER BY TPU_bucket DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Base_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 60234,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Base users",
+          "optionName": "metric_dxmkg6n626c_hwinjmjhx3m",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Retained_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 60235,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retained users",
+          "optionName": "metric_abwthz4b075_34l0dh6uty4",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Retention",
+          "optionName": "metric_ov983if9ry9_mv57w4w6xee",
+          "sqlExpression": "SUM(Retained_users*1.0000)/SUM(Base_users)"
+        }
+      ],
+      "columns": [
+        "TPU_bucket",
+        "Base_users",
+        "Retained_users"
+      ],
+      "groupby_columns": [
+        "TPU_bucket"
+      ],
+      "filters": [],
+      "time_range": null
+    },
+    {
+      "chart_id": 5982,
+      "chart_name": "UPI Retention TPU wise LMTD",
+      "chart_type": "table",
+      "dataset_id": 2650,
+      "dataset_name": "UPI Retention TPU wise LMTD",
+      "database_name": "Trino",
+      "sql_query": "SELECT tpu_bucket AS tpu_bucket, sum(\"Base_users\") AS \"Base Users\", sum(\"Retained_users\") AS \"Retained Users\", SUM(Retained_users*1.0000)/SUM(Base_users) AS \"%\" \nFROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)\nWITH\n-- Current MTD users with TPU\nlMTD AS (\n    SELECT \n        customer_id_payer AS scope_cust_id \n    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a\n    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day\n      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day\n      and day(transaction_date_key)<day(current_date)\n      AND a.transaction_type IN ('PAY','COLLECT')\n      AND a.status IN ('SUCCESS','DEEMED')\n      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\n    GROUP BY 1\n),\n-- Last month users with TPU\nLlM AS (\n    SELECT \n        customer_id_payer AS scope_cust_id,\n        COUNT(DISTINCT txn_id) AS tpu\n    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a\n    WHERE a.dl_last_updated BETWEEN  date_trunc('month', current_date + interval '-1' day) - interval '2' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day\n      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month\n                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day\n      AND a.transaction_type IN ('PAY','COLLECT')\n      AND a.status IN ('SUCCESS','DEEMED')\n      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')\n    GROUP BY 1\n)\n\nSELECT \n    CASE \n        WHEN a.tpu = 1 THEN 'a.1'\n        WHEN a.tpu = 2 THEN 'b.2'\n        WHEN a.tpu = 3 THEN 'c.3'\n        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'\n        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'\n        WHEN a.tpu > 20 THEN 'f.20+'\n    END AS tpu_bucket,\n    COUNT(DISTINCT a.scope_cust_id) AS Base_users,\n    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users\nFROM llm a\nLEFT JOIN lmtd b\n    ON b.scope_cust_id = a.scope_cust_id\nGROUP BY 1\nORDER BY \n    CASE \n        WHEN tpu_bucket = 'a.1' THEN 1\n        WHEN tpu_bucket = 'b.2' THEN 2\n        WHEN tpu_bucket = 'c.3' THEN 3\n        WHEN tpu_bucket = 'd.4-10' THEN 4\n        WHEN tpu_bucket = 'e.11-20' THEN 5\n        WHEN tpu_bucket = 'f.20+' THEN 6\n    END\n) AS virtual_table GROUP BY tpu_bucket ORDER BY tpu_bucket DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Base_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 60231,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Base Users",
+          "optionName": "metric_o3ubm3hlfce_6c166ln4imy",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Retained_users",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 60232,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Retained Users",
+          "optionName": "metric_zs9mshc6zjg_kahcthdo1qk",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "%",
+          "optionName": "metric_rtvllv93cbr_3aflyx2f4js",
+          "sqlExpression": "SUM(Retained_users*1.0000)/SUM(Base_users)"
+        }
+      ],
+      "columns": [
+        "tpu_bucket",
+        "Base_users",
+        "Retained_users"
+      ],
+      "groupby_columns": [
+        "tpu_bucket"
+      ],
+      "filters": [],
+      "time_range": null
+    }
+  ]
+}

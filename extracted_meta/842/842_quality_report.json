@@ -1,0 +1,128 @@
+{
+  "dashboard_id": 842,
+  "timestamp": "2025-11-21T11:31:04.380661",
+  "summary": {
+    "overall_confidence": 89.2,
+    "status": "GOOD",
+    "average_scores": {
+      "completeness": 86.0,
+      "accuracy": 91.6
+    },
+    "total_issues": {
+      "missing_items": 10,
+      "quality_issues": 7,
+      "recommendations": 17
+    }
+  },
+  "detailed_reports": {
+    "table_metadata": {
+      "metadata_type": "table_metadata",
+      "scores": {
+        "completeness": 100.0,
+        "accuracy": 95.0,
+        "confidence": 96.0,
+        "clarity": 92.0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Minor schema naming inconsistency - metadata shows 'hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset' while queries reference 'user_paytm_payments.p2p_inward_hourly_reporting_dataset'"
+      ],
+      "recommendations": [
+        "Standardize schema naming convention to match actual query patterns",
+        "Consider adding sample query patterns in the remarks section to help users understand common usage scenarios",
+        "Add information about data latency and SLA for hourly refreshes"
+      ],
+      "status": "EXCELLENT"
+    },
+    "column_metadata": {
+      "metadata_type": "column_metadata",
+      "scores": {
+        "completeness": 60.0,
+        "accuracy": 95.0,
+        "confidence": 82.0,
+        "business_context": 95.0
+      },
+      "missing_items": [
+        "p2p_inward_hourly_reporting_dataset.payee_customer_id",
+        "p2p_inward_hourly_reporting_dataset.amount",
+        "p2p_inward_hourly_reporting_dataset.krn",
+        "p2p_inward_hourly_reporting_dataset.to_days_hour"
+      ],
+      "quality_issues": [
+        "Missing 40% of columns used in SQL queries including key business fields like amount and customer ID"
+      ],
+      "recommendations": [
+        "Add metadata for payee_customer_id (likely customer identifier for payee)",
+        "Add metadata for amount (transaction value field)",
+        "Add metadata for krn (appears to be transaction reference number)",
+        "Add metadata for to_days_hour (hourly timestamp conversion field)",
+        "Ensure all SELECT and filter columns have corresponding metadata entries"
+      ],
+      "status": "GOOD"
+    },
+    "joining_conditions": {
+      "metadata_type": "joining_conditions",
+      "scores": {
+        "completeness": 100.0,
+        "accuracy": 100.0,
+        "confidence": 100.0,
+        "context": 100.0
+      },
+      "missing_items": [],
+      "quality_issues": [],
+      "recommendations": [],
+      "status": "EXCELLENT"
+    },
+    "filter_conditions": {
+      "metadata_type": "filter_conditions",
+      "scores": {
+        "completeness": 95.0,
+        "accuracy": 98.0,
+        "confidence": 94.0,
+        "clarity": 88.0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Minor inconsistency in table alias naming across documentation (virtual_table vs p2p vs txn)",
+        "Could enhance explanation of why temporal filters are in metrics vs WHERE clause"
+      ],
+      "recommendations": [
+        "Standardize table alias naming conventions across all chart documentation",
+        "Add brief explanation of embedded temporal filtering approach for better technical clarity",
+        "Consider adding filter impact quantification where business-relevant"
+      ],
+      "status": "EXCELLENT"
+    },
+    "definitions": {
+      "metadata_type": "definitions",
+      "scores": {
+        "completeness": 75.0,
+        "accuracy": 70.0,
+        "confidence": 74.0,
+        "usefulness": 80.0
+      },
+      "missing_items": [
+        "hour_",
+        "created_on",
+        "payee_handle",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "quality_issues": [
+        "Payee PSP definition incorrectly states filter is 'yes' when actual filters use bank codes",
+        "P2P Inward Transaction definition incorrectly specifies SBI as PSP when dashboard covers multiple PSPs",
+        "Missing definitions for key database columns used in grouping and filtering"
+      ],
+      "recommendations": [
+        "Add definition for hour_ as the hourly dimension used for transaction grouping",
+        "Add definition for created_on as the transaction timestamp field",
+        "Add definition for payee_handle explaining bank-specific codes (ptyes, pthdfc, ptaxis, ptsbi)",
+        "Correct Payee PSP definition to reflect actual bank code filtering logic",
+        "Add definitions for amount, krn, and lastest_hour fields",
+        "Update P2P Inward Transaction definition to be more generic and not SBI-specific"
+      ],
+      "status": "ACCEPTABLE"
+    }
+  }
+}

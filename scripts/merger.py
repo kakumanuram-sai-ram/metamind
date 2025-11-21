@@ -882,12 +882,14 @@ class MetadataMerger:
         Args:
             include_existing_merged: If True, also merge with existing merged_metadata
         """
+        import sys
+        sys.stdout.flush()
+        
         # Initialize merge progress
         self.progress_tracker.start_merge()
-        
-        print("\n" + "="*80)
-        print("METADATA MERGER")
-        print("="*80)
+        print("\n" + "="*80, flush=True)
+        print("METADATA MERGER", flush=True)
+        print("="*80, flush=True)
         
         if include_existing_merged:
             print(f"Merging metadata from {len(self.dashboard_ids)} new dashboards with existing merged metadata")
@@ -918,27 +920,48 @@ class MetadataMerger:
         self.dashboard_ids = dashboard_ids_to_process
         
         # Merge each metadata type with progress updates
+        import sys
+        print("\n[1/6] Merging table metadata...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('table_metadata', [])
         table_metadata = self.merge_table_metadata()
+        print("✅ Table metadata merge completed", flush=True)
         
+        print("\n[2/6] Merging column metadata...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('columns_metadata', ['table_metadata'])
         columns_metadata = self.merge_columns_metadata()
+        print("✅ Column metadata merge completed", flush=True)
         
+        print("\n[3/6] Merging joining conditions...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('joining_conditions', ['table_metadata', 'columns_metadata'])
         joining_conditions = self.merge_joining_conditions()
+        print("✅ Joining conditions merge completed", flush=True)
         
+        print("\n[4/6] Merging definitions...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('definitions', ['table_metadata', 'columns_metadata', 'joining_conditions'])
         term_definitions = self.merge_term_definitions()
+        print("✅ Definitions merge completed", flush=True)
         
+        print("\n[5/6] Merging filter conditions...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('filter_conditions', ['table_metadata', 'columns_metadata', 'joining_conditions', 'definitions'])
         filter_conditions = self.merge_filter_conditions()
+        print("✅ Filter conditions merge completed", flush=True)
         
-        # Generate conflicts report
+        print("\n[6/6] Generating conflicts report...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.update_merge_status('conflicts_report', ['table_metadata', 'columns_metadata', 'joining_conditions', 'definitions', 'filter_conditions'])
         conflicts_report = self.generate_conflicts_report()
+        print("✅ Conflicts report generated", flush=True)
         
         # Mark merge as completed
+        print("\n✅ All merge steps completed. Marking merge as complete...", flush=True)
+        sys.stdout.flush()
         self.progress_tracker.complete_merge()
+        print("✅ Merge status updated to completed", flush=True)
         
         # Restore original dashboard_ids for summary
         self.dashboard_ids = original_dashboard_ids

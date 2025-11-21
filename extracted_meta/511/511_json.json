@@ -1,0 +1,434 @@
+{
+  "dashboard_id": 511,
+  "dashboard_title": "UPI SR Overview",
+  "dashboard_url": "https://cdp-dataview.platform.mypaytm.com/superset/dashboard/511/",
+  "owner": "Unknown",
+  "created_on": "",
+  "changed_on": "2025-10-29T02:03:15.572905",
+  "charts": [
+    {
+      "chart_id": 2646,
+      "chart_name": "Overall SR_511",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 973,
+      "dataset_name": "UPI overall SR dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        "SR"
+      ],
+      "columns": [
+        "payer_psp",
+        "payee_psp",
+        "flow_category",
+        "final_category",
+        "P2P_P2M",
+        "dl_last_updated",
+        "day_id",
+        "Month",
+        "customer_id",
+        "created_on",
+        "txn_id",
+        "amount",
+        "status",
+        "purpose_code",
+        "Error_code",
+        "payer_handle",
+        "payee_handle",
+        "payer_bank_name",
+        "Day"
+      ],
+      "groupby_columns": [
+        "Month"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dl_last_updated",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_at4m4ibhwhq_3utnmyz1zrb"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sr2hieycyp_fsee6datmko"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "day_id>= date_Trunc('month',current_Date - interval '01' day )",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2676,
+      "chart_name": "P2P P2M SR_511",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 973,
+      "dataset_name": "UPI overall SR dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", \"P2P_P2M\" AS \"P2P_P2M\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), \"P2P_P2M\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        "SR"
+      ],
+      "columns": [
+        "payer_psp",
+        "payee_psp",
+        "flow_category",
+        "final_category",
+        "P2P_P2M",
+        "dl_last_updated",
+        "day_id",
+        "Month",
+        "customer_id",
+        "created_on",
+        "txn_id",
+        "amount",
+        "status",
+        "purpose_code",
+        "Error_code",
+        "payer_handle",
+        "payee_handle",
+        "payer_bank_name",
+        "Day"
+      ],
+      "groupby_columns": [
+        "Month",
+        "P2P_P2M"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dl_last_updated",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_at4m4ibhwhq_3utnmyz1zrb"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sr2hieycyp_fsee6datmko"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "day_id>= date_Trunc('month',current_Date - interval '01' day)",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2684,
+      "chart_name": "Category SR_511",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 973,
+      "dataset_name": "UPI overall SR dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", final_category AS final_category, (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE final_category IN ('Online', 'Onus', 'SnP') AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), final_category ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        "SR"
+      ],
+      "columns": [
+        "payer_psp",
+        "payee_psp",
+        "flow_category",
+        "final_category",
+        "P2P_P2M",
+        "dl_last_updated",
+        "day_id",
+        "Month",
+        "customer_id",
+        "created_on",
+        "txn_id",
+        "amount",
+        "status",
+        "purpose_code",
+        "Error_code",
+        "payer_handle",
+        "payee_handle",
+        "payer_bank_name",
+        "Day"
+      ],
+      "groupby_columns": [
+        "final_category"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dl_last_updated",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_at4m4ibhwhq_3utnmyz1zrb"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sr2hieycyp_fsee6datmko"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "day_id>= date_Trunc('month',current_Date - interval '01' day )",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "final_category",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "Online",
+            "Onus",
+            "SnP"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_d6dx6l6qbid_6bk13jewkg7"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2685,
+      "chart_name": "Handle SR_511",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 973,
+      "dataset_name": "UPI overall SR dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", payer_handle AS payer_handle, (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE payer_handle IN ('ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), payer_handle ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        "SR"
+      ],
+      "columns": [
+        "payer_psp",
+        "payee_psp",
+        "flow_category",
+        "final_category",
+        "P2P_P2M",
+        "dl_last_updated",
+        "day_id",
+        "Month",
+        "customer_id",
+        "created_on",
+        "txn_id",
+        "amount",
+        "status",
+        "purpose_code",
+        "Error_code",
+        "payer_handle",
+        "payee_handle",
+        "payer_bank_name",
+        "Day"
+      ],
+      "groupby_columns": [
+        "payer_handle"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dl_last_updated",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_at4m4ibhwhq_3utnmyz1zrb"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sr2hieycyp_fsee6datmko"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "day_id>= date_Trunc('month',current_Date - interval '01' day )",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "payer_handle",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "ptyes",
+            "ptaxis",
+            "pthdfc",
+            "ptsbi"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_t6juyahiwej_xpe3p3b3e7s"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2686,
+      "chart_name": "Flowwise SR_511",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 973,
+      "dataset_name": "UPI overall SR dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", flow_category AS flow_category, (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE purpose_code != '''14''' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), flow_category ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        "SR"
+      ],
+      "columns": [
+        "payer_psp",
+        "payee_psp",
+        "flow_category",
+        "final_category",
+        "P2P_P2M",
+        "dl_last_updated",
+        "day_id",
+        "Month",
+        "customer_id",
+        "created_on",
+        "txn_id",
+        "amount",
+        "status",
+        "purpose_code",
+        "Error_code",
+        "payer_handle",
+        "payee_handle",
+        "payer_bank_name",
+        "Day"
+      ],
+      "groupby_columns": [
+        "flow_category"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dl_last_updated",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_at4m4ibhwhq_3utnmyz1zrb"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "day_id",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sr2hieycyp_fsee6datmko"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "day_id>= date_Trunc('month',current_Date - interval '01' day )",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "purpose_code",
+          "operator": "!=",
+          "operatorId": "NOT_EQUALS",
+          "comparator": "'14'",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_3uhucngxwv7_kiif4aqqon"
+        }
+      ],
+      "time_range": null
+    }
+  ]
+}

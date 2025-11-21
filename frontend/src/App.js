@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { paytmTheme } from './styles/theme';
 import styled from 'styled-components';
-import DashboardExtractor from './components/DashboardExtractor';
-import DownloadButtons from './components/DownloadButtons';
-import MultiDashboardProcessor from './components/MultiDashboardProcessor';
-import DashboardFileDownloader from './components/DashboardFileDownloader';
+import TabNavigation from './components/TabNavigation';
+import SupersetTab from './components/SupersetTab';
+import GoogleDocsTab from './components/GoogleDocsTab';
+import ConfluenceTab from './components/ConfluenceTab';
+import GlobalStyles from './styles/GlobalStyles';
 
 const AppContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, ${props => props.theme.colors.gray[50]} 0%, ${props => props.theme.colors.gray[100]} 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 const Header = styled.header`
@@ -17,7 +21,11 @@ const Header = styled.header`
   color: white;
   padding: ${props => props.theme.spacing.xl};
   box-shadow: ${props => props.theme.shadows.lg};
-  margin-bottom: ${props => props.theme.spacing.xl};
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
 `;
 
 const HeaderContent = styled.div`
@@ -53,25 +61,49 @@ const Subtitle = styled.p`
 `;
 
 const MainContent = styled.main`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 ${props => props.theme.spacing.xl} ${props => props.theme.spacing.xl};
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: ${props => props.theme.spacing.xl};
 `;
 
 
 function App() {
-  const [extractedDashboard, setExtractedDashboard] = useState(null);
+  const [activeTab, setActiveTab] = useState('superset');
+  
+  // Preserve SupersetTab state across tab switches
+  const [supersetState, setSupersetState] = useState({
+    dashboardIds: '',
+    activeDashboardIds: [],
+    progress: null,
+    statusMessage: null,
+  });
 
-  const handleExtractSuccess = (dashboardData) => {
-    setExtractedDashboard({
-      dashboardId: dashboardData.dashboard_id,
-      dashboardTitle: dashboardData.dashboard_title,
-      totalCharts: dashboardData.total_charts
-    });
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'superset':
+        return (
+          <SupersetTab 
+            preservedState={supersetState}
+            onStateChange={setSupersetState}
+          />
+        );
+      case 'googledocs':
+        return <GoogleDocsTab />;
+      case 'confluence':
+        return <ConfluenceTab />;
+      default:
+        return (
+          <SupersetTab 
+            preservedState={supersetState}
+            onStateChange={setSupersetState}
+          />
+        );
+    }
   };
 
   return (
     <ThemeProvider theme={paytmTheme}>
+      <GlobalStyles />
       <AppContainer>
         <Header>
           <HeaderContent>
@@ -84,18 +116,10 @@ function App() {
           </HeaderContent>
         </Header>
 
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+
         <MainContent>
-          <MultiDashboardProcessor />
-          <DashboardFileDownloader />
-          <DashboardExtractor onExtractSuccess={handleExtractSuccess} />
-          
-          {extractedDashboard && (
-            <DownloadButtons
-              dashboardId={extractedDashboard.dashboardId}
-              dashboardTitle={extractedDashboard.dashboardTitle}
-              totalCharts={extractedDashboard.totalCharts}
-            />
-          )}
+          {renderTabContent()}
         </MainContent>
       </AppContainer>
     </ThemeProvider>

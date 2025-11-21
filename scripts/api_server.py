@@ -30,6 +30,30 @@ import shutil
 
 app = FastAPI(title="Superset Dashboard Extractor API")
 
+# Add request logging middleware
+@app.middleware("http")
+async def log_requests(request, call_next):
+    import sys
+    import time
+    
+    start_time = time.time()
+    
+    # Log incoming request
+    print(f"[API] → {request.method} {request.url.path}", flush=True)
+    if request.url.query:
+        print(f"[API]    Query params: {request.url.query}", flush=True)
+    sys.stdout.flush()
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Log response
+    process_time = time.time() - start_time
+    print(f"[API] ← {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
+    sys.stdout.flush()
+    
+    return response
+
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
@@ -412,47 +436,102 @@ async def extract_dashboard(request: DashboardExtractRequest):
         raise HTTPException(status_code=500, detail=f"Error extracting dashboard: {str(e)}")
 
 
+class DashboardMetadataChoice(BaseModel):
+    dashboard_id: int
+    use_existing: bool  # True = use existing, False = create fresh
+
 class MultiDashboardRequest(BaseModel):
     dashboard_ids: List[int]
     extract: bool = True
     merge: bool = True
     build_kb: bool = True
+    metadata_choices: Optional[Dict[int, bool]] = None  # dashboard_id -> use_existing
 
 
 @app.get("/api/progress")
 async def get_progress():
     """Get current progress of multi-dashboard processing"""
+    import sys
     try:
         tracker = get_progress_tracker()
         progress = tracker.get_progress()
+        
+        # Log progress status for debugging (only when not idle to reduce noise)
+        if progress.get('status') != 'idle':
+            status = progress.get('status', 'unknown')
+            operation = progress.get('current_operation', 'N/A')
+            total = progress.get('total_dashboards', 0)
+            completed = progress.get('completed_dashboards', 0)
+            print(f"[API] GET /api/progress - Status: {status}, Operation: {operation}, Progress: {completed}/{total}", flush=True)
+            sys.stdout.flush()
+        
         return progress
     except Exception as e:
+        print(f"[API] GET /api/progress - ERROR: {str(e)}", flush=True)
+        sys.stdout.flush()
         raise HTTPException(status_code=500, detail=f"Error getting progress: {str(e)}")
 
 
 @app.post("/api/dashboards/process-multiple")
 async def process_multiple_dashboards(request: MultiDashboardRequest):
     """Process multiple dashboards: extract, merge, and build KB"""
+    import sys
     try:
+        print(f"\n{'='*80}", flush=True)
+        print(f"[API] POST /api/dashboards/process-multiple", flush=True)
+        print(f"   📋 Request received from UI", flush=True)
+        print(f"   📊 Dashboard IDs: {request.dashboard_ids}", flush=True)
+        print(f"   ⚙️  Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
+        print(f"{'='*80}", flush=True)
+        sys.stdout.flush()
+        
         from process_multiple_dashboards import process_multiple_dashboards
         
         # Run in background thread
         def run_processing():
+            import sys
+            sys.stdout.flush()
+            sys.stderr.flush()
             try:
+                print(f"\n{'='*80}", flush=True)
+                print(f"🚀 Starting multi-dashboard processing", flush=True)
+                print(f"   Dashboard IDs: {request.dashboard_ids}", flush=True)
+                print(f"   Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
+                print(f"{'='*80}\n", flush=True)
+                
+                # Process metadata choices
+                metadata_choices = request.metadata_choices or {}
+                
+                # Convert metadata_choices dict to proper format
+                choices_dict = {}
+                if request.metadata_choices:
+                    choices_dict = {int(k): bool(v) for k, v in request.metadata_choices.items()}
+                
                 process_multiple_dashboards(
                     dashboard_ids=request.dashboard_ids,
                     extract=request.extract,
                     merge=request.merge,
                     build_kb=request.build_kb,
-                    continue_on_error=True
+                    continue_on_error=True,
+                    metadata_choices=choices_dict
                 )
+                
+                print(f"\n{'='*80}", flush=True)
+                print(f"✅ Multi-dashboard processing completed", flush=True)
+                print(f"{'='*80}\n", flush=True)
             except Exception as e:
                 import traceback
-                print(f"Error in multi-dashboard processing: {str(e)}")
-                print(traceback.format_exc())
+                print(f"\n{'='*80}", flush=True)
+                print(f"❌ Error in multi-dashboard processing: {str(e)}", flush=True)
+                print(f"{'='*80}", flush=True)
+                print(traceback.format_exc(), flush=True)
         
         thread = threading.Thread(target=run_processing, daemon=True)
         thread.start()
+        
+        print(f"[API] ✅ Background processing thread started", flush=True)
+        print(f"[API] 📡 Returning response to UI", flush=True)
+        sys.stdout.flush()
         
         return {
             "success": True,
@@ -461,12 +540,17 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
             "check_progress": "/api/progress"
         }
     except Exception as e:
+        print(f"[API] ❌ ERROR in /api/dashboards/process-multiple: {str(e)}", flush=True)
+        sys.stdout.flush()
         raise HTTPException(status_code=500, detail=f"Error starting processing: {str(e)}")
 
 
 @app.get("/api/dashboard/{dashboard_id}/files")
 async def get_dashboard_files(dashboard_id: int):
     """Get list of all metadata files for a dashboard"""
+    import sys
+    print(f"[API] GET /api/dashboard/{dashboard_id}/files - Checking available files", flush=True)
+    sys.stdout.flush()
     try:
         dashboard_dir = f"extracted_meta/{dashboard_id}"
         
@@ -513,6 +597,9 @@ async def get_dashboard_files(dashboard_id: int):
 @app.get("/api/dashboard/{dashboard_id}/download/{file_type}")
 async def download_dashboard_file(dashboard_id: int, file_type: str):
     """Download a specific metadata file for a dashboard"""
+    import sys
+    print(f"[API] GET /api/dashboard/{dashboard_id}/download/{file_type} - Downloading file", flush=True)
+    sys.stdout.flush()
     try:
         file_mapping = {
             "json": f"{dashboard_id}_json.json",
@@ -589,7 +676,45 @@ async def download_all_dashboard_files(dashboard_id: int):
         raise HTTPException(status_code=500, detail=f"Error creating ZIP: {str(e)}")
 
 
+@app.get("/api/knowledge-base/download")
+@app.head("/api/knowledge-base/download")
+async def download_knowledge_base_zip():
+    """Download the knowledge base ZIP file (supports GET and HEAD for file existence checks)"""
+    import sys
+    print(f"[API] GET/HEAD /api/knowledge-base/download - Checking/downloading knowledge base ZIP", flush=True)
+    sys.stdout.flush()
+    try:
+        kb_zip_path = "extracted_meta/knowledge_base/knowledge_base.zip"
+        
+        if not os.path.exists(kb_zip_path):
+            raise HTTPException(status_code=404, detail="Knowledge base ZIP file not found. Please wait for processing to complete.")
+        
+        return FileResponse(
+            kb_zip_path,
+            media_type="application/zip",
+            filename="knowledge_base.zip"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error downloading knowledge base ZIP: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import sys
+    
+    # Ensure all output is flushed immediately
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+    
+    print("\n" + "="*80, flush=True)
+    print("🚀 Starting MetaMind API Server", flush=True)
+    print("="*80, flush=True)
+    print("📍 Server will be available at: http://localhost:8000", flush=True)
+    print("📚 API docs will be available at: http://localhost:8000/docs", flush=True)
+    print("📊 All API requests and backend activity will be logged here", flush=True)
+    print("="*80 + "\n", flush=True)
+    
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
 

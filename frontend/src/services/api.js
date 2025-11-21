@@ -85,14 +85,31 @@ export const dashboardAPI = {
   },
 
   /**
+   * Check if dashboard metadata exists
+   */
+  checkDashboardMetadataExists: async (dashboardId) => {
+    try {
+      const response = await api.get(`/api/dashboard/${dashboardId}/files`);
+      // Check if key metadata files exist
+      const files = response.data.files || [];
+      const hasTableMetadata = files.some(f => f.type === 'table_metadata');
+      const hasColumnMetadata = files.some(f => f.type === 'columns_metadata');
+      return hasTableMetadata && hasColumnMetadata;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  /**
    * Process multiple dashboards
    */
-  processMultipleDashboards: async (dashboardIds, extract = true, merge = true, buildKb = true) => {
+  processMultipleDashboards: async (dashboardIds, extract = true, merge = true, buildKb = true, metadataChoices = null) => {
     const response = await api.post('/api/dashboards/process-multiple', {
       dashboard_ids: dashboardIds,
       extract,
       merge,
       build_kb: buildKb,
+      metadata_choices: metadataChoices,
     });
     return response.data;
   },
@@ -130,6 +147,26 @@ export const dashboardAPI = {
    */
   downloadTablesColumns: async (dashboardId) => {
     const response = await api.get(`/api/dashboard/${dashboardId}/tables-columns/download`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  /**
+   * Download final consolidated ZIP file (knowledge base)
+   */
+  downloadFinalZip: async () => {
+    const response = await api.get('/api/download-final-zip', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  /**
+   * Download knowledge base ZIP file
+   */
+  downloadKnowledgeBaseZip: async () => {
+    const response = await api.get('/api/knowledge-base/download', {
       responseType: 'blob',
     });
     return response.data;

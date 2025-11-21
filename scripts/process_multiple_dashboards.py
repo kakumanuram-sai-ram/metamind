@@ -9,7 +9,7 @@ This script orchestrates the complete workflow:
 import os
 import sys
 import argparse
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 # Add scripts directory to path for imports
 _scripts_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,8 @@ def process_multiple_dashboards(
     build_kb: bool = True,
     continue_on_error: bool = True,
     parallel: bool = True,
-    incremental_merge: Optional[bool] = None
+    incremental_merge: Optional[bool] = None,
+    metadata_choices: Optional[Dict[int, bool]] = None  # dashboard_id -> use_existing
 ):
     """
     Process multiple dashboards through the complete workflow.
@@ -53,23 +54,57 @@ def process_multiple_dashboards(
         print("STEP 1: EXTRACTING METADATA FOR EACH DASHBOARD")
         print("="*80)
         
-        orchestrator = DashboardMetadataOrchestrator(
-            dashboard_ids=dashboard_ids,
-            continue_on_error=continue_on_error,
-            parallel=parallel
-        )
-        results = orchestrator.extract_all()
+        # Filter dashboards based on metadata choices
+        dashboards_to_extract = []
+        dashboards_to_skip = []
         
-        # Check if we have any successful extractions
-        successful_ids = orchestrator.get_successful_dashboard_ids()
-        if not successful_ids:
-            print("\n❌ No dashboards were successfully extracted. Cannot proceed with merge.")
-            return
+        if metadata_choices:
+            for dashboard_id in dashboard_ids:
+                use_existing = metadata_choices.get(dashboard_id, False)
+                if use_existing:
+                    # Check if metadata actually exists
+                    dashboard_dir = f"extracted_meta/{dashboard_id}"
+                    table_metadata_file = f"{dashboard_dir}/{dashboard_id}_table_metadata.csv"
+                    if os.path.exists(table_metadata_file):
+                        dashboards_to_skip.append(dashboard_id)
+                        print(f"  ℹ️  Dashboard {dashboard_id}: Using existing metadata (skipping extraction)")
+                    else:
+                        dashboards_to_extract.append(dashboard_id)
+                        print(f"  ⚠️  Dashboard {dashboard_id}: Existing metadata not found, will extract")
+                else:
+                    dashboards_to_extract.append(dashboard_id)
+                    print(f"  📝 Dashboard {dashboard_id}: Creating fresh metadata")
+        else:
+            dashboards_to_extract = dashboard_ids
         
-        if len(successful_ids) < len(dashboard_ids):
-            print(f"\n⚠️  Only {len(successful_ids)}/{len(dashboard_ids)} dashboards extracted successfully.")
-            print(f"   Proceeding with successful dashboards: {successful_ids}")
-            dashboard_ids = successful_ids
+        if dashboards_to_extract:
+            orchestrator = DashboardMetadataOrchestrator(
+                dashboard_ids=dashboards_to_extract,
+                continue_on_error=continue_on_error,
+                parallel=parallel
+            )
+            results = orchestrator.extract_all()
+        else:
+            print("  ℹ️  All dashboards using existing metadata, skipping extraction")
+            results = {}
+        
+        # Combine extracted and skipped dashboards
+        if dashboards_to_extract:
+            successful_ids = orchestrator.get_successful_dashboard_ids()
+            # Add dashboards that were skipped (using existing)
+            all_dashboard_ids = successful_ids + dashboards_to_skip
+            
+            if not all_dashboard_ids:
+                print("\n❌ No dashboards available for merging.")
+                return
+            
+            if len(all_dashboard_ids) < len(dashboard_ids):
+                print(f"\n⚠️  Only {len(all_dashboard_ids)}/{len(dashboard_ids)} dashboards available.")
+                print(f"   Proceeding with available dashboards: {all_dashboard_ids}")
+            dashboard_ids = all_dashboard_ids
+        else:
+            # All using existing metadata
+            dashboard_ids = dashboards_to_skip
     
     # Step 2: Merge metadata from all dashboards
     if merge:
@@ -79,10 +114,21 @@ def process_multiple_dashboards(
         
         try:
             merger = MetadataMerger(dashboard_ids=dashboard_ids)
-            # Determine if we should do incremental merge
+            # Determine merge strategy based on metadata choices
             if incremental_merge is None:
-                # Auto-detect: merge with existing if it exists
-                include_existing = os.path.exists("extracted_meta/merged_metadata/consolidated_table_metadata.csv")
+                # If any dashboard is using existing metadata, we might want to merge with existing merged_metadata
+                # But if all are fresh, we create fresh merge
+                has_existing_merged = os.path.exists("extracted_meta/merged_metadata/consolidated_table_metadata.csv")
+                
+                # Check if we should merge with existing based on choices
+                # If all dashboards are fresh, don't merge with existing
+                # If some are using existing, merge with existing merged_metadata
+                if metadata_choices:
+                    all_fresh = all(not metadata_choices.get(did, False) for did in dashboard_ids)
+                    include_existing = has_existing_merged and not all_fresh
+                else:
+                    # Default: merge with existing if it exists
+                    include_existing = has_existing_merged
             else:
                 include_existing = incremental_merge
             

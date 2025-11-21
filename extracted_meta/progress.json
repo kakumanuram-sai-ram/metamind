@@ -1,49 +1,44 @@
 {
-  "status": "completed",
-  "current_operation": null,
+  "status": "merging",
+  "current_operation": "merge",
   "total_dashboards": 1,
   "completed_dashboards": 1,
   "failed_dashboards": 0,
   "dashboards": {
-    "729": {
-      "dashboard_id": 729,
+    "511": {
+      "dashboard_id": 511,
       "status": "completed",
       "current_phase": "Completed",
-      "current_file": "729_definitions.csv",
+      "current_file": "511_definitions.csv",
       "completed_files": [
-        "729_json.json",
-        "729_csv.csv",
-        "729_queries.sql",
-        "729_tables_columns_enriched.csv",
-        "729_table_metadata.csv",
-        "729_columns_metadata.csv",
-        "729_joining_conditions.csv",
-        "729_filter_conditions.txt",
-        "729_tables_columns.csv",
-        "729_definitions.csv"
+        "511_json.json",
+        "511_csv.csv",
+        "511_queries.sql",
+        "511_tables_columns_enriched.csv",
+        "511_table_metadata.csv",
+        "511_columns_metadata.csv",
+        "511_joining_conditions.csv",
+        "511_filter_conditions.txt",
+        "511_quality_report.json",
+        "511_tables_columns.csv",
+        "511_definitions.csv"
       ],
       "total_files": 11,
-      "completed_files_count": 10,
+      "completed_files_count": 11,
       "error": null,
-      "start_time": "2025-11-20T23:06:12.864624",
-      "end_time": "2025-11-20T23:12:10.477416"
+      "start_time": "2025-11-21T12:41:48.313923",
+      "end_time": "2025-11-21T12:42:26.729335"
     }
   },
   "merge_status": {
-    "status": "completed",
-    "current_step": null,
-    "completed_steps": [
-      "table_metadata",
-      "columns_metadata",
-      "joining_conditions",
-      "definitions",
-      "filter_conditions"
-    ]
+    "status": "processing",
+    "current_step": "initializing",
+    "completed_steps": []
   },
   "kb_build_status": {
     "status": "completed",
     "current_step": null
   },
-  "start_time": "2025-11-20T23:06:12.864203",
-  "last_update": "2025-11-20T23:12:37.392623"
+  "start_time": "2025-11-21T12:41:48.313513",
+  "last_update": "2025-11-21T12:42:26.738393"
 }
