@@ -1,0 +1,753 @@
+-- SQL Queries for Dashboard: 3P Online Top 1000 Merchant Summary
+-- Dashboard ID: 585
+-- Total Charts: 6
+================================================================================
+
+-- Chart 1: 3P online top 1k Daily Summary (ID: 3157)
+-- Chart Type: table
+-- Dataset: 3P_online_top_1k_agg_summary
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT online_merchant_name AS online_merchant_name, sum("7d_avg_DAU") AS "7d avg DAU", sum("Yday_DAU") AS "Yday DAU", AVG(Yday_DAU)/AVG("7d_avg_DAU") - 1 AS "Yday DAU Growth", sum("LMTD_mau") AS "LMTD MAU", sum("MTD_mau") AS "MTD MAU", AVG(MTD_mau)/AVG(LMTD_mau) - 1 AS "MTD MAU Growth", sum("Yday_txns") AS "yday txns", sum("7d_avg_txns") AS "7d avg Txns", avg(Yday_txns)/avg("7d_avg_txns") - 1 AS "Yday Txn Growth", sum("LMTD_txns") AS "LMTD Txns", sum("MTD_txns") AS "MTD Txns", avg(MTD_txns)/avg(LMTD_txns)-1 AS "MTD Txn _Growth", sum("7d_avg_gmv") AS "7d avg Gmv", sum("Yday_gmv") AS "yday Gmv", avg(Yday_gmv)/avg("7d_avg_gmv") - 1 AS "Yday Gmv Growth", sum("LMTD_gmv") AS "LMTD Gmv", sum("MTD_gmv") AS "MTD GMV", avg(MTD_gmv)/avg(LMTD_gmv) -1 AS "MTD Gmv Growth", sum("7d_avg_nr") AS "7d avg NR", sum("Yday_nr") AS "Yday NR", avg(yday_nr)/avg("7d_avg_nr")- 1 AS "Yday NR Growth", sum("LMTD_nr") AS "LMTD NR", sum("MTD_nr") AS "MTD NR", avg(MTD_nr)/avg(LMTD_nr) - 1 AS "MTD NR Grwoth" 
+FROM (with A as(
+SELECT * FROM (
+SELECT day_id AS day_id, online_merchant_name AS online_merchant_name, dau AS dau, mau AS mau, "NR" AS "NR", new AS new, "React" AS "React", n_txns AS n_txns, gmv AS gmv 
+FROM (with upi_flow_wise_base as (
+select a.*, b.online_merchant_name, date_trunc('month',day_id) mnt,
+case when day_id between date_trunc('month',current_date - interval '01' day) and current_date - interval '01' day then 'MTD'
+when day_id between date_trunc('month',current_date - interval '01' day - interval '01' month) and current_date - interval '01' day - interval '01' month then 'LMTD'
+end as periods,
+--row_number() over (partition by payer_cust_id,b.online_merchant_name, date_trunc('month', date(cast(txn_timestamp as timestamp ))) order by txn_timestamp) as rn_online_merchant_name
+row_number() over (partition by customer_id, date_trunc('month', date(day_id)) order by created_on) as rn_ft
+from (
+select
+transaction_date_key day_id,
+customer_id_payer customer_id,
+txn_timestamp created_on,
+txn_id,
+amount,
+payee_vpa,
+CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_category
+
+from  cdo.fact_upi_transactions_snapshot_v3
+where dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+and transaction_type in('PAY','COLLECT')
+and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+and status = 'SUCCESS'
+and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+)a
+left JOIN  user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on LOWER(a.payee_vpa) = LOWER(b.payee_vpa)
+),
+
+paytm_nrr AS (
+      SELECT customer_id customer_id, date_trunc('month',date(txn_date) ) mnt,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type
+      FROM  user_paytm_payments.rolling_nrr_v1 
+      WHERE txn_date >= date'2025-08-01'
+      and user_type not IN ('Repeat')
+       and
+        customer_Id not in (
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        where dt >=  date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+        and channel in (
+        'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+           ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ) 
+        union all
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        where dt >=  date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+        and channel in (
+        'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+           ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong') 
+        )
+      )
+
+-- select day_id,txn_id,customer_id,online_merchant_name,amount,rn_ft,mnt,
+-- row_number() over (partition by customer_id,online_merchant_name, date_trunc('month', day_id) order by day_id) as rn_mau
+-- from  upi_flow_wise_base 
+--                 where 
+--                 -- lower(online_merchant_name) in (select lower(online_merchant_name) from user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss)
+--                 -- and
+--                 final_category = 'Online'
+
+-- and day_id >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)      
+
+select
+day_id,
+online_merchant_name,
+        count(distinct a.customer_id) as dau,
+        count(distinct case when a.rn_mau = 1 then a.customer_id end) as mau,
+        count(distinct case when a.rn_ft = 1 and b.customer_id is not null then a.customer_id  end) as NR, --- paytm new/react 
+        count(distinct case when a.rn_ft = 1 and b.user_type = 'New' then a.customer_id  end) as new, --- paytm new/react 
+        count(distinct case when a.rn_ft = 1 and  b.user_type = 'React_2M+' then a.customer_id  end) as React, --- paytm new/react 
+        count(distinct a.txn_id) as n_txns,
+        sum(cast (amount as double)) as gmv
+
+from
+(  
+select day_id,txn_id,customer_id,online_merchant_name,amount,rn_ft,mnt,
+row_number() over (partition by customer_id,online_merchant_name, date_trunc('month', day_id) order by day_id) as rn_mau
+from  upi_flow_wise_base 
+                where lower(online_merchant_name) in (select lower(online_merchant_name) from user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss)
+                and final_category = 'Online'
+
+and day_id >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+)a
+left join paytm_nrr b on a.customer_id = b.customer_id  and a.mnt = b.mnt
+group by 1,2
+
+UNION ALL
+
+select 
+        day_id,
+        'overall' as online_merchant_name,
+        count(distinct a.customer_id) as dau,
+        count(distinct case when rn_mau = 1 then a.customer_id end) as mau,
+        count(distinct case when rn_ft = 1 and b.customer_id is not null then a.customer_id  end) as NR, --- paytm new/react
+        count(distinct case when a.rn_ft = 1 and b.user_type = 'New' then a.customer_id  end) as new, --- paytm new/react 
+        count(distinct case when a.rn_ft = 1 and  b.user_type = 'React_2M+' then a.customer_id  end) as React, --- paytm new/react 
+ 
+        count(distinct txn_id) as n_txns,
+        sum(cast (amount as double)) as gmv
+from
+      (  
+select day_id,txn_id,customer_id,online_merchant_name,amount,rn_ft,mnt,
+row_number() over (partition by customer_id, date_trunc('month', day_id) order by day_id) as rn_mau
+from  upi_flow_wise_base 
+                where final_category = 'Online'
+and day_id >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+)a
+left join paytm_nrr b on a.customer_id = b.customer_id and a.mnt = b.mnt
+group by 1,2
+) AS virtual_table
+) AS dataset_970
+)
+
+,Date_ as(
+SELECT date_column
+FROM UNNEST(
+    SEQUENCE(
+        date_trunc('month', current_date - interval '1' month),
+        current_date - interval '1' day,
+        interval '1' day
+    )
+) AS t(date_column)
+)
+
+
+
+,date_a as (
+select 
+date_column,
+case 
+when date_column between date_trunc('month',current_date  - interval '01' day) and (current_date  - interval '01' day) then 'MTD'
+when date_column between date_trunc('month',current_date  - interval '01' day - interval '01' month ) and (current_date  - interval '01' day - interval '01' month ) then 'LMTD'
+end as MTD_Flag,
+case when date_column = (current_date  - interval '01' day) then 'Yesterday'
+when date_column between (current_date  - interval '08' day) and (current_date  - interval '02' day) then 'last_7_day'
+end as yday_flag from date_
+)
+
+select
+online_merchant_name,
+sum(dau) filter(where yday_flag = 'Yesterday') Yday_DAU,
+sum(nr) filter(where yday_flag = 'Yesterday') Yday_nr,
+sum(new) filter(where yday_flag = 'Yesterday') Yday_new,
+sum(react) filter(where yday_flag = 'Yesterday') Yday_react,
+sum(n_txns) filter(where yday_flag = 'Yesterday') Yday_txns,
+sum(gmv) filter(where yday_flag = 'Yesterday') Yday_gmv,
+
+avg(dau) filter(where yday_flag = 'last_7_day') "7d_avg_DAU",
+avg(nr) filter(where yday_flag = 'last_7_day') "7d_avg_nr",
+avg(new) filter(where yday_flag = 'last_7_day') "7d_avg_new",
+avg(react) filter(where yday_flag = 'last_7_day') "7d_avg_react",
+avg(n_txns) filter(where yday_flag = 'last_7_day') "7d_avg_txns",
+avg(gmv) filter(where yday_flag = 'last_7_day') "7d_avg_gmv",
+
+sum(mau) filter(where MTD_Flag = 'LMTD') LMTD_mau,
+sum(nr) filter(where MTD_Flag = 'LMTD') LMTD_nr,
+sum(new) filter(where MTD_Flag = 'LMTD') LMTD_new,
+sum(react) filter(where MTD_Flag = 'LMTD') LMTD_react,
+sum(n_txns) filter(where MTD_Flag = 'LMTD') LMTD_txns,
+sum(gmv) filter(where MTD_Flag = 'LMTD') LMTD_gmv,
+----
+sum(mau) filter(where MTD_Flag = 'MTD') MTD_mau,
+sum(nr) filter(where MTD_Flag = 'MTD') MTD_nr,
+sum(new) filter(where MTD_Flag = 'MTD') MTD_new,
+sum(react) filter(where MTD_Flag = 'MTD') MTD_react,
+sum(n_txns) filter(where MTD_Flag = 'MTD') MTD_txns,
+sum(gmv) filter(where MTD_Flag = 'MTD') MTD_gmv
+--max(day_id) data_as_of
+
+from A a join date_a b on a.day_id in(b.date_column)
+where MTD_Flag is not null or yday_flag is not null
+GROUP by 1
+order by MTD_txns desc
+) AS virtual_table GROUP BY online_merchant_name ORDER BY "7d avg DAU" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 2: 3P Online - Overall MTD LMTD FT RT Summary (ID: 3462)
+-- Chart Type: table
+-- Dataset: 3P online ft rt overall MTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT paytm_user_type AS paytm_user_type, sum(users_mtd) AS "MTD Users", sum(txns_mtd) AS "MTD Txns", sum(gmv_mtd) AS "MTD Gmv", sum(txns_mtd*1.00)/sum(users_mtd*1.00) AS "TPU", sum(users_lmtd) AS "LMTD Users", sum(txns_lmtd) AS "LMTD Txns", sum(gmv_lmtd) AS "LMTD Gmv", sum(txns_lmtd*1.00)/sum(users_lmtd*1.00) AS "LMTD TPU", (SUM(users_mtd)*1.0000)
+/
+(SUM(users_lmtd)*1.0000) -1 AS "MTD User Growth", (SUM(txns_mtd)*1.0000)
+/
+(SUM(txns_lmtd)*1.0000) -1 AS "MTD Txn Growth", (SUM(gmv_mtd)*1.0000)
+/
+(SUM(gmv_lmtd)*1.0000) -1 AS "MTD Gmv Growth" 
+FROM (WITH date_ranges AS (
+          SELECT
+              DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AS mtd_start,
+              DATE_ADD('day', -1, CURRENT_DATE) AS mtd_end,
+              DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AS lmtd_start,
+              DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)) AS lmtd_end
+      ),
+
+      paytm_nrr_mtd AS (
+      WITH paytm_nrr AS (
+      SELECT payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type
+      FROM user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+       and
+
+        customer_Id not in (
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+        and lower(channel) in (
+        'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+        ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ) )
+
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      )
+      SELECT payer_cust_id, paytm_user_type, 'MTD' AS period FROM paytm_nrr
+      ),
+
+      paytm_nrr_lmtd AS (
+      WITH paytm_nrr AS (
+      SELECT payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type
+      FROM hive.user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+
+      and customer_Id not in (
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+        ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ))
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      )
+      SELECT payer_cust_id, paytm_user_type, 'LMTD' AS period FROM paytm_nrr
+      ),
+
+      upi_online_ft AS (
+      SELECT payer_cust_id, 'MTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay
+      WHERE day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges) -- MTD Source
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+
+      UNION ALL
+
+      SELECT payer_cust_id, 'LMTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay
+      where day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+      ),
+
+      upi_online_txns AS (
+      SELECT payer_cust_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'MTD' AS period
+      FROM user_paytm_payments.upi_abhay  -- MTD Source
+      WHERE payer_cust_id IN (SELECT payer_cust_id FROM upi_online_ft WHERE period = 'MTD')
+      AND day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+      GROUP BY 1
+
+      UNION ALL
+
+      SELECT payer_cust_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'LMTD' AS period
+      FROM user_paytm_payments.upi_abhay  -- LMTD Source
+      WHERE payer_cust_id IN (SELECT payer_cust_id FROM upi_online_ft WHERE period = 'LMTD')
+      AND day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+      GROUP BY 1
+      ),
+
+      final_base as (
+      SELECT
+      a.paytm_user_type,
+      a.period,
+      COUNT(DISTINCT a.payer_cust_id) AS users,
+      COALESCE(SUM(n_txns), 0) AS n_txns,
+      COALESCE(SUM(gmv), 0) AS gmv
+      FROM (
+      SELECT * FROM paytm_nrr_mtd
+      UNION ALL
+      SELECT * FROM paytm_nrr_lmtd
+      ) AS a
+      INNER JOIN upi_online_ft AS b
+      ON a.payer_cust_id = b.payer_cust_id
+      AND a.period = b.period
+      LEFT JOIN upi_online_txns AS c
+      ON b.payer_cust_id = c.payer_cust_id
+      AND b.period = c.period
+      GROUP BY 1, 2
+      ORDER BY 3, 1
+      )
+
+      select
+      paytm_user_type,
+      sum(case when period = 'MTD' then users end) as users_mtd,
+      sum(case when period = 'MTD' then n_txns end) as txns_mtd,
+      sum(case when period = 'MTD' then gmv end) as gmv_mtd,
+
+      sum(case when period = 'LMTD' then users end) as users_lmtd,
+      sum(case when period = 'LMTD' then n_txns end) as txns_lmtd,
+      sum(case when period = 'LMTD' then gmv end) as gmv_lmtd
+      from final_base
+      group by 1
+) AS virtual_table GROUP BY paytm_user_type ORDER BY "MTD Users" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 3: FT/RT DoD Merchant Level (Apply Merchant filter on top for any specific merchant) (ID: 3463)
+-- Chart Type: table
+-- Dataset: 3P online FT RT Merchant Level
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT day_id AS day_id__, sum("MTD_New_Users") AS "MTD New users", sum("MTD_React2Mplus_Users") AS "MTD React Users", sum("LMTD_New_Users") AS "LMTD New Users", sum("LMTD_React2Mplus_Users") AS "LMTD React Users", SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users) AS "MTD New + React Users", SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users) AS "LMTD New + React Users", (SUM(MTD_New_Users)*1.0000)/
+(SUM(LMTD_New_Users)*1.0000)-1 AS "New user Growth", (SUM(MTD_React2Mplus_Users)*1.0000)/
+(SUM(LMTD_React2Mplus_Users)*1.0000)-1 AS "React User Growth", ((SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users)
+)*1.0000)
+/
+((SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users)
+)*1.0000) - 1 AS "New+React User Growth" 
+FROM (WITH date_ranges AS (
+          SELECT
+              DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AS mtd_start,
+              DATE_ADD('day', -1, CURRENT_DATE) AS mtd_end,
+              DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AS lmtd_start,
+              DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)) AS lmtd_end
+      ),
+
+      paytm_nrr_mtd AS (
+      WITH paytm_nrr AS (
+      SELECT dt, payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT txn_date dt, customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type,
+      row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date) krn
+         FROM user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+       and
+
+        customer_Id not in (
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+           ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ))
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      --where krn = 1
+      )
+      SELECT dt, payer_cust_id, paytm_user_type, 'MTD' AS period FROM paytm_nrr
+      ),
+
+      paytm_nrr_lmtd AS (
+      WITH paytm_nrr AS (
+      SELECT dt, payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT txn_date dt, customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type,
+      row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date) krn
+     FROM user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+       and
+
+        customer_Id not in (
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+        ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ))
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      --where krn = 1
+      )
+      SELECT dt, payer_cust_id, paytm_user_type, 'LMTD' AS period FROM paytm_nrr
+      ),
+
+      upi_online_ft AS (
+      SELECT payer_cust_id, day_id,online_merchant_name, 'MTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category, day_id,b.online_merchant_name,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay a
+      left join user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on lower(a.payee_vpa) = lower(b.payee_vpa)
+      WHERE day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges) -- MTD Source
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+
+      UNION ALL
+
+      SELECT payer_cust_id, day_id,online_merchant_name, 'LMTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category, day_id,b.online_merchant_name,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay a
+      left join user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on lower(a.payee_vpa) = lower(b.payee_vpa)
+      where day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+      )
+
+      SELECT
+      day(b.day_id) as day_id,
+      b.online_merchant_name,
+      count(distinct case when a.paytm_user_type = 'New' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_New_Users,
+      count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_React2Mplus_Users,
+      count(distinct case when a.paytm_user_type = 'New' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_New_Users,
+      count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_React2Mplus_Users,
+      count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_Repeat_Users,
+      count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_Repeat_Users
+
+      FROM (
+      SELECT * FROM paytm_nrr_mtd
+      UNION ALL
+      SELECT * FROM paytm_nrr_lmtd
+      ) AS a
+      INNER JOIN upi_online_ft AS b
+      ON a.payer_cust_id = b.payer_cust_id
+      AND a.period = b.period
+      GROUP BY 1, 2
+      ORDER BY 3, 1
+) AS virtual_table GROUP BY day_id ORDER BY max(day_id) ASC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 4: online_category_missingvpa_mapping (ID: 3562)
+-- Chart Type: table
+-- Dataset: online_category_missingvpa_mapping
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payee_vpa AS payee_vpa, online_merchant_name AS online_merchant_name, sum(n_txns) AS "Txns(>100)" 
+FROM (select lower(a.payee_vpa) as payee_vpa, a.online_merchant_name,
+count(txn_id) as n_txns
+from
+ user_paytm_payments.upi_flow_wise_base_cm a
+left JOIN user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on LOWER(a.payee_vpa) = LOWER(b.payee_vpa)
+where dl_last_updated >= date_trunc('month',current_Date - interval '01' day)
+and final_category = 'Online'
+and b.online_merchant_name is null
+group by 1,2
+having count(*) > 100
+order by 3 desc
+) AS virtual_table GROUP BY payee_vpa, online_merchant_name ORDER BY "Txns(>100)" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 5: MTU_Live_Non_Live_Top_15_ (ID: 6505)
+-- Chart Type: table
+-- Dataset: Live_NonLive_MTU_3P_Online
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(mnt AS TIMESTAMP)) AS mnt, sum("Overall_MTU") AS "Overall_MTU__", sum("Live_Merchants") AS "Live_Merchants", sum("Non_live(Excl. Live)") AS "Non_Live(Excl. Live)", sum("Top_15_Merch") AS "Top_15_Merch" 
+FROM (SELECT date_trunc('day', CAST(mnt AS TIMESTAMP)) AS mnt, sum("total_Mtd") AS "Overall_MTU", sum(live_) AS "Live_Merchants", sum(non_live_exc_live) AS "Non_live(Excl. Live)", sum("Top_merc") AS "Top_15_Merch" 
+FROM (--------------------------------------------------------------------------------------------------------------------------
+
+-- cumulative for LMTD and MTD:
+with base_ as (
+select
+mnt,
+payer_cust_id,
+SUM(1)
+filter (where 
+      lower(online_merchant_name) IN ('flipkart','Reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone',
+        'mpokket','bookmyshow','gokwik','jar','district','kreditbee','bigbasket','jiomart','cashfree','urban company','fancode','Paytm PG',
+        'tataplay','hungerbox','nykaa','ola cabs','burger king','stage','magicpin','zee5','DMRC Momentum',
+        '1mg','apollo','ajio','firstcry','chartr','eatclub','kfc','pharmeasy','zivame','pvr','snapdeal','gaana com','bbdaily','ketto online ventures pvt',
+        'ferns n petal','gullak','rentomojo','dish tv','chaupal tv','healthians','tata play binge','rail yatri','igp','aha media','bakingo','nearbuy','netmeds'
+        ,'Intrcity','d2h','freeup','floweraura','bix42','walmart')
+)Live_MTU,
+SUM(1) filter (where 
+       lower(online_merchant_name) IN ('meesho','flipkart','zomato','Reliance','Myntra','bharti','gokwik','swiggy','rapido',
+'blinkit','zepto','bookmyshow','mpokket','jar','vodafone') 
+)Top_15_MTU, 
+SUM(1)
+filter (where 
+        lower(online_merchant_name) Not IN ('flipkart','Reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone',
+        'mpokket','bookmyshow','gokwik','jar','district','kreditbee','bigbasket','jiomart','cashfree','urban company','fancode','Paytm PG',
+        'tataplay','hungerbox','nykaa','ola cabs','burger king','stage','magicpin','zee5','DMRC Momentum',
+        '1mg','apollo','ajio','firstcry','chartr','eatclub','kfc','pharmeasy','zivame','pvr','snapdeal','gaana com','bbdaily','ketto online ventures pvt',
+        'ferns n petal','gullak','rentomojo','dish tv','chaupal tv','healthians','tata play binge','rail yatri','igp','aha media','bakingo','nearbuy','netmeds'
+        ,'Intrcity','d2h','freeup','floweraura','bix42','walmart')
+        )
+Non_Live_MTU
+from 
+(
+select mnt,
+payer_cust_id,
+coalesce(b.online_merchant_name,'aaaaaaaaaa')online_merchant_name
+from
+        (
+           select distinct  date_Trunc('month',day_id)mnt, payer_cust_id,payee_vpa
+        FROM user_paytm_payments.upi_abhay --user_paytm_payments.upi_flow_wise_base_partitioned
+        WHERE
+            day_id >= date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            AND day(day_id) <= day(current_Date - interval '01' day)
+            AND final_category = 'Online'
+        ) a
+        left join (SELECT payee_vpa,lower(online_merchant_name) online_merchant_name
+        FROM (
+        select *, row_number() over(partition by payee_vpa order by updated_on DESC) as rn from user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1
+        )
+        WHERE RN=1
+        ) b
+        ON LOWER(a.payee_vpa) = lower(b.payee_vpa)   
+) group by 1,2
+) 
+
+select 
+mnt,
+count(distinct payer_cust_id) total_Mtd
+,count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0)>=1) live_
+,count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0)>=1 and coalesce(Non_Live_MTU,0)>=1) live_n_non_live
+,count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0) =0 and coalesce(Non_Live_MTU,0)>=1) non_live_exc_live
+,count(distinct payer_cust_id) filter(where coalesce(Top_15_MTU,0)>=1) Top_merc
+from base_
+group by 1
+) AS virtual_table GROUP BY date_trunc('day', CAST(mnt AS TIMESTAMP)) ORDER BY "Overall_MTU" DESC
+LIMIT 1000
+) AS virtual_table GROUP BY date_trunc('day', CAST(mnt AS TIMESTAMP)) ORDER BY sum("Overall_MTU") DESC
+LIMIT 5000;
+
+
+
+================================================================================
+
+-- Chart 6: FT/RT DoD Merchant Level (Top 15) (ID: 6680)
+-- Chart Type: table
+-- Dataset: 3P online FT RT Merchant Level
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT online_merchant_name AS online_merchant_name, day_id AS day_id__, sum("MTD_New_Users") AS "MTD New users", sum("MTD_React2Mplus_Users") AS "MTD React Users", sum("LMTD_New_Users") AS "LMTD New Users", sum("LMTD_React2Mplus_Users") AS "LMTD React Users", SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users) AS "MTD New + React Users", SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users) AS "LMTD New + React Users", case when SUM(LMTD_New_Users) = 0 then 0 else
+
+(SUM(MTD_New_Users)*1.0000)/
+(SUM(LMTD_New_Users)*1.0000)-1
+
+end AS "New user Growth", case when SUM(LMTD_React2Mplus_Users) = 0 then 0 else
+(SUM(MTD_React2Mplus_Users)*1.0000)/
+(SUM(LMTD_React2Mplus_Users)*1.0000)-1
+end AS "React User Growth", case when 
+SUM(LMTD_New_Users) + sum(LMTD_React2Mplus_Users) = 0 then 0 else
+
+(
+(SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users)
+)*1.0000)
+/
+(
+(
+SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users)
+)*1.0000) - 1
+end AS "New+React User Growth" 
+FROM (WITH date_ranges AS (
+          SELECT
+              DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AS mtd_start,
+              DATE_ADD('day', -1, CURRENT_DATE) AS mtd_end,
+              DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AS lmtd_start,
+              DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)) AS lmtd_end
+      ),
+
+      paytm_nrr_mtd AS (
+      WITH paytm_nrr AS (
+      SELECT dt, payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT txn_date dt, customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type,
+      row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date) krn
+         FROM user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+       and
+
+        customer_Id not in (
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+           ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ))
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      --where krn = 1
+      )
+      SELECT dt, payer_cust_id, paytm_user_type, 'MTD' AS period FROM paytm_nrr
+      ),
+
+      paytm_nrr_lmtd AS (
+      WITH paytm_nrr AS (
+      SELECT dt, payer_cust_id, user_type AS paytm_user_type
+      FROM (
+      SELECT txn_date dt, customer_id AS payer_cust_id,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type,
+      row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date) krn
+     FROM user_paytm_payments.rolling_nrr_v1 --hive.user_paytm_payments.paytm_mau_final_nrr_exc
+      WHERE txn_date BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+       and
+
+        customer_Id not in (
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+        ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        ,'1.c.ong'
+        ))
+      )
+      WHERE user_type IN ('New', 'React_2M+')
+      --where krn = 1
+      )
+      SELECT dt, payer_cust_id, paytm_user_type, 'LMTD' AS period FROM paytm_nrr
+      ),
+
+      upi_online_ft AS (
+      SELECT payer_cust_id, day_id,online_merchant_name, 'MTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category, day_id,b.online_merchant_name,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay a
+      left join user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on lower(a.payee_vpa) = lower(b.payee_vpa)
+      WHERE day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges) -- MTD Source
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+
+      UNION ALL
+
+      SELECT payer_cust_id, day_id,online_merchant_name, 'LMTD' AS period
+      FROM (
+      SELECT payer_cust_id, final_category, day_id,b.online_merchant_name,
+      ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
+      FROM user_paytm_payments.upi_abhay a
+      left join user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on lower(a.payee_vpa) = lower(b.payee_vpa)
+      where day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
+      )
+      WHERE final_category = 'Online'
+      AND rnk = 1
+
+      )
+
+      SELECT
+      day(b.day_id) as day_id,
+      b.online_merchant_name,
+      count(distinct case when a.paytm_user_type = 'New' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_New_Users,
+      count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_React2Mplus_Users,
+      count(distinct case when a.paytm_user_type = 'New' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_New_Users,
+      count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_React2Mplus_Users,
+      count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'MTD' then  a.payer_cust_id end) as MTD_Repeat_Users,
+      count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'LMTD' then  a.payer_cust_id end) as LMTD_Repeat_Users
+
+      FROM (
+      SELECT * FROM paytm_nrr_mtd
+      UNION ALL
+      SELECT * FROM paytm_nrr_lmtd
+      ) AS a
+      INNER JOIN upi_online_ft AS b
+      ON a.payer_cust_id = b.payer_cust_id
+      AND a.period = b.period
+      GROUP BY 1, 2
+      ORDER BY 3, 1
+) AS virtual_table 
+WHERE ((online_merchant_name IN ('meesho', 'flipkart', 'zomato', 'reliance', 'myntra', 'bharti', 'gokwik', 'swiggy', 'rapido', 'blinkit', 'zepto', 'bookmyshow', 'mpokket', 'jar', 'vodafone'))) GROUP BY online_merchant_name, day_id ORDER BY max(day_id) ASC
+LIMIT 10000;
+
+
+
+================================================================================
+

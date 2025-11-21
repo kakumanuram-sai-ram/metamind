@@ -1,0 +1,93 @@
+[
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"created_on",
+    "alias_column_name":"created_on",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"hour_",
+    "alias_column_name":"hour_",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"hour_",
+    "alias_column_name":"hour___",
+    "source_or_derived":"derived",
+    "derived_column_logic":"hour_"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"lastest_hour",
+    "alias_column_name":"lastest_hour",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"payee_handle",
+    "alias_column_name":"payee_handle",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"payer_handle",
+    "alias_column_name":"Payer PsP",
+    "source_or_derived":"derived",
+    "derived_column_logic":"case when lower(payer_handle) in('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer = Paytm' else 'Payer = Other' End"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"payer_handle",
+    "alias_column_name":"payer_handle",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"Last month same day Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"Today vs Last month Same Day",
+    "source_or_derived":"derived",
+    "derived_column_logic":"case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)  = 0 then null else (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000) \/ (COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1 end"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"Todays Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"COUNT(txn_id)filter(where date(created_on) = (current_Date))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"Yesterdays Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"today Vs Yesterday",
+    "source_or_derived":"derived",
+    "derived_column_logic":"case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000) = 0 then null else (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000) \/ (COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1 end"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset",
+    "column_names":"txn_id",
+    "alias_column_name":"txn_id",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  }
+]

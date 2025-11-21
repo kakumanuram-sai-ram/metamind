@@ -1,0 +1,49 @@
+{
+  "status": "completed",
+  "current_operation": null,
+  "total_dashboards": 1,
+  "completed_dashboards": 1,
+  "failed_dashboards": 0,
+  "dashboards": {
+    "729": {
+      "dashboard_id": 729,
+      "status": "completed",
+      "current_phase": "Completed",
+      "current_file": "729_definitions.csv",
+      "completed_files": [
+        "729_json.json",
+        "729_csv.csv",
+        "729_queries.sql",
+        "729_tables_columns_enriched.csv",
+        "729_table_metadata.csv",
+        "729_columns_metadata.csv",
+        "729_joining_conditions.csv",
+        "729_filter_conditions.txt",
+        "729_tables_columns.csv",
+        "729_definitions.csv"
+      ],
+      "total_files": 11,
+      "completed_files_count": 10,
+      "error": null,
+      "start_time": "2025-11-20T23:06:12.864624",
+      "end_time": "2025-11-20T23:12:10.477416"
+    }
+  },
+  "merge_status": {
+    "status": "completed",
+    "current_step": null,
+    "completed_steps": [
+      "table_metadata",
+      "columns_metadata",
+      "joining_conditions",
+      "definitions",
+      "filter_conditions"
+    ]
+  },
+  "kb_build_status": {
+    "status": "completed",
+    "current_step": null
+  },
+  "start_time": "2025-11-20T23:06:12.864203",
+  "last_update": "2025-11-20T23:12:37.392623"
+}

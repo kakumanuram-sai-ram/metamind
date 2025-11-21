@@ -1,0 +1,29 @@
+term,type,definition,business_alias
+Cashback,Metric / Calculated Field,"Total sum of standardized cashburn amounts aggregated over time, representing the monetary value of cashback given to users",
+Cashburn,Metric / Calculated Field,"Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount","Cash Burn Amount, Burn Value"
+UPI,Category,Unified Payments Interface - a real-time payment system for instant money transfers and digital payments,Unified Payments Interface
+SuperCash,Category,"Reward system offering cash benefits through various redemption types including coins, goldcoins, and UPI transactions",
+MTD,Synonym,Month-to-Date - refers to the time period from the beginning of the current month up to the current date,Month-to-Date
+Redemption Type,Category,"Classification of how cashback is redeemed including coins, goldcoins, and UPI methods, each with different conversion rates","Reward Type, Redemption Method"
+Fulfillment Status,Category,"Status tracking for cashback processing including Given (3), Processing (2), and Pending (1) states",
+#Users,Metric,Count of distinct users who have SuperCash transactions in the selected time period,"Users, Unique Users, Number of Users, User Count"
+SUM(cashburn),Metric / Calculated Field,"Total sum of cashburn amounts across all transactions, aggregated from individual cashburn calculations","Total Cash Burn, Cash Burn Sum, Total Cashburn, Cashburn Sum"
+Campaign,Category,UPI SuperCash campaign identifier grouping transactions by specific promotional campaigns,"Campaign Name, Promo Campaign"
+Status,Category,"Transaction status indicating completion state: Given (completed), Processing (in progress), Pending (awaiting fulfillment), or Unscratched (not activated)","Transaction Status, Fulfillment Status"
+Wallet,Category,Wallet platform or service associated with the SuperCash campaign,"Wallet Provider, Payment Wallet"
+Cash Burn,Metric / Calculated Field,"Calculated cashback amount based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types",Cashburn
+Given,Category,"Status category for cashback that has been successfully delivered to users (status=1, fulfillment_status=3)",
+Processing,Category,"Status category for cashback that is currently being processed (status=1, fulfillment_status=2)",
+Pending,Category,"Cashback status when status=1 and fulfillment_status=1, indicating cashback is awaiting processing",
+Unscratched,Category,"Status category for scratch cards that have not been scratched by users (status=2, fulfillment_status=1)",
+Coins,Category,Redemption type for cashback where amount is divided by 166.67 to calculate cash burn,
+Goldcoins,Category,Redemption type for cashback where amount is divided by 100 to calculate cash burn,
+MTD Daily Users,Metric / Calculated Field,Month-to-date count of unique users who performed transactions on a daily basis,Month-to-Date Daily Users
+COUNT_DISTINCT(user_id),Metric,"Unique count of user identifiers, representing the number of distinct users","Unique Users, Daily Active Users"
+MTD Gratified Users,Metric,Month-to-date count of unique users who have been gratified (received benefits) through the UPI SuperCash program,Gratified Users
+UPI SuperCash,Category,"Cashback program related to UPI transactions offering rewards through various redemption types including coins, goldcoins, and direct UPI transfers",SuperCash
+cashburn,Metric / Calculated Field,"Calculated cash equivalent value based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types",Cash Burn Amount
+redemption_type,Category,"Type of SuperCash redemption method including coins, goldcoins, UPI, and other payment methods",Redemption Method
+campaign,Category,Marketing campaign identifier associated with SuperCash offers and promotions,Campaign ID
+status,Category,"Current state of SuperCash transaction including Given, Processing, Unscratched, and Pending statuses",Transaction Status
+wallet,Category,Digital wallet type or payment method associated with the SuperCash transaction,Payment Wallet

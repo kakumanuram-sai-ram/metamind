@@ -1,0 +1,117 @@
+{
+  "total_conflicts": 4,
+  "conflicts_by_type": {
+    "definitions": [
+      {
+        "field_name": "definition",
+        "conflicting_values": [
+          "Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount",
+          "Calculated cash equivalent value based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types"
+        ],
+        "dashboard_ids": [
+          729,
+          729
+        ],
+        "resolution_approach": "merged_similar_definitions",
+        "term": "Cashburn",
+        "metadata_type": "definitions"
+      },
+      {
+        "field_name": "business_alias",
+        "conflicting_values": [
+          "Cash Burn Amount, Burn Value",
+          "Cash Burn Amount"
+        ],
+        "dashboard_ids": [
+          729,
+          729
+        ],
+        "resolution_approach": "combined_all_aliases",
+        "term": "Cashburn",
+        "metadata_type": "definitions"
+      },
+      {
+        "field_name": "definition",
+        "conflicting_values": [
+          "UPI SuperCash campaign identifier grouping transactions by specific promotional campaigns",
+          "Marketing campaign identifier associated with SuperCash offers and promotions"
+        ],
+        "dashboard_ids": [
+          729
+        ],
+        "resolution_approach": "merged_complementary_definitions",
+        "term": "Campaign",
+        "metadata_type": "definitions"
+      },
+      {
+        "field_name": "term_capitalization",
+        "conflicting_values": [
+          "Status",
+          "status"
+        ],
+        "dashboard_ids": [
+          729
+        ],
+        "resolution_approach": "Used proper case 'Status' as standard capitalization",
+        "term": "Status",
+        "metadata_type": "definitions"
+      }
+    ]
+  },
+  "conflicts": [
+    {
+      "field_name": "definition",
+      "conflicting_values": [
+        "Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount",
+        "Calculated cash equivalent value based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types"
+      ],
+      "dashboard_ids": [
+        729,
+        729
+      ],
+      "resolution_approach": "merged_similar_definitions",
+      "term": "Cashburn",
+      "metadata_type": "definitions"
+    },
+    {
+      "field_name": "business_alias",
+      "conflicting_values": [
+        "Cash Burn Amount, Burn Value",
+        "Cash Burn Amount"
+      ],
+      "dashboard_ids": [
+        729,
+        729
+      ],
+      "resolution_approach": "combined_all_aliases",
+      "term": "Cashburn",
+      "metadata_type": "definitions"
+    },
+    {
+      "field_name": "definition",
+      "conflicting_values": [
+        "UPI SuperCash campaign identifier grouping transactions by specific promotional campaigns",
+        "Marketing campaign identifier associated with SuperCash offers and promotions"
+      ],
+      "dashboard_ids": [
+        729
+      ],
+      "resolution_approach": "merged_complementary_definitions",
+      "term": "Campaign",
+      "metadata_type": "definitions"
+    },
+    {
+      "field_name": "term_capitalization",
+      "conflicting_values": [
+        "Status",
+        "status"
+      ],
+      "dashboard_ids": [
+        729
+      ],
+      "resolution_approach": "Used proper case 'Status' as standard capitalization",
+      "term": "Status",
+      "metadata_type": "definitions"
+    }
+  ]
+}

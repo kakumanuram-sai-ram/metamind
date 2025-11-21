@@ -1,0 +1,110 @@
+## P2P Inward Transaction by Payee PSP
+
+This metric tracks P2P inward transaction volumes segmented by payee Payment Service Provider (PSP) including ptyes (Yes Bank), pthdfc (HDFC), ptaxis (Axis Bank), and ptsbi (SBI). It provides hourly breakdown with temporal comparisons showing today's transaction count against yesterday and the same day last month, along with day-over-day and month-over-month growth percentages. The analysis enables monitoring of PSP-specific performance patterns and identifying trends in inward P2P transaction flows across different banking partners within the UPI ecosystem. Data is filtered to show only current day hours up to the latest available hour to ensure real-time accuracy.
+
+```sql
+-- tables_involved
+hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to current day hours up to latest available data point
+txn.hour_ <= txn.lastest_hour
+
+--- specific filters
+--- segment by payee PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), pthdfc (HDFC), ptaxis (Axis Bank), ptsbi (SBI)
+txn.payee_handle IN ({payee_psp}: ptyes, pthdfc, ptaxis, ptsbi)
+
+--- calculation_logic
+pattern: temporal_daily_comparison
+base_metric: COUNT(txn_id)
+dimensions: [hour_, payee_handle]
+```
+
+---
+
+## P2P Inward Transactions
+
+This metric tracks P2P inward transaction volumes with temporal comparisons to monitor daily performance trends and growth patterns. It measures the count of inbound peer-to-peer transactions segmented by payee PSP including ptyes (Yes Bank), pthdfc (HDFC), ptaxis (Axis Bank), and ptsbi (SBI), enabling performance analysis across different payment service providers. The analysis includes current day counts alongside yesterday and last month same day comparisons with calculated growth percentages. Additional segmentation by payer PSP categorizes transactions as 'Payer = Paytm' versus 'Payer = Other' based on whether the payer handle belongs to the Paytm ecosystem. Data is aggregated hourly and filtered to show only completed hours up to the latest available hour, providing real-time operational visibility into transaction flow patterns and PSP-specific performance metrics.
+
+```sql
+-- tables_involved
+hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset vt
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit analysis to completed hours only
+vt.hour_ <= vt.lastest_hour
+
+--- specific filters
+--- segment by payee PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), pthdfc (HDFC), ptaxis (Axis), ptsbi (SBI)
+vt.payee_handle IN ({payee_psp}: ptyes, pthdfc, ptaxis, ptsbi) AND
+--- payer PSP ecosystem categorization for paytm vs external analysis
+CASE 
+  WHEN lower(vt.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+  THEN 'Payer = Paytm'
+  ELSE 'Payer = Other'
+END
+
+--- calculation_logic
+pattern: temporal_daily_comparison
+base_metric: COUNT(txn_id)
+dimensions: [hour_, payee_handle, payer_category]
+```
+
+---
+
+## P2P Inward Transactions comp
+
+This metric tracks P2P inward transaction volumes with temporal comparisons to analyze daily performance trends and growth patterns. It provides real-time monitoring of transaction counts segmented by payee PSP (including ptyes, pthdfc, ptaxis, ptsbi) and payer PSP categories (Paytm ecosystem vs Others). The analysis includes current day transaction counts alongside yesterday and last month same-day comparisons, with formatted growth percentages showing directional indicators. This enables stakeholders to quickly identify performance changes, monitor PSP-specific trends, and assess both day-over-day and month-over-month growth patterns across different payment service provider segments within the P2P inward transaction flow.
+
+```sql
+-- tables_involved
+hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to current operational hours only
+virtual_table.hour_ <= lastest_hour
+
+--- specific filters
+--- segment by payee PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), pthdfc (HDFC), ptaxis (Axis), ptsbi (SBI)
+virtual_table.payee_handle IN ({payee_psp})
+--- categorize payer PSP ecosystem for competitive analysis
+CASE 
+  WHEN lower(virtual_table.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+  THEN 'Payer = Paytm'
+  ELSE 'Payer = Other'
+END
+
+--- calculation_logic
+pattern: temporal_daily_comparison_with_formatting
+base_metric: COUNT(txn_id)
+dimensions: [hour_, payee_handle, payer_psp_category]
+format_output: directional_arrows_with_percentage
+```
+
+---
+
+
+## Common Calculation Patterns
+
+### temporal_daily_comparison
+**Description**: Compare current day metrics against yesterday and last month same day with growth percentages
+**Formulas**:
+- todays_value: COUNT(txn_id) FILTER(WHERE date(created_on) = current_date)
+- yesterdays_value: COUNT(txn_id) FILTER(WHERE date(created_on) = current_date - interval '1' day)
+- last_month_same_day: COUNT(txn_id) FILTER(WHERE date(created_on) = current_date - interval '1' month)
+- dod_growth: (todays_value * 1.0000) / (yesterdays_value * 1.0000) - 1
+- mom_growth: (todays_value * 1.0000) / (last_month_same_day * 1.0000) - 1
+**Usage**: Replace COUNT(txn_id) with any aggregation metric like SUM(amount), COUNT(DISTINCT customer_id), etc.
+
+### temporal_daily_comparison_with_formatting
+**Description**: Compare current day transaction metrics against yesterday and last month same day with formatted growth percentages including directional indicators
+**Formulas**:
+- todays_value: COUNT({metric_column}) FILTER(WHERE date(created_on) = current_date)
+- yesterdays_value: COUNT({metric_column}) FILTER(WHERE date(created_on) = current_date - interval '1' day)
+- last_month_same_day: COUNT({metric_column}) FILTER(WHERE date(created_on) = current_date - interval '1' month)
+- dod_growth_formatted: CASE WHEN todays_value > yesterdays_value THEN format('%s %.2f%%','🔼', abs((todays_value*1.0000)/(yesterdays_value*1.0000) - 1) * 100) ELSE format('%s %.2f%%','🔽', abs((todays_value*1.0000)/(yesterdays_value*1.0000) - 1) * 100) END
+- mom_growth_formatted: CASE WHEN todays_value > last_month_same_day THEN format('%s %.2f%%','🔼', abs((todays_value*1.0000)/(last_month_same_day*1.0000) - 1) * 100) ELSE format('%s %.2f%%','🔽', abs((todays_value*1.0000)/(last_month_same_day*1.0000) - 1) * 100) END
+**Usage**: Replace {metric_column} with txn_id, amount, etc. Provides formatted output with directional arrows for dashboard display.

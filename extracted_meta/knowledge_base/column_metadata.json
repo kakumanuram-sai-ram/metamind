@@ -1,0 +1,1493 @@
+[
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "category",
+    "variable_type": NaN,
+    "column_description": "A categorical field that classifies merchants into different business segments (Live, Non-Live, Top 15, Overall) for Monthly Transacting User (MTU) analysis in the UPI payment ecosystem. This categorization helps distinguish between active major merchants versus other merchant types for performance tracking and business intelligence reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "dl_last_updated",
+    "variable_type": NaN,
+    "column_description": "Timestamp indicating when the record was last updated in the data pipeline, used for tracking data freshness and ETL audit purposes in the UPI 3rd party online merchant VPA mapping table.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "final_category",
+    "variable_type": NaN,
+    "column_description": "A classification column that categorizes users into final business segments (New, Repeat, React_2M+) based on their transaction patterns and user lifecycle status. This column is used to track user acquisition metrics and measure growth in new user adoption versus user reactivation in payment transactions.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "n_txns",
+    "variable_type": NaN,
+    "column_description": "Number of transactions processed by online merchants through UPI payment system, used for calculating daily, weekly, and monthly transaction volume metrics and growth rates in merchant performance dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "Stores the name of online merchants in UPI payment transactions, used to categorize and analyze Monthly Transacting Users (MTU) across different merchant segments including live merchants, top 15 merchants, and overall merchant performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "payee_vpa",
+    "variable_type": "varchar",
+    "column_description": "Virtual Payment Address (VPA) of the payee in UPI transactions, used to map and identify online merchants in third-party payment processing scenarios. This field stores the unique UPI identifier (e.g., merchant@bank) that serves as the destination address for payments made to online merchants.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "txn_id",
+    "variable_type": NaN,
+    "column_description": "Unique transaction identifier used for counting and aggregating UPI payment transactions in the online merchant VPA mapping analysis, particularly for identifying missing merchant name mappings.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "dl_last_updated",
+    "variable_type": "date",
+    "column_description": "A date column that tracks when each record was last updated in the data lake, commonly used for filtering recent data and ensuring data freshness in analytical queries.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "final_category",
+    "variable_type": "varchar(6)",
+    "column_description": "A categorical field that classifies UPI transactions by their transaction type or flow, with 'Online' being used to identify transactions made to online merchants as opposed to other transaction categories like P2P or offline payments.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "n_txns",
+    "variable_type": NaN,
+    "column_description": "Number of UPI transactions aggregated by payee VPA and merchant, used to identify high-volume online payment flows (>100 transactions) that lack proper merchant VPA mapping in the system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "The name of the online merchant associated with UPI transactions, used to identify and categorize online payment recipients for transaction analysis and VPA mapping validation.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "payee_vpa",
+    "variable_type": "varchar",
+    "column_description": "Virtual Payment Address (VPA) of the payee in UPI transactions, used to identify and map online merchants for transaction categorization and analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_flow_wise_base_cm",
+    "column_name": "txn_id",
+    "variable_type": "varchar",
+    "column_description": "A unique transaction identifier used to count and track individual UPI payment transactions within the payment flow system. This field serves as the primary key for transaction-level analysis and is commonly used in aggregations to measure transaction volumes.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making payments through UPI third-party online merchant transactions. This column is used to track customer behavior patterns, segment users into categories (New, Repeat, React), and calculate month-over-month growth metrics in payment analytics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "day_id",
+    "variable_type": NaN,
+    "column_description": "A date identifier column used for daily aggregation and time-based analysis of UPI merchant transactions, enabling tracking of Monthly Transacting Users (MTU) across different merchant categories including live merchants, non-live merchants, and top merchant segments.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "payer_cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for the customer who is making the payment transaction through UPI 3rd party online merchant channels. This column is used to track and categorize users as new or reactivated customers for merchant-level user growth analytics and payment behavior analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "day_id",
+    "variable_type": NaN,
+    "column_description": "A date identifier column used for daily-level temporal analysis and aggregation of UPI third-party online merchant payment transactions, enabling time-series reporting of merchant transaction user (MTU) metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "final_category",
+    "variable_type": NaN,
+    "column_description": "A categorical field that classifies merchants or transactions into business segments such as \"Live_Merchants\" (major established brands), \"Non_Live\", \"Top_15_Merch\", and \"Overall_MTU\" for Monthly Transacting User analysis and merchant performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "The name of the online merchant associated with UPI payment transactions, used for categorizing merchants into business segments like Live Merchants, Top 15 Merchants, and Non-Live merchants for MTU (Monthly Transacting Users) analysis and reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "payee_vpa",
+    "variable_type": "varchar",
+    "column_description": "Virtual Payment Address (VPA) of the payee/merchant receiving UPI payments, used to identify and categorize merchants as live, non-live, or top-tier for transaction analysis and merchant performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "payer_cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique customer identifier for users making UPI payments to third-party online merchants, used to track and categorize Monthly Transacting Users (MTU) across different merchant segments including live merchants, non-live merchants, and top merchant categories.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_name": "updated_on",
+    "variable_type": "date",
+    "column_description": "Timestamp indicating when the UPI merchant VPA mapping record was last updated or modified, used for tracking data freshness and enabling time-based analysis of merchant mapping changes.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making UPI payments, used to track and categorize Monthly Transacting Users (MTU) across different merchant segments including live merchants, top 15 merchants, and overall transaction patterns.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "day_id",
+    "variable_type": "date",
+    "column_description": "A date field representing the transaction or event date used for time-based grouping and analysis of user acquisition metrics in the UPI payment system. This column serves as the primary date dimension for calculating daily, monthly, and comparative growth trends for new and reactivated Paytm users.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "final_category",
+    "variable_type": "varchar(6)",
+    "column_description": "A categorical field that classifies UPI payment users into different segments (likely \"New\" for first-time users and \"React\" for reactivated users) used for analyzing user acquisition and reactivation metrics at the merchant level in day-over-day growth analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "Contains the name of the online merchant or business where UPI payments were made, used for categorizing transactions into different merchant segments (live merchants, top merchants, etc.) for business analytics and performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "payee_vpa",
+    "variable_type": "varchar",
+    "column_description": "Virtual Payment Address (VPA) of the payee/merchant receiving UPI payments, used to categorize transactions into different merchant segments (live merchants, top merchants, etc.) for business analysis and MTU calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "payer_cust_id",
+    "variable_type": "varchar",
+    "column_description": "A unique varchar identifier for customers who make UPI payments through Paytm, used to track and analyze user behavior patterns including new, repeat, and reactivated users across different time periods for growth metrics and merchant-level reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "updated_on",
+    "variable_type": NaN,
+    "column_description": "Timestamp indicating when the record was last updated or modified in the UPI transaction table, typically used for data lineage and audit purposes rather than business analytics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "The amount column represents transaction values in the Paytm payments system, used to calculate key business metrics including GMV (Gross Merchandise Value), Net Revenue, and various growth indicators across different time periods for online merchant performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "category",
+    "variable_type": NaN,
+    "column_description": "A classification column that categorizes Paytm payment users into segments such as 'New', 'Repeat', or 'React_2M+' (reactivated after 2+ months) based on their transaction patterns, used for calculating user growth metrics and net revenue retention analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "channel",
+    "variable_type": "varchar(44)",
+    "column_description": "The channel column identifies the payment channel or merchant category type used for transactions in the Paytm payments system. It serves as a key dimension for segmenting and analyzing payment metrics across different online merchant channels in business intelligence dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "cust_id",
+    "variable_type": "varchar",
+    "column_description": "Unique customer identifier used to track individual customers in payment transaction analysis and customer segmentation for Net Revenue Retention calculations. This ID enables classification of customers into lifecycle stages (New, Repeat, Reactivated) and supports month-over-month growth analysis in the payments ecosystem.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers in the payment system, used to track user engagement metrics (DAU/MAU), transaction behavior, and revenue attribution across online merchants for business performance analysis and net revenue retention calculations.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "day_id",
+    "variable_type": NaN,
+    "column_description": "A date identifier that serves as the primary temporal dimension for tracking daily payment transactions and enabling month-to-date (MTD) and period-over-period analysis of user behavior, transaction volumes, and GMV metrics in the Paytm payments platform.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "dt",
+    "variable_type": "date",
+    "column_description": "Date field representing the transaction or event date used for time-based segmentation and aggregation in user payment behavior analysis, particularly for calculating month-to-date and comparative period metrics in net revenue retention reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "final_category",
+    "variable_type": NaN,
+    "column_description": "A categorical field that classifies Paytm users into behavioral segments: 'New' for first-time users, 'Repeat' for returning users, and 'React_2M+' for users who reactivated after being inactive for 2+ months. This segmentation is used to analyze payment transaction patterns and business performance metrics across different customer lifecycle stages.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "payer_cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making payments through Paytm, used to track and categorize user behavior patterns including new, repeat, and reactivated users for business analytics and growth measurement.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "paytm_user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm users into three business segments: 'New' (first-time users), 'Repeat' (returning users), and 'React_2M+' (users reactivating after 2+ months of inactivity). This classification is used to track user acquisition, retention, and reactivation metrics in monthly performance dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "period",
+    "variable_type": NaN,
+    "column_description": "A time period identifier column used to categorize and filter data by different time ranges, primarily supporting Month-to-Date (MTD) and Last Month-to-Date (LMTD) calculations for user acquisition and reactivation analytics in the Paytm payments system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "The transaction date column that serves as the primary temporal dimension for filtering and analyzing Paytm payment transactions within specific time periods, particularly used for Month-to-Date (MTD) and Last Month-to-Date (LMTD) business metrics calculations.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "txn_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for individual payment transactions in the Paytm payments system, serving as the primary key that enables aggregation of transaction-level data into business metrics like transaction counts, GMV, and net revenue.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "txn_timestamp",
+    "variable_type": NaN,
+    "column_description": "Records the timestamp when each transaction occurred, used as the primary date dimension for calculating month-to-date (MTD) and last month-to-date (LMTD) business metrics including user growth, transaction volume, and GMV performance in the Paytm payments ecosystem.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "user_type",
+    "variable_type": "varchar(11)",
+    "column_description": "Categorizes users based on their transaction behavior pattern, with values including 'New' (first-time users), 'Repeat' (ongoing users), and 'React_2M+' (users reactivated after 2+ months of inactivity). This classification is used to segment and analyze user acquisition, retention, and reactivation metrics in merchant payment analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "The amount column represents monetary values associated with transactions or revenue metrics, used extensively in business intelligence calculations for GMV, Net Revenue, and other financial aggregations across various time periods in the 3P online merchant performance dashboard.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "category",
+    "variable_type": NaN,
+    "column_description": "A categorization field that classifies merchants or payment types within the Paytm online payments ecosystem, used for segmenting and analyzing performance metrics across different business categories in the 3P merchant analytics dashboard.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "channel",
+    "variable_type": "varchar(44)",
+    "column_description": "A categorical field that identifies the specific business channel or acquisition source through which users engage with Paytm payments, used for segmenting and analyzing new user acquisition and reactivation metrics across different merchant touchpoints.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "cust_id",
+    "variable_type": "varchar",
+    "column_description": "A unique customer identifier (varchar) used to track individual customers in the Paytm payments system for analytics purposes. This field serves as a key for customer-level data that gets aggregated into various business metrics like DAU, transactions, and revenue in merchant performance dashboards.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making payments through the Paytm platform, used to track user behavior patterns and categorize users into segments (New, Repeat, React_2M+) for rolling net revenue retention analysis and month-over-month growth calculations.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "day_id",
+    "variable_type": NaN,
+    "column_description": "A date identifier that serves as the primary time dimension for tracking daily merchant performance metrics and enabling time-based calculations for growth rates, rolling averages, and period-over-period comparisons in the payments analytics dashboard.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "dt",
+    "variable_type": "date",
+    "column_description": "A date column that serves as the primary time dimension for filtering and analyzing Paytm payment transactions, enabling month-to-date (MTD) and last month-to-date (LMTD) comparisons of user activity, transaction volumes, and GMV metrics in the rolling NRR analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "final_category",
+    "variable_type": NaN,
+    "column_description": "Represents the final user categorization after business logic processing, classifying users as 'New', 'Repeat', or 'React_2M+' (reactivated after 2+ months) for revenue retention analysis and user growth tracking in the Paytm payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "payer_cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for the customer making the payment in Paytm's payment system, used to track user behavior, categorize users (new vs. reactivated), and calculate user growth metrics across different time periods.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "paytm_user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm users into three business segments: 'New' for first-time users, 'Repeat' for recurring users, and 'React_2M+' for users returning after 2+ months of inactivity. This classification is used to analyze user acquisition, retention, and reactivation patterns in payment transaction data.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "period",
+    "variable_type": NaN,
+    "column_description": "The period column identifies the time period or date range used for rolling Net Revenue Retention analysis in Paytm payments data. This column enables period-based filtering and aggregation for MTD (Month-to-Date) and LMTD (Last Month-to-Date) performance comparisons across user segments.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "The transaction date field that records when a payment transaction occurred, serving as the primary temporal dimension for month-over-month user growth analysis and Net Revenue Retention calculations in the Paytm payments system.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "txn_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for individual payment transactions in the Paytm payments system, serving as the primary key that enables transaction-level analysis and aggregation for user segmentation, GMV calculations, and growth metrics reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "txn_timestamp",
+    "variable_type": NaN,
+    "column_description": "A timestamp field that captures the date and time of payment transactions, used as the primary temporal dimension for calculating time-based business metrics like daily active users, transaction volumes, GMV, and growth rates across various periods (daily, weekly, monthly).",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "user_type",
+    "variable_type": "varchar(11)",
+    "column_description": "Categorizes users into engagement segments ('New', 'Repeat', or 'React_2M+') to track user acquisition and reactivation patterns in Paytm payment analytics. This classification is used for measuring month-to-date and period-over-period growth metrics for different user cohorts.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "The amount column represents monetary transaction values used to calculate key business metrics like Gross Merchandise Value (GMV) and Net Revenue (NR) across different time periods. It serves as the base metric for tracking payment volumes and revenue performance in various aggregated views including daily, weekly, and monthly summaries for merchant analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "category",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm payment users into engagement segments: 'New' for first-time users, 'Repeat' for returning users, and 'React_2M+' for users who return after being inactive for 2+ months. This segmentation is used in Net Revenue Retention analysis to track user lifecycle patterns and calculate growth metrics across different user cohorts.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "channel",
+    "variable_type": NaN,
+    "column_description": "Represents the payment channel or method through which transactions are processed in the Paytm payments system, used for analyzing transaction patterns and performance across different payment channels in the net revenue retention analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "cust_id",
+    "variable_type": NaN,
+    "column_description": "Customer identifier used for tracking and analyzing customer behavior in the context of merchant performance metrics and net revenue retention calculations. This column serves as a key for aggregating customer-level data into merchant-level analytics including daily/monthly active users, transaction volumes, and revenue metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "customer_id",
+    "variable_type": "varchar",
+    "column_description": "A unique identifier for customers in the payments system, used to track and aggregate various business metrics including daily/monthly active users, transaction volumes, gross merchandise value, and net revenue across different time periods for rolling net revenue retention analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "day_id",
+    "variable_type": NaN,
+    "column_description": "A date identifier column that serves as the primary time dimension for tracking daily business metrics and calculating rolling averages, month-to-date, and period-over-period growth rates for key performance indicators like DAU, transactions, GMV, and net revenue.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "dt",
+    "variable_type": NaN,
+    "column_description": "Date field that serves as the primary time dimension for tracking user acquisition and reactivation metrics in the rolling Net Revenue Retention analysis. Used for calculating Month-to-Date (MTD) and Last Month-to-Date (LMTD) comparisons of new and reactivated user growth.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "final_category",
+    "variable_type": NaN,
+    "column_description": "Represents the final user categorization for Paytm payment users, classifying them into segments such as 'New', 'Repeat', or 'React_2M+' based on their payment behavior patterns. This categorization is used to track user acquisition, retention, and reactivation metrics in month-over-month growth analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "payer_cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who make payments through the Paytm platform, used to track user behavior patterns and categorize customers into segments like new, repeat, and reactivated users for growth analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "paytm_user_type",
+    "variable_type": NaN,
+    "column_description": "A categorical field that segments Paytm users into three types based on their transaction patterns: 'New' (first-time users), 'Repeat' (regular users), and 'React_2M+' (reactivated users who haven't transacted in 2+ months). This segmentation is used to analyze user engagement metrics and growth trends across different user cohorts.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "period",
+    "variable_type": NaN,
+    "column_description": "A time period identifier used in rolling Net Revenue Retention analysis, likely representing monthly periods for tracking and comparing Month-to-Date (MTD) and Last Month-to-Date (LMTD) user acquisition and reactivation metrics in the Paytm payments system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "txn_date",
+    "variable_type": "date",
+    "column_description": "The transaction date used to track and analyze user payment activities over time, serving as the primary temporal dimension for calculating month-to-date and period-over-period growth metrics for new and returning users in the rolling NRR analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "txn_id",
+    "variable_type": NaN,
+    "column_description": "Unique transaction identifier used to track individual payment transactions in the rolling Net Revenue Retention analysis table, serving as the basis for aggregated merchant performance metrics like DAU, transaction counts, and GMV calculations.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "txn_timestamp",
+    "variable_type": NaN,
+    "column_description": "A timestamp column that records when each transaction occurred, used primarily for time-based filtering in rolling Net Revenue Retention analysis to calculate month-to-date and period-over-period metrics for Paytm payment transactions.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "user_type",
+    "variable_type": "varchar(9)",
+    "column_description": "Categorizes users based on their transaction behavior pattern, distinguishing between new users, repeat users, and reactivated users who returned after 2+ months of inactivity (React_2M+). This segmentation is used in rolling NRR analysis to track user acquisition and reactivation metrics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "users_lmtd",
+    "variable_type": NaN,
+    "column_description": "Count of unique users for the Last Month to Date (LMTD) period, used as a baseline for calculating month-over-month user growth in payment transaction analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "users_mtd",
+    "variable_type": NaN,
+    "column_description": "The number of users who made Paytm payments during the current month-to-date period, used for calculating user growth metrics and transaction analysis in the rolling NRR dashboard.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "amount",
+    "variable_type": "double",
+    "column_description": "Represents the transaction amount in UPI payments, used to calculate Gross Merchandise Value (GMV) metrics for month-to-date and period-over-period business performance analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "channel",
+    "variable_type": NaN,
+    "column_description": "The channel column identifies the specific payment channel or method used for UPI transactions within the Paytm payments ecosystem. This column enables segmentation and analysis of payment performance across different UPI channels for business intelligence and growth tracking purposes.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making UPI payments through Paytm, used to track individual user behavior, transaction patterns, and classify users into segments (New, Repeat, Reactivated) for payment analytics and growth metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "dt",
+    "variable_type": NaN,
+    "column_description": "Date field representing the transaction or record date in the UPI payments table, used for time-based filtering and aggregations to calculate month-to-date and period-over-period user growth metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "gmv_lmtd",
+    "variable_type": NaN,
+    "column_description": "Represents the Gross Merchandise Value (GMV) for the Last Month-to-Date period, used as a baseline to calculate month-over-month GMV growth rates in UPI payment transaction analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "gmv_mtd",
+    "variable_type": NaN,
+    "column_description": "Represents the Gross Merchandise Value (total transaction amount) processed through UPI payments for the current month-to-date period. This metric is used to track financial performance and calculate month-over-month GMV growth in payment analytics dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "paytm_user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm users based on their transaction behavior into three types: 'New' for first-time users, 'Repeat' for regular users, and 'React_2M+' for users who have reactivated after being inactive for 2+ months. This classification is primarily used for tracking user engagement metrics and measuring month-over-month growth in new user acquisition and user reactivation rates.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "period",
+    "variable_type": NaN,
+    "column_description": "A time period identifier used to categorize data into Month-to-Date (MTD) and Last Month-to-Date (LMTD) periods for payment analytics comparisons. This column enables period-over-period analysis of user engagement, transaction volumes, and gross merchandise value in the UPI payment system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "Transaction date column that stores the date when UPI payments occurred, used as the primary time dimension for calculating Month-to-Date (MTD) and Last Month-to-Date (LMTD) business metrics including user counts, transaction volumes, and GMV in payment analytics dashboards.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "txn_id",
+    "variable_type": "varchar",
+    "column_description": "Unique transaction identifier for UPI payments processed through Paytm, used as the primary key for tracking individual payment transactions in business analytics and reporting dashboards.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "txn_timestamp",
+    "variable_type": "timestamp(3)",
+    "column_description": "Records the precise timestamp (with millisecond precision) when each UPI transaction occurred, used for temporal analysis to calculate month-to-date and historical user growth metrics by segmenting transactions into specific time periods.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "txns_lmtd",
+    "variable_type": NaN,
+    "column_description": "Number of UPI transactions for the Last Month-to-Date period, used as a baseline for calculating month-over-month transaction growth comparisons in payment analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "txns_mtd",
+    "variable_type": NaN,
+    "column_description": "Month-to-date transaction count representing the total number of UPI payment transactions processed from the start of the current month up to the current date. This metric is used in business dashboards to track payment volume performance and calculate month-over-month transaction growth rates.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm users into behavioral segments: 'New' for first-time users, 'Repeat' for returning users, and 'React_2M+' for users reactivated after 2+ months of inactivity. This segmentation enables business analysis of user engagement patterns and performance metrics across different customer lifecycle stages.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "LMTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "LMTD_New_Users represents the count of new users acquired during the Last Month To Date period (same date range as current MTD but in the previous month). This metric serves as a baseline for calculating month-over-month new user growth rates and is used in merchant-level performance analysis dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "LMTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of reactivated users (users returning after 2+ months of inactivity) for the Last Month to Date (LMTD) period, used to measure user re-engagement and calculate month-over-month growth in merchant-level analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "MTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "MTD_New_Users represents the count of new users acquired during the current month-to-date period, used primarily for tracking user acquisition performance and calculating month-over-month growth rates at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "MTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the month-to-date count of reactivated users who returned to using Paytm's M+ (Merchant Plus) services after a period of inactivity. This metric is used alongside new user counts to measure total user acquisition and calculate growth rates for merchant-level performance analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "online_merchant_name",
+    "variable_type": NaN,
+    "column_description": "This column contains the name or identifier of the online merchant associated with payment transactions, used primarily for filtering and segmenting user acquisition metrics (new users, reactivated users) at the merchant level in business dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "payee_vpa",
+    "variable_type": NaN,
+    "column_description": "Virtual Payment Address (VPA) of the payee/merchant receiving payments, used as an identifier for merchant-level analysis in user acquisition and reactivation tracking within the Paytm payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "LMTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of new users for the Last Month-To-Date (LMTD) period, used primarily for calculating month-over-month growth rates in new user acquisition within the Paytm payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "LMTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Tracks the count of reactivated users (React users) for the Last Month To Date (LMTD) period in Paytm's payment platform, used for merchant-level analytics to measure user re-engagement and calculate growth rates compared to current month performance.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "MTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "MTD_New_Users represents the count of new users acquired during the current month-to-date period, used for tracking user acquisition performance and calculating month-over-month growth metrics at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "MTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Counts the number of users who have re-engaged or reactivated with Paytm Plus services during the current month-to-date period, used to track user retention and calculate react user growth metrics at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "online_merchant_name",
+    "variable_type": NaN,
+    "column_description": "This column contains the names of online merchants in the Paytm payments ecosystem, used as a filter dimension to analyze user acquisition metrics (new users, reactivated users, growth rates) at the merchant level in dashboard reports.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "payee_vpa",
+    "variable_type": NaN,
+    "column_description": "Virtual Payment Address (VPA) of the payment recipient or merchant in UPI transactions, used to identify the payee in payment flows for merchant-level analysis and user growth tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "LMTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of new users acquired during the same period in the previous month (Last Month-to-Date), used as a baseline for calculating month-over-month new user growth rates and performance comparisons in payment transaction analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "LMTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of users who were reactivated and became M+ (premium) users during the same date range in the previous month (Last Month-to-Date), used as a baseline for calculating month-over-month growth rates in user reactivation metrics at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "MTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "Month-to-date count of new users who made their first payment transaction in the current month period. This metric is used to track new user acquisition performance and calculate growth rates compared to the same period in the previous month.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "MTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Month-to-date count of reactivated users who returned to make payments after being inactive for 2 or more months. This metric is used to track user reactivation performance and calculate growth rates compared to the previous month's same period.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "online_merchant_name",
+    "variable_type": NaN,
+    "column_description": "Identifies the name of the online merchant in the Paytm payments ecosystem, used as a filter dimension for merchant-level analysis of user acquisition and retention metrics. This column enables drilling down into specific merchant performance within the rolling NRR dashboard.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "payee_vpa",
+    "variable_type": NaN,
+    "column_description": "Virtual Payment Address (VPA) of the payee/merchant receiving payments, used to identify and track merchant-level user acquisition and reactivation metrics in the rolling Net Revenue Retention analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "LMTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of new users acquired during the last month-to-date period, used as a baseline for calculating new user growth rates by comparing against current month-to-date performance in merchant payment analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "LMTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of reactive users (returning/reactivated users) for the Last Month-to-Date period, used to calculate user growth metrics and compare against current month reactive user performance in merchant-level analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "MTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "MTD_New_Users represents the month-to-date count of newly acquired users in the Paytm UPI merchant payment system. This metric is used to track user acquisition performance and calculate new user growth rates by comparing current month progress against the same period in the previous month.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "MTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Month-to-Date count of existing users who have reactivated or upgraded to Paytm's M+ premium service, used for tracking user engagement and service adoption metrics at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "channel",
+    "variable_type": NaN,
+    "column_description": "The channel column represents the payment channel or platform type used for UPI transactions in the merchant VPA mapping system. This field enables segmentation and analysis of merchant performance across different payment channels within the Paytm ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers making UPI payments through third-party merchants, used to track user behavior patterns and calculate user type classifications (new, repeat, reactivated users) for business analytics and growth metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "dt",
+    "variable_type": NaN,
+    "column_description": "Date column used for temporal analysis and time-series reporting of UPI 3P online merchant payment metrics. This field enables dashboard calculations for daily, weekly, monthly, and growth trend analysis across key business KPIs.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "paytm_user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes Paytm users into engagement segments ('New', 'Repeat', or 'React_2M+') based on their transaction history, used for tracking new user acquisition and reactivation metrics in merchant payment analysis.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "period",
+    "variable_type": NaN,
+    "column_description": "The period column represents a time dimension used to categorize and filter UPI merchant transaction data by specific temporal intervals, enabling analysis of user acquisition and reactivation patterns across different time periods such as month-to-date (MTD) and previous month comparisons.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "Transaction date field used for time-based analysis and aggregation of UPI third-party online merchant payment data. This column enables daily, weekly, and monthly trend analysis for metrics like DAU, transaction volume, GMV, and net revenue across merchant VPA mappings.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "txn_timestamp",
+    "variable_type": NaN,
+    "column_description": "Records the timestamp when a UPI payment transaction occurred, used primarily for temporal analysis and user segmentation based on transaction timing patterns (MTD vs LMTD comparisons).",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes users based on their transaction behavior, distinguishing between new users, repeat users, and reactivated users (React_2M+) who haven't transacted in 2+ months. This classification is used to track user acquisition and reactivation metrics for UPI merchant payments.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "LMTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "LMTD_New_Users represents the count of new users from the last month-to-date period (same date range as current MTD but from the previous month), used as a baseline for calculating month-over-month new user growth in UPI payment transactions.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "LMTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Last Month-To-Date count of reactivated users who returned to using Paytm's payment services after a period of inactivity. This metric is used to track user re-engagement patterns and calculate month-over-month growth in reactivated user base at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "MTD_New_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of new users acquired during the current month-to-date period, used for tracking user acquisition performance and calculating growth rates at the merchant level in Paytm's payment analytics dashboard.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_abhay",
+    "column_name": "MTD_React2Mplus_Users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of users who have reactivated and upgraded to Paytm's premium services (Mplus) within the current month-to-date period. This metric tracks previously inactive users who have returned to using premium Paytm services, commonly used for measuring user reactivation performance at the merchant level.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "amount",
+    "variable_type": "double",
+    "column_description": "The monetary value of individual UPI transactions, used as the basis for calculating Gross Merchandise Value (GMV) metrics across different time periods for business performance tracking and merchant analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "category",
+    "variable_type": "varchar",
+    "column_description": "Categorical field that classifies UPI transactions or merchants into different business segments, used for grouping and analyzing transaction metrics across various merchant categories in dashboard reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "channel",
+    "variable_type": NaN,
+    "column_description": "The channel column represents the transaction channel or platform through which UPI payments are processed, used to categorize and analyze transaction performance across different payment channels in the UPI ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "cust_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers in the UPI transactions fact table, used to calculate user engagement metrics like DAU, MAU, and customer-level transaction analytics for business performance reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers in UPI transaction records, used to calculate customer engagement metrics like DAU, MAU, and aggregate transaction volumes and values for business intelligence reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "customer_id_payer",
+    "variable_type": "varchar",
+    "column_description": "Unique identifier for the customer who initiates and pays for UPI transactions, used to calculate user engagement metrics like DAU and MAU for merchant performance analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "dt",
+    "variable_type": NaN,
+    "column_description": "Date column representing the snapshot date or transaction date in the UPI transactions fact table, used for time-based partitioning and calculating various daily, weekly, and monthly business metrics like DAU, transaction volumes, and GMV.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "flow_category",
+    "variable_type": "varchar",
+    "column_description": "A categorical field that classifies UPI transactions into different flow types or payment pathways, used for segmenting and analyzing transaction patterns within the UPI payment ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "The name identifier for third-party online merchants in the UPI transactions system, used to segment and analyze key business metrics like user activity, transaction volumes, and revenue across different merchant partners.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "payee_vpa",
+    "variable_type": "varchar",
+    "column_description": "The Virtual Payment Address (VPA) of the payee/recipient in UPI transactions, used to identify the destination account for payment routing and transaction processing.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "payer_handle",
+    "variable_type": "varchar",
+    "column_description": "A unique identifier or handle representing the payer (customer/user) making the UPI transaction, typically formatted as an alphanumeric string that serves as the payer's identity in the UPI payment system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "status",
+    "variable_type": "varchar",
+    "column_description": "Represents the current state or processing status of UPI transactions (e.g., SUCCESS, FAILED, PENDING), used for filtering and categorizing transaction records based on their completion status.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "transaction_date_key",
+    "variable_type": "date",
+    "column_description": "A date field that represents the transaction date and serves as the primary time dimension for analyzing UPI transaction metrics including daily/monthly active users, transaction volumes, GMV, and net revenue across various time periods and growth calculations.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "transaction_type",
+    "variable_type": "varchar",
+    "column_description": "Categorizes the type of UPI transaction (such as P2P, P2M, or other transaction categories), serving as a classification field in the UPI transactions fact table for potential segmentation and analysis purposes.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "The transaction date column that serves as the primary time dimension for UPI transaction analysis, enabling day-over-day, month-to-date, and period-over-period growth calculations for business metrics like DAU, transaction volume, and GMV.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "txn_id",
+    "variable_type": "varchar",
+    "column_description": "Unique identifier for each UPI transaction record in the snapshot table, serving as the primary key that enables transaction counting and analysis for various business metrics and reporting dashboards.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "txn_timestamp",
+    "variable_type": "timestamp(3)",
+    "column_description": "Records the exact timestamp when each UPI transaction occurred, with millisecond precision. This field serves as the primary time dimension for calculating daily, weekly, and monthly business metrics including user activity, transaction volumes, and revenue aggregations across different time periods.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "user_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes users or entities in the UPI transaction system, likely distinguishing between different user segments such as merchants, consumers, or third-party participants for business analytics and performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "customer_id_payer",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for the customer who is making the payment transaction, used as a key dimension for calculating user engagement metrics like Daily Active Users (DAU) and Monthly Active Users (MAU) in online merchant payment analytics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "Categorizes different types of payment flows or transaction categories for online merchants in the Paytm payments ecosystem. This classification helps segment and analyze merchant payment patterns across various flow types for business intelligence and performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "payer_handle",
+    "variable_type": NaN,
+    "column_description": "A unique identifier or handle representing the customer/user who made the payment transaction, used for user-level analytics and aggregations in the Paytm payments system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "A categorical field that indicates the current state or condition of records in the online merchant payment analytics system, used to segment and filter performance metrics like DAU, transactions, and GMV for dashboard reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "transaction_date_key",
+    "variable_type": NaN,
+    "column_description": "A date key column that represents the transaction date used for time-based filtering and aggregations in payment analytics, enabling daily, weekly, and monthly performance calculations for online merchant transactions.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "column_name": "transaction_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes the type of payment transaction processed through the Paytm platform, used to segment and analyze different transaction methods or categories in online merchant payment analytics and reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "customer_id_payer",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who are making payments through the Paytm platform, specifically used to track payer activity across online merchant transactions for calculating user engagement and revenue metrics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "Categorizes different types of payment flows or transaction streams within the Paytm payments ecosystem, used for segmenting and analyzing merchant payment data across various flow types.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "payer_handle",
+    "variable_type": NaN,
+    "column_description": "Identifier for the payer entity (likely merchant or payment processor handle) in the third-party online payments system, used for tracking and aggregating payment-related metrics across the Paytm platform.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "A status indicator column that likely tracks the processing or validation state of payment records or merchant analytics data within the base table used for rolling net revenue retention calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "transaction_date_key",
+    "variable_type": NaN,
+    "column_description": "A date key column that serves as the primary temporal dimension for analyzing merchant payment transactions, enabling time-based filtering and aggregation for daily, monthly, and rolling period metrics in the payment analytics dashboard.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "column_name": "transaction_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes the type of payment transaction (e.g., UPI, wallet, card, etc.) to enable segmented analysis of business metrics like DAU, transaction volume, GMV, and net revenue across different payment methods in the online merchant ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "customer_id_payer",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who are making payments through the platform, used as a key dimension in rolling net revenue retention analysis and payment transaction tracking for online merchants.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "Categorizes different types of payment flows or transaction streams within the UPI payment system, used to segment and analyze merchant payment data across various flow types in the rolling net revenue retention calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "payer_handle",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for individual users or customers who make payments through the Paytm platform, used as a key for aggregating and analyzing payment transaction metrics in net revenue retention calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "A categorical field that indicates the temporal status or time period classification of records in the rolling NRR analysis, likely used to segment data into periods like MTD (Month-to-Date), LMTD (Last Month-to-Date), or other time-based categories for period-over-period growth calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "transaction_date_key",
+    "variable_type": NaN,
+    "column_description": "A date key column used as the primary time dimension for transaction analysis, enabling time-based filtering and aggregation of payment metrics across different time periods (daily, weekly, monthly) in the rolling NRR dashboard.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.rolling_nrr_v1",
+    "column_name": "transaction_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes payment transactions by their processing type or flow method (such as UPI, wallet, cards, etc.) used for analyzing merchant performance metrics and net revenue retention across different payment channels.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "Represents transaction or payment amount values used in merchant performance analysis, likely contributing to GMV and revenue calculations for tracking top 1000 merchants' business metrics across different time periods.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "category",
+    "variable_type": NaN,
+    "column_description": "A classification field that categorizes merchants into different business types or segments, used for grouping and analyzing merchant performance across different categories in the payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "channel",
+    "variable_type": NaN,
+    "column_description": "Identifies the payment channel or merchant category type (e.g., online, offline) used for segmenting and analyzing merchant performance across different business channels in the payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "cust_id",
+    "variable_type": NaN,
+    "column_description": "Customer identifier used to track individual users across merchant transactions and calculate aggregated business metrics like DAU, MAU, transaction volumes, and GMV for top merchant performance analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "customer_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who made payments to the top 1000 merchants, serving as the primary key to link individual customer transactions in the payments data that gets aggregated for merchant-level business metrics reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "customer_id_payer",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who make payments through the platform, used as the basis for calculating daily active users (DAU) and monthly active users (MAU) metrics in merchant performance analytics.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "dt",
+    "variable_type": NaN,
+    "column_description": "Date column used as the primary time dimension for analyzing daily, weekly, and monthly trends in merchant payment metrics including DAU, transactions, GMV, and net revenue across top 1000 online merchants.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "This column categorizes different payment flow types or transaction categories for merchant payments analysis, likely used to segment and analyze merchant performance across different payment methods or business flows in the Paytm payments ecosystem.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "online_merchant_name",
+    "variable_type": "varchar",
+    "column_description": "The name identifier for online merchants in Paytm's ecosystem, used as a primary grouping dimension to track and analyze business performance metrics including daily active users, transactions, gross merchandise value, and net revenue for the top 1000 performing merchants.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "payee_vpa",
+    "variable_type": NaN,
+    "column_description": "Virtual Payment Address (VPA) of the payee/merchant receiving payments, used as an identifier for UPI-based transactions in the merchant payments system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "payer_handle",
+    "variable_type": NaN,
+    "column_description": "A unique identifier or handle for payers/customers who conduct transactions with the top 1000 merchants, used for tracking customer engagement and payment activity in merchant performance analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "A categorical field that indicates the operational or processing status of merchant records in the top 1000 merchants dataset, used for filtering and segmenting merchant performance analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "transaction_date_key",
+    "variable_type": NaN,
+    "column_description": "A date key column used for temporal filtering and grouping in merchant payment analytics, enabling time-based calculations such as daily, weekly, and monthly aggregations for performance metrics like DAU, transactions, GMV, and net revenue.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "transaction_type",
+    "variable_type": NaN,
+    "column_description": "This column categorizes different types of payment transactions within the merchant payments system, though it's not currently utilized in the dashboard's merchant performance analytics which focus on aggregated metrics by merchant rather than transaction type segmentation.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "txn_date",
+    "variable_type": NaN,
+    "column_description": "The transaction date field that records when payment transactions occurred, used as the primary time dimension for calculating daily, weekly, and monthly business metrics including DAU, transaction volumes, GMV, and growth rates across different time periods.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "txn_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for each payment transaction in the Paytm payments system, serving as the primary key to track individual transactions for merchant payment analysis and aggregation.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "txn_timestamp",
+    "variable_type": NaN,
+    "column_description": "Timestamp field that records when each transaction occurred, used as the primary temporal dimension for calculating daily, monthly, and period-over-period performance metrics for top online merchants in the payments ecosystem.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_name": "user_type",
+    "variable_type": NaN,
+    "column_description": "A categorical field that segments users into different types or categories within the Paytm payments ecosystem, used for analyzing user behavior patterns across top merchant transactions and engagement metrics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "Represents the transaction amount or gross merchandise value (GMV) for UPI third-party online merchant transactions, used to calculate various GMV metrics and growth rates across different time periods (daily, weekly, monthly) in merchant performance dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "customer_id_payer",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for customers who make UPI payments to third-party online merchants, used to track payer activity and link transactions in the merchant VPA mapping system.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "Categorizes different types of UPI payment flows for third-party online merchants, used to segment transaction patterns and performance metrics in payment analytics dashboards.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "payer_handle",
+    "variable_type": NaN,
+    "column_description": "A UPI (Unified Payments Interface) handle or identifier that uniquely identifies a payer in third-party online merchant transactions, used for mapping payers to merchants in payment analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "The status column likely represents the current state or condition of UPI merchant VPA mapping records in the system, though it appears to be unused in the current dashboard analytics that focus on merchant performance metrics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "transaction_date_key",
+    "variable_type": NaN,
+    "column_description": "A date key that represents the transaction date used for temporal analysis and filtering of UPI 3rd party online merchant payment data. This column enables time-based aggregations and comparisons across different periods like daily, weekly, and monthly metrics in business intelligence dashboards.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
+    "column_name": "transaction_type",
+    "variable_type": NaN,
+    "column_description": "Categorizes the type of UPI transaction or payment method used by third-party online merchants, helping to classify and analyze different transaction patterns in the merchant VPA mapping system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "amount",
+    "variable_type": NaN,
+    "column_description": "The amount column stores the base monetary value for campaign redemptions that gets converted to actual cash burn costs using redemption-type-specific formulas (coins divided by 166.67, goldcoins by 100, UPI plus 0.2478 fee). This column serves as the foundation for calculating campaign financial impact across different reward types.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "campaign",
+    "variable_type": "varchar",
+    "column_description": "Identifies the promotional campaign or marketing offer associated with cashback transactions and supercash tasks. This column is used to categorize and analyze performance metrics across different promotional campaigns in the cashback system.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "created_at",
+    "variable_type": "timestamp(3)",
+    "column_description": "Timestamp indicating when a campaign record was created in the system, used for temporal analysis and reporting in cashback campaign tracking, particularly for UPI-related financial transactions.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "dl_last_updated",
+    "variable_type": "date",
+    "column_description": "A date column that indicates when the record was last updated or loaded into the data lake, used for incremental data processing and filtering records based on their data freshness in the campaign snapshot table.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "fulfillment_status",
+    "variable_type": NaN,
+    "column_description": "Indicates the fulfillment stage of cashback rewards, with values representing different states in the reward processing workflow (1=Pending, 2=Processing, 3=Given). This column is used to track and categorize the status of cashback distribution in campaign analytics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "id",
+    "variable_type": "bigint",
+    "column_description": "Primary key identifier for campaign snapshot records in the campaign tracking system, used to uniquely identify each campaign snapshot entry for user reward and supercash campaigns.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "info",
+    "variable_type": "varchar",
+    "column_description": "A JSON field containing metadata and configuration details for cashback campaigns, including scratch card information and transaction-specific data that can be parsed to extract campaign parameters and status indicators.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "redemption_type",
+    "variable_type": "varchar",
+    "column_description": "Specifies the type of cashback redemption method used in campaigns, with values like 'coins', 'goldcoins', and 'upi' that determine different calculation formulas for cashback amounts. This column categorizes how users redeem their rewards and is used to apply appropriate conversion rates for different redemption mechanisms.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "status",
+    "variable_type": NaN,
+    "column_description": "A numeric status code that tracks the lifecycle state of promotional campaigns or cashback tasks, where 1 indicates active/processed campaigns and 2 indicates inactive/unscratched campaigns, used in combination with fulfillment_status to determine final reward states.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "updated_at",
+    "variable_type": "timestamp(3)",
+    "column_description": "Timestamp indicating when a campaign snapshot record was last updated, used to track the timing of cashback task modifications and filter records for month-to-date analysis of gratified users.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "user_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for users who have participated in cashback campaigns and redemption activities. This column is used to track and count distinct users who have received various types of rewards (coins, goldcoins, UPI cashback) for campaign performance analysis.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.code.campaign_snapshot_v3",
+    "column_name": "wallet",
+    "variable_type": "varchar",
+    "column_description": "The wallet column stores wallet identifier or wallet type information for users participating in promotional campaigns, used to track and analyze user engagement across different payment methods including UPI, coins, and goldcoins redemption systems.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocad.supercash_task_snapshot_v3",
+    "column_name": "user_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for users participating in the supercash rewards system, used to track distinct users who have received or are eligible for cashback rewards through various redemption methods including UPI transactions.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "amount",
+    "variable_type": "decimal(8,2)",
+    "column_description": "Represents the base cashback amount in decimal format for supercash tasks, which gets converted using different formulas based on redemption type (coins, goldcoins, or UPI) to calculate the final cashback value displayed in dashboard reports.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "campaign",
+    "variable_type": "varchar",
+    "column_description": "Identifies the promotional campaign or marketing initiative associated with each supercash task, used for tracking and analyzing campaign-specific performance metrics like user engagement and cash burn rates.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "cashburn",
+    "variable_type": NaN,
+    "column_description": "A calculated monetary value representing the cash equivalent cost of rewards redeemed by users, standardized across different redemption types (coins, goldcoins, UPI) using specific conversion rates. This metric is used to track the total financial impact of promotional campaigns and reward distributions.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "created_at",
+    "variable_type": "timestamp(3)",
+    "column_description": "Timestamp indicating when a supercash task record was originally created in the system. This field is used for temporal filtering and analysis in promotional campaigns, particularly for month-to-date user activity tracking and historical data segmentation.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "dl_last_updated",
+    "variable_type": "date",
+    "column_description": "A system-generated date field that tracks when each record in the supercash task snapshot was last updated during data pipeline processing, commonly used for filtering data within specific time ranges for analytics and reporting.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "fulfillment_status",
+    "variable_type": "integer",
+    "column_description": "Indicates the fulfillment stage of supercash/cashback tasks, where integer values represent different states: 1 (Pending/Unscratched), 2 (Processing), and 3 (Given/Completed). This column is used together with the status field to track the progression of cashback rewards through the fulfillment pipeline.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "id",
+    "variable_type": "decimal(20,0)",
+    "column_description": "Unique identifier for each cashback task or transaction record in the supercash system, used to track individual UPI and other payment method cashback rewards through their lifecycle from creation to fulfillment.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "info",
+    "variable_type": "varchar",
+    "column_description": "A JSON-formatted text field that stores additional metadata and details about supercash tasks and scratch cards, including fields like scratch card ID and scratched status that can be extracted for analysis and reporting.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "redemption_type",
+    "variable_type": "varchar",
+    "column_description": "Specifies the type of redemption method used for supercash rewards (e.g., 'coins', 'goldcoins', 'upi'), which determines the cashburn calculation formula and is used to categorize redemption activities in campaign performance tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "status",
+    "variable_type": "integer",
+    "column_description": "Integer status code indicating the current state of a supercash task or cashback transaction, where 1 represents active/processed transactions and 2 represents unscratched/inactive transactions, used in conjunction with fulfillment_status to determine the final transaction state.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "updated_at",
+    "variable_type": "timestamp(3)",
+    "column_description": "Timestamp indicating when the supercash task record was last updated, used to track temporal patterns of cashback reward processing and user gratification events with microsecond precision.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "user_id",
+    "variable_type": "decimal(20,0)",
+    "column_description": "Unique identifier for users who have earned or are eligible for supercash/cashback rewards through various redemption types including UPI transactions. Used to track and count distinct users who have been gratified with cashback in promotional campaigns.",
+    "required_flag": "yes"
+  },
+  {
+    "table_name": "hive.promocard.supercash_task_snapshot_v3",
+    "column_name": "wallet",
+    "variable_type": NaN,
+    "column_description": "Column used to categorize or filter wallet-related transactions, specifically for UPI (Unified Payments Interface) payment method tracking in the supercash redemption system. This column enables the identification and counting of distinct users engaging with UPI-based wallet transactions.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocod.supercash_task_snapshot_v3",
+    "column_name": "info",
+    "variable_type": NaN,
+    "column_description": "A JSON field containing metadata about cashback transactions and scratch card details, including properties like scratchCardId and scratched status that are extracted for cashback reward processing and user gratification tracking.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.promocoda.supercash_task_snapshot_v3",
+    "column_name": "user_id",
+    "variable_type": NaN,
+    "column_description": "Unique identifier for users in the supercash rewards system, used to track and count distinct users who have received or are eligible for cashback rewards through various redemption methods including UPI transactions.",
+    "required_flag": "yes"
+  }
+]

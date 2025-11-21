@@ -1,0 +1,652 @@
+{
+  "dashboard_id": 729,
+  "dashboard_title": "UPI SuperCash Burn Report",
+  "dashboard_url": "https://cdp-dataview.platform.mypaytm.com/superset/dashboard/729/",
+  "owner": "Unknown",
+  "created_on": "",
+  "changed_on": "2025-11-07T11:00:45.034915",
+  "charts": [
+    {
+      "chart_id": 3455,
+      "chart_name": "UPI  - MTD Cashback",
+      "chart_type": "big_number",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('hour', CAST(updated_at AS TIMESTAMP)) AS updated_at, sum(cashburn) AS \"Cashback\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table \nWHERE created_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND created_at < TIMESTAMP '2025-12-01 00:00:00.000000' GROUP BY date_trunc('hour', CAST(updated_at AS TIMESTAMP))\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "changed_on": "2025-10-05T08:11:20.484489",
+            "column_name": "cashburn",
+            "created_on": "2025-10-05T08:11:20.484488",
+            "description": null,
+            "expression": null,
+            "extra": "{\"warning_markdown\":null}",
+            "filterable": true,
+            "groupby": true,
+            "id": 31734,
+            "is_active": true,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(10, 2)",
+            "type_generic": 0,
+            "uuid": "456ea48c-cac2-445b-835f-8d8ef5bb8411",
+            "verbose_name": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Cashback",
+          "optionName": "metric_0uv28ac67mji_j8x4dbpjljj",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "Current month",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_bi4h8sy5kqb_24bvs941f9d"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "updated_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j1y31d55myj_dw48tik1ywv"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "is_mtd_u",
+          "operator": "==",
+          "operatorId": "IS_TRUE",
+          "comparator": true,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_0g3jtsuad6m_thpvzmp7k8k"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3456,
+      "chart_name": "UPI  - MTD Gratified Users",
+      "chart_type": "big_number",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('hour', CAST(updated_at AS TIMESTAMP)) AS updated_at, count(DISTINCT user_id) AS \"Cashback\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table \nWHERE created_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND created_at < TIMESTAMP '2025-12-01 00:00:00.000000' GROUP BY date_trunc('hour', CAST(updated_at AS TIMESTAMP))\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "COUNT_DISTINCT",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "user_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 31726,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(20, 0)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Cashback",
+          "optionName": "metric_0uv28ac67mji_j8x4dbpjljj",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "Current month",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_bi4h8sy5kqb_24bvs941f9d"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "updated_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j1y31d55myj_dw48tik1ywv"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "is_mtd_u",
+          "operator": "==",
+          "operatorId": "IS_TRUE",
+          "comparator": true,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_0g3jtsuad6m_thpvzmp7k8k"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3457,
+      "chart_name": "UPI  - MTD Daily Cashback",
+      "chart_type": "echarts_timeseries_smooth",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('day', CAST(updated_at AS TIMESTAMP)) AS updated_at, count(DISTINCT user_id) AS \"Cashback\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table \nWHERE updated_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND updated_at < TIMESTAMP '2025-12-01 00:00:00.000000' GROUP BY date_trunc('day', CAST(updated_at AS TIMESTAMP)) ORDER BY \"Cashback\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "COUNT_DISTINCT",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "user_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 31726,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(20, 0)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Cashback",
+          "optionName": "metric_0uv28ac67mji_j8x4dbpjljj",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_bi4h8sy5kqb_24bvs941f9d"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "updated_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "Current month",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j1y31d55myj_dw48tik1ywv"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "is_mtd_u",
+          "operator": "==",
+          "operatorId": "IS_TRUE",
+          "comparator": true,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_0g3jtsuad6m_thpvzmp7k8k"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3458,
+      "chart_name": "UPI  - MTD Daily Users",
+      "chart_type": "echarts_timeseries_smooth",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('day', CAST(updated_at AS TIMESTAMP)) AS updated_at, count(DISTINCT user_id) AS \"COUNT_DISTINCT(user_id)\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table \nWHERE updated_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND updated_at < TIMESTAMP '2025-12-01 00:00:00.000000' GROUP BY date_trunc('day', CAST(updated_at AS TIMESTAMP)) ORDER BY \"COUNT_DISTINCT(user_id)\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "COUNT_DISTINCT",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "user_id",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 31755,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(20, 0)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": false,
+          "label": "COUNT_DISTINCT(user_id)",
+          "optionName": "metric_fgavo963feu_1pa6delpnee",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_bi4h8sy5kqb_24bvs941f9d"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "updated_at",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "Current month",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j1y31d55myj_dw48tik1ywv"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "is_mtd_u",
+          "operator": "==",
+          "operatorId": "IS_TRUE",
+          "comparator": true,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_0g3jtsuad6m_thpvzmp7k8k"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3459,
+      "chart_name": "UPI  - Daily Updated Campaign Wise Burn summary",
+      "chart_type": "table",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date(dl_last_updated) AS \"Date\", campaign AS campaign, status_1 AS \"Status\", wallet AS wallet, redemption_type AS redemption_type, count(DISTINCT user_id) AS \"#Users\", sum(cashburn) AS \"SUM(cashburn)\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table GROUP BY date(dl_last_updated), campaign, status_1, wallet, redemption_type ORDER BY \"#Users\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "COUNT_DISTINCT",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "user_id",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 31755,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(20, 0)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "#Users",
+          "optionName": "metric_hdqnrq0sviv_88nqwt28ta",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "cashburn",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 31763,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(10, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": false,
+          "label": "SUM(cashburn)",
+          "optionName": "metric_z4t7ke2l2td_zpm1doxzej",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [
+        {
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "label": "Date",
+          "sqlExpression": "date(dl_last_updated)"
+        },
+        "campaign",
+        {
+          "datasourceWarning": true,
+          "expressionType": "SQL",
+          "label": "Status",
+          "sqlExpression": "status_1"
+        },
+        "wallet",
+        "redemption_type"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_dhwkr2rbowp_qnopkvoogub",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "operatorId": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "dl_last_updated"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3460,
+      "chart_name": "UPI  - Daily by Created Date Campaign Wise Burn Summary",
+      "chart_type": "table",
+      "dataset_id": 1476,
+      "dataset_name": "UPI SuperCashback dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT date(created_at) AS \"Date\", campaign AS campaign, status_1 AS \"Status\", wallet AS wallet, redemption_type AS redemption_type, count(DISTINCT user_id) AS \"#Users\", sum(cashburn) AS \"SUM(cashburn)\" \nFROM (with burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      (case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        when a.redemption_type = 'goldcoins' then (a.amount/100)\n        when a.redemption_type = 'upi' then (a.amount+0.2478)\n        else a.amount\n              end) as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select dl_last_updated, created_at, updated_at, id, user_id, status,fulfillment_status, amount,info,redemption_type,campaign\n          from  hive.promocard.supercash_task_snapshot_v3\n          where \n          \n          \n          dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and date(created_at) >= current_date  - interval '01' day  --date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          --and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          \n          -- and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n)\n\nselect a.*,b.wallet from burn a\nleft join (select distinct wallet,campaign\n                  from hive.code.campaign_snapshot_v3 as b\n                  where dl_last_updated>= current_date- interval '62' day\n                  ) b on a.campaign = b.campaign\n\n\n-- select \n-- created_at,\n-- -- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- -- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- -- status_1, \n-- -- scratched,\n-- count(a.id) cards,\n-- count(a.id) filter (where  scratched = 'true') card_scrached ,\n-- count(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\n-- sum(cashburn) burn_issued,\n-- sum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\n-- from burn a \n-- group by 1\n\n\n      -- select * from hive.code.campaign_snapshot_v3 where  dl_last_updated >=  current_date  - interval '01' day limit 10\n      \n      -- as c\n      -- on gt.campaign = c.campaign\n) AS virtual_table \nWHERE ((date(created_at) >= date_trunc('month', current_date - interval '01' day))) GROUP BY date(created_at), campaign, status_1, wallet, redemption_type ORDER BY \"#Users\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "COUNT_DISTINCT",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "user_id",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 31755,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(20, 0)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "#Users",
+          "optionName": "metric_hdqnrq0sviv_88nqwt28ta",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "cashburn",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 31763,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(10, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": false,
+          "label": "SUM(cashburn)",
+          "optionName": "metric_z4t7ke2l2td_zpm1doxzej",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "created_at",
+        "updated_at",
+        "redemption_type",
+        "campaign",
+        "status_1",
+        "cashburn",
+        "scratchCardId",
+        "scratched",
+        "dl_last_updated",
+        "id",
+        "user_id",
+        "status",
+        "fulfillment_status",
+        "amount",
+        "info",
+        "wallet"
+      ],
+      "groupby_columns": [
+        {
+          "expressionType": "SQL",
+          "label": "Date",
+          "sqlExpression": "date(created_at)"
+        },
+        "campaign",
+        {
+          "expressionType": "SQL",
+          "label": "Status",
+          "sqlExpression": "status_1"
+        },
+        "wallet",
+        "redemption_type"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_bi4h8sy5kqb_24bvs941f9d",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_at"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_j1y31d55myj_dw48tik1ywv",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "updated_at"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "filterOptionName": "filter_awjwep1gpun_35q6ivywjcr",
+          "isExtra": false,
+          "isNew": false,
+          "operator": null,
+          "sqlExpression": "date(created_at) >= date_trunc('month', current_date - interval '01' day)",
+          "subject": null
+        }
+      ],
+      "time_range": null
+    }
+  ]
+}

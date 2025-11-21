@@ -1,0 +1,28 @@
+{
+  "dashboard_ids": [
+    585,
+    729
+  ],
+  "merged_files": {
+    "table_metadata": "extracted_meta/merged_metadata/consolidated_table_metadata.csv",
+    "columns_metadata": "extracted_meta/merged_metadata/consolidated_columns_metadata.csv",
+    "joining_conditions": "extracted_meta/merged_metadata/consolidated_joining_conditions.csv",
+    "definitions": "extracted_meta/merged_metadata/consolidated_definitions.csv",
+    "filter_conditions": "extracted_meta/merged_metadata/consolidated_filter_conditions.txt",
+    "conflicts_report": "extracted_meta/merged_metadata/conflicts_report.json"
+  },
+  "statistics": {
+    "total_tables": 23,
+    "total_columns": 213,
+    "total_joins": 0,
+    "total_terms": 80,
+    "total_conflicts": 4
+  },
+  "conflict_resolution_rules": {
+    "most_common_wins": "For categorical fields (refresh_frequency, vertical, variable_type), use the most common value across dashboards",
+    "any_required": "For required_flag, if ANY dashboard marks it as required, mark as required",
+    "merge_descriptions": "For descriptions, merge content from all dashboards rather than picking one",
+    "preserve_all_joins": "For joining conditions, preserve all unique join patterns (don't merge different joins)",
+    "merge_synonyms": "For term definitions, identify and merge synonyms into single entries"
+  }
+}

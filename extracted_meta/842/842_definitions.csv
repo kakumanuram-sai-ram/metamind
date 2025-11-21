@@ -1,0 +1,17 @@
+term,type,definition,business_alias
+P2P Inward Transactions,Category,Peer-to-peer payment transactions received by the organization from external sources via VPA (Virtual Payment Address),VPA2VPA Transactions
+VPA,Metric,Virtual Payment Address used for digital payments in UPI (Unified Payments Interface) system,Virtual Payment Address
+PSP,Metric,Payment Service Provider that facilitates digital payment transactions,Payment Service Provider
+Yesterdays Txns,Metric,Count of transactions that occurred on the previous day (current_date - 1 day),
+Todays Txns,Metric,Count of transactions that occurred on the current date,
+Last month same day Txns,Metric,Count of transactions that occurred on the same day of the previous month (current_date - 1 month),
+today Vs Yesterday,Metric / Calculated Field,"Percentage change in transaction count from yesterday to today, calculated as (Today's Txns / Yesterday's Txns) - 1",
+Today vs Last month Same Day,Metric / Calculated Field,"Percentage change in transaction count from same day last month to today, calculated as (Today's Txns / Last Month Same Day Txns) - 1",
+Payee Psp,Category,Payment Service Provider associated with the transaction recipient (payee),
+Payer PsP,Category,Payment Service Provider associated with the transaction sender (payer),
+HDFC,Metric,HDFC Bank Payment Service Provider transactions identified by 'pthdfc' handle,pthdfc
+AXIS,Metric,Axis Bank Payment Service Provider transactions identified by 'ptaxis' handle,ptaxis
+SBI,Metric,State Bank of India Payment Service Provider transactions identified by 'ptsbi' handle,ptsbi
+yes,Metric,Paytm Yes Bank Payment Service Provider transactions identified by 'ptyes' handle,ptyes
+Txns,Synonym,Transactions,Transactions
+txn_id,Metric,Unique identifier for each transaction record in the system,Transaction ID
