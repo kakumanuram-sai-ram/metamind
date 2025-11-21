@@ -28,3 +28,32 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Virtual environment
+meta_env/
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# Virtual environment
+meta_env/
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+
+# Virtual environment
+meta_env/
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Python cache
+__pycache__/
