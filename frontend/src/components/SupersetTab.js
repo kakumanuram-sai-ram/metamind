@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { dashboardAPI } from '../services/api';
 import DashboardSection from './DashboardSection';
-import KnowledgeBaseZipSection from './KnowledgeBaseZipSection';
+import KnowledgeBaseDownload from './KnowledgeBaseDownload';
 import MetadataChoiceModal from './MetadataChoiceModal';
 
 const Container = styled.div`
@@ -147,23 +147,62 @@ const SupersetTab = ({ preservedState, onStateChange }) => {
       const progressData = await dashboardAPI.getProgress();
       setProgress(progressData);
       
-      // Update status messages based on progress
+      // Only show status messages if we have active dashboards being processed
+      if (activeDashboardIds.length === 0) {
+        setStatusMessage(null);
+        return;
+      }
+      
+      // Check if ALL active dashboards are in progress (strict matching)
+      const progressDashboardIds = Object.keys(progressData.dashboards || {}).map(id => parseInt(id));
+      const allDashboardsMatch = activeDashboardIds.length > 0 && 
+                                 activeDashboardIds.every(id => progressDashboardIds.includes(id));
+      
+      // Only show status if ALL active dashboards are in progress
+      if (!allDashboardsMatch && progressData.status !== 'idle') {
+        // Progress is for different dashboards, don't show status
+        setStatusMessage(null);
+        return;
+      }
+      
+      // Update status messages based on progress - only if all dashboards match
+      if (!allDashboardsMatch) {
+        setStatusMessage(null);
+        return;
+      }
+      
       if (progressData.status === 'merging') {
         setStatusMessage({ type: 'info', text: 'Metadata merging is happening...' });
       } else if (progressData.status === 'building_kb') {
         setStatusMessage({ type: 'info', text: 'Validation is happening...' });
-      } else if (progressData.status === 'completed') {
-        setStatusMessage({ type: 'success', text: 'All processing complete! Knowledge base ZIP file is available for download.' });
-        if (progressInterval) {
-          clearInterval(progressInterval);
-          setProgressInterval(null);
+      } else if (progressData.status === 'completed' && allDashboardsMatch) {
+        // Only show completed if ALL active dashboards are completed
+        // Also verify that all dashboards actually have completed status
+        const allCompleted = activeDashboardIds.every(id => {
+          const dashProgress = progressData.dashboards?.[id.toString()];
+          return dashProgress?.status === 'completed' || dashProgress?.status === 'processing';
+        });
+        
+        if (allCompleted) {
+          setStatusMessage({ type: 'success', text: 'All processing complete! Knowledge base ZIP file is available for download.' });
+          if (progressInterval) {
+            clearInterval(progressInterval);
+            setProgressInterval(null);
+          }
+        } else {
+          setStatusMessage({ type: 'info', text: 'Processing in progress...' });
         }
+      } else if (progressData.status === 'extracting') {
+        setStatusMessage({ type: 'info', text: 'Extraction in progress...' });
       } else if (progressData.status === 'idle') {
         setStatusMessage(null);
+      } else {
+        // Default: show processing
+        setStatusMessage({ type: 'info', text: 'Processing in progress...' });
       }
       
-      // Stop polling if completed or idle
-      if (progressData.status === 'completed' || progressData.status === 'idle') {
+      // Stop polling if completed or idle (only for our dashboards)
+      if ((progressData.status === 'completed' && allDashboardsMatch) || progressData.status === 'idle') {
         if (progressInterval) {
           clearInterval(progressInterval);
           setProgressInterval(null);
@@ -186,8 +225,9 @@ const SupersetTab = ({ preservedState, onStateChange }) => {
   useEffect(() => {
     if (activeDashboardIds.length > 0 && !progressInterval) {
       // Restart polling if we have active dashboards
+      // Poll every 3 seconds instead of 2 to reduce server load
       fetchProgress();
-      const interval = setInterval(fetchProgress, 2000);
+      const interval = setInterval(fetchProgress, 3000);
       setProgressInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -267,6 +307,10 @@ const SupersetTab = ({ preservedState, onStateChange }) => {
 
   const proceedWithExtraction = async (ids, metadataChoices) => {
     try {
+      // Clear any previous status messages and progress
+      setStatusMessage(null);
+      setProgress(null);
+      
       // Set active dashboard IDs
       setActiveDashboardIds(ids);
 
@@ -336,7 +380,7 @@ const SupersetTab = ({ preservedState, onStateChange }) => {
       )}
 
       {activeDashboardIds.length > 0 && (
-        <KnowledgeBaseZipSection 
+        <KnowledgeBaseDownload 
           progress={progress} 
           dashboardIds={activeDashboardIds}
         />

@@ -1,0 +1,1311 @@
+chart_id,chart_name,sql_query,dashboard_id,dashboard_title,chart_type,dataset_id,dataset_name,database_name,time_range
+2695,UPI Features Adoption DoD,"SELECT cast(Month(Dt) as varchar) AS ""Month"", cast(date_format(Dt, '%d') as varchar) AS ""Day"", ""Feature"" AS ""Feature"", sum(""Users"") AS ""Users__"" 
+FROM (--Features
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 4. UPI Statement
+    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.upi_statement_download_V1
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 5. Receive Money widget
+    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily
+    WHERE  dl_last_updated  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_snp_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.spend_analytics
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.customer_vpa
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.hide_payments
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, cust_id AS custid, dt
+    FROM hive.user_paytm_payments.P2P_Reminders
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+    
+    UNION ALL
+    -- 14. p2p_in
+    SELECT 'P2P In' AS type, payee_customer_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.p2p_in 
+    WHERE  day_id  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+   union all
+   --hub
+     SELECT Concat('z.hub_',Feature_name) Feature_name, customer_id, cast(split_field_dl_last_updated as date) AS dt 
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+     WHERE   cast(dt as date)  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE
+  
+
+)
+
+SELECT Dt,type Feature, COunt(distinct custid) Users
+from ftr
+where dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+GROUP by 1,2
+) AS virtual_table GROUP BY cast(Month(Dt) as varchar), cast(date_format(Dt, '%d') as varchar), ""Feature"" ORDER BY sum(""Users"") ASC
+LIMIT 10000;
+
+",583,UPI Growth Campaign Tracker,pivot_table_v2,1012,UPI Feature Adoption,featurehub,
+2695,UPI Features Adoption DoD,"SELECT cast(Month(Dt) as varchar) AS ""Month"", cast(date_format(Dt, '%d') as varchar) AS ""Day"", ""Feature"" AS ""Feature"", sum(""Users"") AS ""Users__"" 
+FROM (--Features
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 4. UPI Statement
+    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.upi_statement_download_V1
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 5. Receive Money widget
+    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily
+    WHERE  dl_last_updated  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_snp_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.spend_analytics
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.customer_vpa
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.hide_payments
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, cust_id AS custid, dt
+    FROM hive.user_paytm_payments.P2P_Reminders
+    WHERE  dt  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+    
+    UNION ALL
+    -- 14. p2p_in
+    SELECT 'P2P In' AS type, payee_customer_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.p2p_in 
+    WHERE  day_id  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+   union all
+   --hub
+     SELECT Concat('z.hub_',Feature_name) Feature_name, customer_id, cast(split_field_dl_last_updated as date) AS dt 
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+     WHERE   cast(dt as date)  between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE
+  
+
+)
+
+SELECT Dt,type Feature, COunt(distinct custid) Users
+from ftr
+where dt between DATE(date_trunc('month',CURRENT_DATE - INTERVAL '1' DAY)-interval '1' month) AND CURRENT_DATE 
+GROUP by 1,2
+) AS virtual_table GROUP BY cast(Month(Dt) as varchar), cast(date_format(Dt, '%d') as varchar), ""Feature"" ORDER BY sum(""Users"") ASC
+LIMIT 10000;
+
+",583,UPI Growth Campaign Tracker,pivot_table_v2,1012,UPI Feature Adoption,featurehub,
+2816,CLM Impression Click Conversion,"SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, measurement_label AS measurement_label, feature_group AS feature_group, banner_id AS banner_id, storefront_name AS storefront_name, view_type AS view_type, view_name AS view_name, priority AS priority, sum(impressions) AS ""Impression"", sum(clicks) AS ""Clicks"", sum(unique_impressions) AS ""Unique_Impressions"", sum(unique_clicks) AS ""Unique Clicks"", sum(impressions_conversion) AS ""Impression_conversion"", sum(clicks_conversion) AS ""Clicks_Conversion"" 
+FROM (/* with Conversion CLM dashboard Automations - */
+ 
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 4. UPI Statement
+   SELECT 'Download UPI Statement' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Download Statement'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 5. Receive Money widget
+   SELECT 'Receive Money widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Receive Money Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Scan and Pay Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Spend Analytics'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'Personalized VPA'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Hide Payment'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'P2P Reminder'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+    
+    UNION ALL
+    -- 13. cc spends
+    SELECT 'CC Spends' AS type, customer_id_payer scope_cust_id ,transaction_date_key dt
+    from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+        where a.dl_last_updated  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_date_key  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_type in ('PAY','COLLECT')
+        and a.status in('SUCCESS','DEEMED')
+        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+        and payer_account_type='CREDIT'   
+        group by 1,2,3
+     
+
+),
+CLm as (SELECT DATE dt,
+       banner_id,
+       view_name,
+       view_type,
+       storefront_name,
+       measurement_label,
+         CASE
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_ADD_BANK_ACCOUNT', 'UPI_MULTI_BANK_ACCOUNT_LINKING', 'UPI_SINGLE_BANK_LINKING') THEN 'Bank Linking'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_MOBILE_MAPPER', 'UPI_P2P_MOBILE_LINK_UPI_NUMBER') THEN 'Mapper'
+    WHEN UPPER(measurement_label) IN ('UPI_P2M_CCLINKAGE',  'UPI_P2M_CCACTIVATION') THEN 'RuPay CC Linking'
+    WHEN UPPER(measurement_label) = 'UPI_P2M_CCSPENDS' THEN 'CC Spends'   
+    WHEN UPPER(measurement_label) = 'UPI_P2P_UPI_LITE' THEN 'UPI Lite Activation'
+    WHEN UPPER(measurement_label) IN ('UPI_DOWNLOAD_STATEMENT', 'UPI_DOWNLOAD_STATEMENT_WHATSNEW') THEN 'Download UPI Statement'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_RECEIVE_MONEY', 'UPI_P2P_RECEIVE_MONEY_WHATSNEW') THEN 'Receive Money widget'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_SCAN_SHORTCUT', 'UPI_P2P_NEW_SCANNER_3_0', 'UPI_P2P_SCAN_SHORTCUT_WHATSNEW') THEN 'Scan & Pay widget'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_SPENDS_SUMMARY', 'UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW') THEN 'Spends Analytics'
+    WHEN UPPER(measurement_label) = 'UPI_P2P_LITE_AUTOPAY' THEN 'UPI Lite Auto Top UP'
+    WHEN UPPER(measurement_label) = 'UPI_SELF_TRANSFER' THEN 'Self Transfer'
+    WHEN UPPER(measurement_label) IN ('UPI_TOTAL_BALANCE', 'UPI_TOTAL_BALANCE_WHATSNEW') THEN 'Total Balance'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_CUSTOM_VPA', 'UPI_P2P_CUSTOM_VPA_WHATSNEW') THEN 'Custom VPA'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_HIDE_PAYMENTS', 'UPI_P2P_HIDE_PAYMENTS_WHATSNEW') THEN 'Hide Payments'
+END AS feature_group,
+       priority,
+       customer_id,
+       SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks
+    --    COUNT(DISTINCT customer_id) FILTER (WHERE impressions > 0) AS unique_impressions,
+    --    COUNT(DISTINCT customer_id) FILTER (WHERE CLICKS > 0) AS unique_clicks
+FROM hive.team_measurement.banner_campaigns_customer_v1
+WHERE dt BETWEEN DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+  AND DATE BETWEEN DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+  AND UPPER(measurement_label) IN (
+        'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+        'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+        'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+        'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+        'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+        'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+        'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+        'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+        'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+        ,
+    'UPI_GMV_REDCARPET',
+    'UPI_P2P_SPLIT_BILL',
+    'UPI_GMV_P2P'
+      )
+GROUP BY 1,2,3,4,5,6,7,8,9
+)
+
+
+select a.dt,--type,
+        measurement_label,
+        feature_group,
+        banner_id,
+       storefront_name,
+       view_type,
+       view_name, 
+       priority, 
+        SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks, 
+        COUNT(DISTINCT customer_id) FILTER (WHERE impressions > 0) AS unique_impressions,
+       COUNT(DISTINCT customer_id) FILTER (WHERE clicks > 0) AS unique_clicks,
+        COUNT(DISTINCT custid) AS impressions_conversion,
+       COUNT(DISTINCT custid) FILTER (WHERE clicks > 0) AS clicks_conversion
+from clm a
+left join (select * from ftr where dt>=current_date-interval '4' day) b 
+          on b.custid=a.customer_id and a.dt=b.dt and lower(a.feature_group)=lower(b.type)
+group by 1,2,3,4,5,6,7,8
+) AS virtual_table GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), measurement_label, feature_group, banner_id, storefront_name, view_type, view_name, priority ORDER BY dt DESC
+LIMIT 10000;
+
+",583,UPI Growth Campaign Tracker,table,1007,"CLM dashboard (Impressions, Clicks, Conversions)",featurehub,
+2816,CLM Impression Click Conversion,"SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, measurement_label AS measurement_label, feature_group AS feature_group, banner_id AS banner_id, storefront_name AS storefront_name, view_type AS view_type, view_name AS view_name, priority AS priority, sum(impressions) AS ""Impression"", sum(clicks) AS ""Clicks"", sum(unique_impressions) AS ""Unique_Impressions"", sum(unique_clicks) AS ""Unique Clicks"", sum(impressions_conversion) AS ""Impression_conversion"", sum(clicks_conversion) AS ""Clicks_Conversion"" 
+FROM (/* with Conversion CLM dashboard Automations - */
+ 
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 4. UPI Statement
+   SELECT 'Download UPI Statement' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Download Statement'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 5. Receive Money widget
+   SELECT 'Receive Money widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Receive Money Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Scan and Pay Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Spend Analytics'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'Personalized VPA'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Hide Payment'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'P2P Reminder'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+    
+    UNION ALL
+    -- 13. cc spends
+    SELECT 'CC Spends' AS type, customer_id_payer scope_cust_id ,transaction_date_key dt
+    from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+        where a.dl_last_updated  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_date_key  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_type in ('PAY','COLLECT')
+        and a.status in('SUCCESS','DEEMED')
+        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+        and payer_account_type='CREDIT'   
+        group by 1,2,3
+     
+
+),
+CLm as (SELECT DATE dt,
+       banner_id,
+       view_name,
+       view_type,
+       storefront_name,
+       measurement_label,
+         CASE
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_ADD_BANK_ACCOUNT', 'UPI_MULTI_BANK_ACCOUNT_LINKING', 'UPI_SINGLE_BANK_LINKING') THEN 'Bank Linking'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_MOBILE_MAPPER', 'UPI_P2P_MOBILE_LINK_UPI_NUMBER') THEN 'Mapper'
+    WHEN UPPER(measurement_label) IN ('UPI_P2M_CCLINKAGE',  'UPI_P2M_CCACTIVATION') THEN 'RuPay CC Linking'
+    WHEN UPPER(measurement_label) = 'UPI_P2M_CCSPENDS' THEN 'CC Spends'   
+    WHEN UPPER(measurement_label) = 'UPI_P2P_UPI_LITE' THEN 'UPI Lite Activation'
+    WHEN UPPER(measurement_label) IN ('UPI_DOWNLOAD_STATEMENT', 'UPI_DOWNLOAD_STATEMENT_WHATSNEW') THEN 'Download UPI Statement'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_RECEIVE_MONEY', 'UPI_P2P_RECEIVE_MONEY_WHATSNEW') THEN 'Receive Money widget'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_SCAN_SHORTCUT', 'UPI_P2P_NEW_SCANNER_3_0', 'UPI_P2P_SCAN_SHORTCUT_WHATSNEW') THEN 'Scan & Pay widget'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_SPENDS_SUMMARY', 'UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW') THEN 'Spends Analytics'
+    WHEN UPPER(measurement_label) = 'UPI_P2P_LITE_AUTOPAY' THEN 'UPI Lite Auto Top UP'
+    WHEN UPPER(measurement_label) = 'UPI_SELF_TRANSFER' THEN 'Self Transfer'
+    WHEN UPPER(measurement_label) IN ('UPI_TOTAL_BALANCE', 'UPI_TOTAL_BALANCE_WHATSNEW') THEN 'Total Balance'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_CUSTOM_VPA', 'UPI_P2P_CUSTOM_VPA_WHATSNEW') THEN 'Custom VPA'
+    WHEN UPPER(measurement_label) IN ('UPI_P2P_HIDE_PAYMENTS', 'UPI_P2P_HIDE_PAYMENTS_WHATSNEW') THEN 'Hide Payments'
+END AS feature_group,
+       priority,
+       customer_id,
+       SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks
+    --    COUNT(DISTINCT customer_id) FILTER (WHERE impressions > 0) AS unique_impressions,
+    --    COUNT(DISTINCT customer_id) FILTER (WHERE CLICKS > 0) AS unique_clicks
+FROM hive.team_measurement.banner_campaigns_customer_v1
+WHERE dt BETWEEN DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+  AND DATE BETWEEN DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+  AND UPPER(measurement_label) IN (
+        'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+        'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+        'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+        'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+        'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+        'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+        'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+        'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+        'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+        ,
+    'UPI_GMV_REDCARPET',
+    'UPI_P2P_SPLIT_BILL',
+    'UPI_GMV_P2P'
+      )
+GROUP BY 1,2,3,4,5,6,7,8,9
+)
+
+
+select a.dt,--type,
+        measurement_label,
+        feature_group,
+        banner_id,
+       storefront_name,
+       view_type,
+       view_name, 
+       priority, 
+        SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks, 
+        COUNT(DISTINCT customer_id) FILTER (WHERE impressions > 0) AS unique_impressions,
+       COUNT(DISTINCT customer_id) FILTER (WHERE clicks > 0) AS unique_clicks,
+        COUNT(DISTINCT custid) AS impressions_conversion,
+       COUNT(DISTINCT custid) FILTER (WHERE clicks > 0) AS clicks_conversion
+from clm a
+left join (select * from ftr where dt>=current_date-interval '4' day) b 
+          on b.custid=a.customer_id and a.dt=b.dt and lower(a.feature_group)=lower(b.type)
+group by 1,2,3,4,5,6,7,8
+) AS virtual_table GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), measurement_label, feature_group, banner_id, storefront_name, view_type, view_name, priority ORDER BY dt DESC
+LIMIT 10000;
+
+",583,UPI Growth Campaign Tracker,table,1007,"CLM dashboard (Impressions, Clicks, Conversions)",featurehub,
+3238,[Growth]TG CG tracking feature for New PTS Banner 2.0,"SELECT dt AS dt, property AS property, feature AS feature, users_viewed_banner AS users_viewed_banner, converted_post_viewing AS converted_post_viewing, users_clicked_banner AS users_clicked_banner, converted_post_clicking AS converted_post_clicking 
+FROM (--TG
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt < current_date
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt < current_date
+
+    UNION ALL
+    -- 4. UPI Statement
+    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.upi_statement_download_V1
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 5. Receive Money widget
+    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_snp_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.spend_analytics
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.customer_vpa
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.hide_payments
+    WHERE  dt < current_date
+),
+  banner AS (
+  SELECT dt,
+       customer_id,
+       CASE 
+    WHEN banner_id IN (
+        '3159810','3159843','3159842','3159841','3159987',
+        '3159988','3159989','3160634','3159986','3041990',
+        '3159992','3159993','3159994','3159995'
+    ) THEN 'PTS Banner 2.0'
+
+    WHEN banner_id IN (
+        '3136301','3135794','3137732','3135803','3135814',
+        '3137499','3135812','3135813','3137500','3136333',
+        '3136337','3135809'
+    ) THEN 'PTS Curtain widget'
+END AS property,
+     CASE 
+    WHEN banner_id = '3159810' THEN 'Mapper'
+    WHEN banner_id = '3136301' THEN 'Mapper'
+    WHEN banner_id = '3159843' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3137500' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3159842' THEN 'Spends Analytics'
+    WHEN banner_id = '3135813' THEN 'Spends Analytics'
+    WHEN banner_id = '3159841' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3137732' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3159987' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3135812' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3159988' THEN 'Receive Money widget'
+    WHEN banner_id = '3137499' THEN 'Receive Money widget'
+    WHEN banner_id = '3159989' THEN 'Download UPI Statement'
+    WHEN banner_id = '3135814' THEN 'Download UPI Statement'
+    WHEN banner_id = '3160634' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3135803' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3159986' THEN 'Bank Linking'
+    WHEN banner_id = '3135794' THEN 'Bank Linking'
+    WHEN banner_id = '3041990' THEN 'Self Transfer'
+    WHEN banner_id = '3159992' THEN 'Total Balance'
+    WHEN banner_id = '3136333' THEN 'Total Balance'
+    WHEN banner_id = '3159993' THEN 'Custom VPA'
+    WHEN banner_id = '3136337' THEN 'Custom VPA'
+    WHEN banner_id = '3159994' THEN 'Hide Payments'
+    WHEN banner_id = '3135809' THEN 'Hide Payments'
+    WHEN banner_id = '3159995' THEN 'Handle Creation'
+END AS feature,
+       SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks
+FROM team_measurement.banner_campaigns_customer_v1
+WHERE dt >=  current_date- interval '35' day
+  AND dt < CURRENT_DATE
+  AND try_cast(banner_id as varchar) IN (
+    '3159810','3136301',   -- Mapper
+    '3159843','3137500',   -- UPI Lite Auto Top UP
+    '3159842','3135813',   -- Spends Analytics
+    '3159841','3137732',   -- RuPay CC Linking
+    '3159987','3135812',   -- Scan & Pay widget
+    '3159988','3137499',   -- Receive Money widget
+    '3159989','3135814',   -- Download UPI Statement
+    '3160634','3135803',   -- UPI Lite Activation
+    '3159986','3135794',   -- Bank Linking
+    '3041990',             -- Self Transfer
+    '3159992','3136333',   -- Total Balance
+    '3159993','3136337',   -- Custom VPA
+    '3159994','3135809',   -- Hide Payments
+    '3159995'              -- Handle Creation
+)
+GROUP BY 1,2,3,4
+
+)
+
+    select b.dt,property,
+        b.feature, 
+        count(distinct case when b.impressions>0 then b.customer_id end) as users_viewed_banner,
+        count(distinct case when b.impressions>0 and f.custid is not null then b.customer_id end) as converted_post_viewing,
+        count(distinct case when b.clicks>0 then b.customer_id end) as users_clicked_banner,
+        count(distinct case when b.clicks>0 and f.custid is not null then b.customer_id end) as converted_post_clicking
+    from banner b 
+    -- left join (select custid,type, min(dt)dt from  ftr group by 1,2 having min(dt)>=DATE '2025-08-11' ) f
+    --         on b.customer_id=f.custid and b.feature=f.type and b.dt=f.dt
+      left join (select custid,type feature,  date(dt) dt from  ftr where dt>= current_date-interval '35' day group by 1,2,3  ) f
+            on b.customer_id=f.custid and b.feature=f.feature and b.dt=f.dt
+    group by 1,2,3
+) AS virtual_table ORDER BY dt DESC, users_clicked_banner DESC
+LIMIT 50000;
+
+",583,UPI Growth Campaign Tracker,table,1364,[Growth]TG CG tracking feature for New PTS Banner 2.0,Trino,
+3238,[Growth]TG CG tracking feature for New PTS Banner 2.0,"SELECT dt AS dt, property AS property, feature AS feature, users_viewed_banner AS users_viewed_banner, converted_post_viewing AS converted_post_viewing, users_clicked_banner AS users_clicked_banner, converted_post_clicking AS converted_post_clicking 
+FROM (--TG
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt < current_date
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt < current_date
+
+    UNION ALL
+    -- 4. UPI Statement
+    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.upi_statement_download_V1
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 5. Receive Money widget
+    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_snp_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.spend_analytics
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.customer_vpa
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.hide_payments
+    WHERE  dt < current_date
+),
+  banner AS (
+  SELECT dt,
+       customer_id,
+       CASE 
+    WHEN banner_id IN (
+        '3159810','3159843','3159842','3159841','3159987',
+        '3159988','3159989','3160634','3159986','3041990',
+        '3159992','3159993','3159994','3159995'
+    ) THEN 'PTS Banner 2.0'
+
+    WHEN banner_id IN (
+        '3136301','3135794','3137732','3135803','3135814',
+        '3137499','3135812','3135813','3137500','3136333',
+        '3136337','3135809'
+    ) THEN 'PTS Curtain widget'
+END AS property,
+     CASE 
+    WHEN banner_id = '3159810' THEN 'Mapper'
+    WHEN banner_id = '3136301' THEN 'Mapper'
+    WHEN banner_id = '3159843' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3137500' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3159842' THEN 'Spends Analytics'
+    WHEN banner_id = '3135813' THEN 'Spends Analytics'
+    WHEN banner_id = '3159841' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3137732' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3159987' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3135812' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3159988' THEN 'Receive Money widget'
+    WHEN banner_id = '3137499' THEN 'Receive Money widget'
+    WHEN banner_id = '3159989' THEN 'Download UPI Statement'
+    WHEN banner_id = '3135814' THEN 'Download UPI Statement'
+    WHEN banner_id = '3160634' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3135803' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3159986' THEN 'Bank Linking'
+    WHEN banner_id = '3135794' THEN 'Bank Linking'
+    WHEN banner_id = '3041990' THEN 'Self Transfer'
+    WHEN banner_id = '3159992' THEN 'Total Balance'
+    WHEN banner_id = '3136333' THEN 'Total Balance'
+    WHEN banner_id = '3159993' THEN 'Custom VPA'
+    WHEN banner_id = '3136337' THEN 'Custom VPA'
+    WHEN banner_id = '3159994' THEN 'Hide Payments'
+    WHEN banner_id = '3135809' THEN 'Hide Payments'
+    WHEN banner_id = '3159995' THEN 'Handle Creation'
+END AS feature,
+       SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks
+FROM team_measurement.banner_campaigns_customer_v1
+WHERE dt >=  current_date- interval '35' day
+  AND dt < CURRENT_DATE
+  AND try_cast(banner_id as varchar) IN (
+    '3159810','3136301',   -- Mapper
+    '3159843','3137500',   -- UPI Lite Auto Top UP
+    '3159842','3135813',   -- Spends Analytics
+    '3159841','3137732',   -- RuPay CC Linking
+    '3159987','3135812',   -- Scan & Pay widget
+    '3159988','3137499',   -- Receive Money widget
+    '3159989','3135814',   -- Download UPI Statement
+    '3160634','3135803',   -- UPI Lite Activation
+    '3159986','3135794',   -- Bank Linking
+    '3041990',             -- Self Transfer
+    '3159992','3136333',   -- Total Balance
+    '3159993','3136337',   -- Custom VPA
+    '3159994','3135809',   -- Hide Payments
+    '3159995'              -- Handle Creation
+)
+GROUP BY 1,2,3,4
+
+)
+
+    select b.dt,property,
+        b.feature, 
+        count(distinct case when b.impressions>0 then b.customer_id end) as users_viewed_banner,
+        count(distinct case when b.impressions>0 and f.custid is not null then b.customer_id end) as converted_post_viewing,
+        count(distinct case when b.clicks>0 then b.customer_id end) as users_clicked_banner,
+        count(distinct case when b.clicks>0 and f.custid is not null then b.customer_id end) as converted_post_clicking
+    from banner b 
+    -- left join (select custid,type, min(dt)dt from  ftr group by 1,2 having min(dt)>=DATE '2025-08-11' ) f
+    --         on b.customer_id=f.custid and b.feature=f.type and b.dt=f.dt
+      left join (select custid,type feature,  date(dt) dt from  ftr where dt>= current_date-interval '35' day group by 1,2,3  ) f
+            on b.customer_id=f.custid and b.feature=f.feature and b.dt=f.dt
+    group by 1,2,3
+) AS virtual_table ORDER BY dt DESC, users_clicked_banner DESC
+LIMIT 50000;
+
+",583,UPI Growth Campaign Tracker,table,1364,[Growth]TG CG tracking feature for New PTS Banner 2.0,Trino,
+3313,P2P Reminder Removed,"select dl_last_updated Date,
+        count(distinct user_id) users
+from hive.pth_ps.rec_pay_snapshot_v3
+where dl_last_updated>= date_trunc('month',current_date)-interval '1' month
+and reminder_type = 2 --opted
+and curr_status = 2 -- removed
+group by 1 ",583,UPI Growth Campaign Tracker,table,1399,P2P Reminder Removed,Trino,
+3313,P2P Reminder Removed,"select dl_last_updated Date,
+        count(distinct user_id) users
+from hive.pth_ps.rec_pay_snapshot_v3
+where dl_last_updated>= date_trunc('month',current_date)-interval '1' month
+and reminder_type = 2 --opted
+and curr_status = 2 -- removed
+group by 1 ",583,UPI Growth Campaign Tracker,table,1399,P2P Reminder Removed,Trino,
+3850,[Growth] Push with Conversion,"SELECT ""Date"" AS ""Date"", ""Campaign_id"" AS ""Campaign_id"", ""Feature_type"" AS ""Feature_type"", ""Sent"" AS ""Sent"", ""Impression"" AS ""Impression"", ""Click"" AS ""Click"", ""Conversions_sameDay"" AS ""Conversions_sameDay"" 
+FROM (WITH a as ( select customer_id,dt ,campaign_id,campaign_type AS feature_type  ,
+                              CASE
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_ADD_BANK_ACCOUNT', 'UPI_MULTI_BANK_ACCOUNT_LINKING', 'UPI_SINGLE_BANK_LINKING') THEN 'Bank Linking'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_MOBILE_MAPPER', 'UPI_P2P_MOBILE_LINK_UPI_NUMBER') THEN 'Mapper'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2M_CCLINKAGE',  'UPI_P2M_CCACTIVATION') THEN 'RuPay CC Linking'
+                              WHEN UPPER(campaign_type) = 'UPI_P2M_CCSPENDS' THEN 'CC Spends'   
+                              WHEN UPPER(campaign_type) = 'UPI_P2P_UPI_LITE' THEN 'UPI Lite Activation'
+                              WHEN UPPER(campaign_type) IN ('UPI_DOWNLOAD_STATEMENT', 'UPI_DOWNLOAD_STATEMENT_WHATSNEW') THEN 'Download UPI Statement'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_RECEIVE_MONEY', 'UPI_P2P_RECEIVE_MONEY_WHATSNEW') THEN 'Receive Money widget'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_SCAN_SHORTCUT', 'UPI_P2P_NEW_SCANNER_3_0', 'UPI_P2P_SCAN_SHORTCUT_WHATSNEW') THEN 'Scan & Pay widget'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_SPENDS_SUMMARY', 'UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW') THEN 'Spends Analytics'
+                              WHEN UPPER(campaign_type) = 'UPI_P2P_LITE_AUTOPAY' THEN 'UPI Lite Auto Top UP'
+                              WHEN UPPER(campaign_type) = 'UPI_SELF_TRANSFER' THEN 'Self Transfer'
+                              WHEN UPPER(campaign_type) IN ('UPI_TOTAL_BALANCE', 'UPI_TOTAL_BALANCE_WHATSNEW') THEN 'Total Balance'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_CUSTOM_VPA', 'UPI_P2P_CUSTOM_VPA_WHATSNEW') THEN 'Custom VPA'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_HIDE_PAYMENTS', 'UPI_P2P_HIDE_PAYMENTS_WHATSNEW') THEN 'Hide Payments'
+                          END AS feature_group
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day) and current_date   --partition  
+                        -- and total_attempted>0 
+                        AND UPPER(campaign_type) IN (
+                                                    'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+                                                    'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+                                                    'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+                                                    'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+                                                    'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+                                                    'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+                                                    'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+                                                    'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+                                                    'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+                                                    , 'UPI_GMV_REDCARPET',
+                                                      'UPI_P2P_SPLIT_BILL',
+                                                      'UPI_GMV_P2P'
+                                                  )
+ 
+),
+b as (select customer_id,dt ,campaign_id    
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day)- interval '0' month and current_date   --partition  
+                        and total_delivered>0 
+                         AND UPPER(campaign_type) IN (
+                                                    'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+                                                    'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+                                                    'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+                                                    'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+                                                    'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+                                                    'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+                                                    'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+                                                    'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+                                                    'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+                                                    , 'UPI_GMV_REDCARPET',
+                                                      'UPI_P2P_SPLIT_BILL',
+                                                      'UPI_GMV_P2P'
+                                                  )
+),
+c as (select customer_id,dt ,campaign_id   
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day)- interval '0' month and current_date   --partition  
+                        and total_opened>0 
+                        AND UPPER(campaign_type) IN (
+        'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+        'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+        'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+        'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+        'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+        'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+        'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+        'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+        'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+        , 'UPI_GMV_REDCARPET',
+          'UPI_P2P_SPLIT_BILL',
+          'UPI_GMV_P2P'
+      )
+),
+feature_adoption as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 4. UPI Statement
+   SELECT 'Download UPI Statement' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Download Statement'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 5. Receive Money widget
+   SELECT 'Receive Money widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Receive Money Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Scan and Pay Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Spend Analytics'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'Personalized VPA'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Hide Payment'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'P2P Reminder'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+    
+    UNION ALL
+    -- 13. cc spends
+    SELECT 'CC Spends' AS type, customer_id_payer scope_cust_id ,transaction_date_key dt
+    from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+        where a.dl_last_updated  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_date_key  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_type in ('PAY','COLLECT')
+        and a.status in('SUCCESS','DEEMED')
+        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+        and payer_account_type='CREDIT'   
+        group by 1,2,3
+)
+    
+select a.dt Date,a.Campaign_id,a.Feature_type,
+            count(distinct a.customer_id) Sent ,
+            count(distinct b.customer_id) Impression ,
+            count(distinct c.customer_id) Click ,
+            COUNT(DISTINCT d.customer_id) AS Conversions_sameDay
+        from a
+        left join b on a.customer_id=b.customer_id 
+                    and a.campaign_id=b.campaign_id
+                    and a.dt=b.dt
+        left join c on c.customer_id=b.customer_id 
+                    and c.campaign_id=b.campaign_id
+                    and c.dt=b.dt
+        left join feature_adoption d on c.customer_id=d.customer_id 
+                    and d.type=a.feature_group
+                     and d.dt=c.dt
+  GROUP BY 1,2,3
+) AS virtual_table ORDER BY ""Date"" DESC, ""Sent"" DESC
+LIMIT 5000;
+
+",583,UPI Growth Campaign Tracker,table,1653,[Growth] Push with Conversion,featurehub,
+3850,[Growth] Push with Conversion,"SELECT ""Date"" AS ""Date"", ""Campaign_id"" AS ""Campaign_id"", ""Feature_type"" AS ""Feature_type"", ""Sent"" AS ""Sent"", ""Impression"" AS ""Impression"", ""Click"" AS ""Click"", ""Conversions_sameDay"" AS ""Conversions_sameDay"" 
+FROM (WITH a as ( select customer_id,dt ,campaign_id,campaign_type AS feature_type  ,
+                              CASE
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_ADD_BANK_ACCOUNT', 'UPI_MULTI_BANK_ACCOUNT_LINKING', 'UPI_SINGLE_BANK_LINKING') THEN 'Bank Linking'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_MOBILE_MAPPER', 'UPI_P2P_MOBILE_LINK_UPI_NUMBER') THEN 'Mapper'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2M_CCLINKAGE',  'UPI_P2M_CCACTIVATION') THEN 'RuPay CC Linking'
+                              WHEN UPPER(campaign_type) = 'UPI_P2M_CCSPENDS' THEN 'CC Spends'   
+                              WHEN UPPER(campaign_type) = 'UPI_P2P_UPI_LITE' THEN 'UPI Lite Activation'
+                              WHEN UPPER(campaign_type) IN ('UPI_DOWNLOAD_STATEMENT', 'UPI_DOWNLOAD_STATEMENT_WHATSNEW') THEN 'Download UPI Statement'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_RECEIVE_MONEY', 'UPI_P2P_RECEIVE_MONEY_WHATSNEW') THEN 'Receive Money widget'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_SCAN_SHORTCUT', 'UPI_P2P_NEW_SCANNER_3_0', 'UPI_P2P_SCAN_SHORTCUT_WHATSNEW') THEN 'Scan & Pay widget'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_SPENDS_SUMMARY', 'UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW') THEN 'Spends Analytics'
+                              WHEN UPPER(campaign_type) = 'UPI_P2P_LITE_AUTOPAY' THEN 'UPI Lite Auto Top UP'
+                              WHEN UPPER(campaign_type) = 'UPI_SELF_TRANSFER' THEN 'Self Transfer'
+                              WHEN UPPER(campaign_type) IN ('UPI_TOTAL_BALANCE', 'UPI_TOTAL_BALANCE_WHATSNEW') THEN 'Total Balance'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_CUSTOM_VPA', 'UPI_P2P_CUSTOM_VPA_WHATSNEW') THEN 'Custom VPA'
+                              WHEN UPPER(campaign_type) IN ('UPI_P2P_HIDE_PAYMENTS', 'UPI_P2P_HIDE_PAYMENTS_WHATSNEW') THEN 'Hide Payments'
+                          END AS feature_group
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day) and current_date   --partition  
+                        -- and total_attempted>0 
+                        AND UPPER(campaign_type) IN (
+                                                    'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+                                                    'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+                                                    'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+                                                    'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+                                                    'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+                                                    'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+                                                    'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+                                                    'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+                                                    'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+                                                    , 'UPI_GMV_REDCARPET',
+                                                      'UPI_P2P_SPLIT_BILL',
+                                                      'UPI_GMV_P2P'
+                                                  )
+ 
+),
+b as (select customer_id,dt ,campaign_id    
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day)- interval '0' month and current_date   --partition  
+                        and total_delivered>0 
+                         AND UPPER(campaign_type) IN (
+                                                    'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+                                                    'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+                                                    'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+                                                    'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+                                                    'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+                                                    'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+                                                    'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+                                                    'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+                                                    'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+                                                    , 'UPI_GMV_REDCARPET',
+                                                      'UPI_P2P_SPLIT_BILL',
+                                                      'UPI_GMV_P2P'
+                                                  )
+),
+c as (select customer_id,dt ,campaign_id   
+                   from  hive.team_measurement.push_campaigns_customer_v1
+                    where dt  between date_trunc('month',CURRENT_DATE - INTERVAL '7' day)- interval '0' month and current_date   --partition  
+                        and total_opened>0 
+                        AND UPPER(campaign_type) IN (
+        'UPI_P2P_SCAN_SHORTCUT','UPI_P2P_UPI_LITE','UPI_P2P_RECEIVE_MONEY','UPI_P2P_ADD_BANK_ACCOUNT',
+        'UPI_SELF_TRANSFER','UPI_SINGLE_HANDLE','UPI_P2P_MOBILE_MAPPER','UPI_P2M_CCLINKAGE',
+        'UPI_P2P_HANDLE_MIGRATION','UPI_P2P_CUSTOM_VPA','UPI_P2P_SPENDS_SUMMARY','UPI_WHATS_NEW',
+        'UPI_CROSS_CATEGORY','UPI_P2P_HIDE_PAYMENTS','UPI_P2P_MULTIPLE_HANDLE_CREATION','UPI_P2M_CCSPENDS',
+        'UPI_MULTI_BANK_ACCOUNT_LINKING','UPI_ALL_HANDLE_PSEUDO','UPI_SINGLE_BANK_LINKING','UPI_P2M_CCACTIVATION',
+        'UPI_P2P_MOBILE_LINK_UPI_NUMBER','UPI_URC_REPEAT','UPI_DOWNLOAD_STATEMENT','UPI_TOTAL_BALANCE',
+        'UPI_P2P_LITE_AUTOPAY','UPI_P2P_NEW_SCANNER_3_0','UPI_P2P_SPENDS_SUMMARY_WHATSNEW_WHATSNEW',
+        'UPI_TOTAL_BALANCE_WHATSNEW','UPI_DOWNLOAD_STATEMENT_WHATSNEW','UPI_P2P_HIDE_PAYMENTS_WHATSNEW',
+        'UPI_P2P_RECEIVE_MONEY_WHATSNEW','UPI_P2P_SCAN_SHORTCUT_WHATSNEW','UPI_P2P_CUSTOM_VPA_WHATSNEW'
+        , 'UPI_GMV_REDCARPET',
+          'UPI_P2P_SPLIT_BILL',
+          'UPI_GMV_P2P'
+      )
+),
+feature_adoption as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 4. UPI Statement
+   SELECT 'Download UPI Statement' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Download Statement'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 5. Receive Money widget
+   SELECT 'Receive Money widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Receive Money Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Scan and Pay Widgets'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE)
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Spend Analytics'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'Personalized VPA'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, cast(split_field_dl_last_updated as date) AS dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE  feature_name= 'Hide Payment'
+    and cast(dt as date)   between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE  )
+  
+    UNION ALL
+    -- 12. P2p Reminder
+    SELECT 'P2P Reminder' AS type, customer_id AS custid,cast(split_field_dl_last_updated as date) dt
+    FROM featurehub.enterprise.UPI_FeatureAdoption_Olap_Daily_v3
+    WHERE feature_name= 'P2P Reminder'
+    and cast(dt as date)  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE )
+
+    UNION ALL
+    -- 13. self_transfer
+    SELECT 'Self Transfer' AS type, payer_cust_id AS custid, day_id dt
+    FROM hive.user_paytm_payments.self_transfer 
+    WHERE  day_id  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+    
+    UNION ALL
+    -- 13. cc spends
+    SELECT 'CC Spends' AS type, customer_id_payer scope_cust_id ,transaction_date_key dt
+    from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+        where a.dl_last_updated  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_date_key  between DATE(CURRENT_DATE - INTERVAL '4' DAY) AND (CURRENT_DATE - INTERVAL '01' DAY)
+        and transaction_type in ('PAY','COLLECT')
+        and a.status in('SUCCESS','DEEMED')
+        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+        and payer_account_type='CREDIT'   
+        group by 1,2,3
+)
+    
+select a.dt Date,a.Campaign_id,a.Feature_type,
+            count(distinct a.customer_id) Sent ,
+            count(distinct b.customer_id) Impression ,
+            count(distinct c.customer_id) Click ,
+            COUNT(DISTINCT d.customer_id) AS Conversions_sameDay
+        from a
+        left join b on a.customer_id=b.customer_id 
+                    and a.campaign_id=b.campaign_id
+                    and a.dt=b.dt
+        left join c on c.customer_id=b.customer_id 
+                    and c.campaign_id=b.campaign_id
+                    and c.dt=b.dt
+        left join feature_adoption d on c.customer_id=d.customer_id 
+                    and d.type=a.feature_group
+                     and d.dt=c.dt
+  GROUP BY 1,2,3
+) AS virtual_table ORDER BY ""Date"" DESC, ""Sent"" DESC
+LIMIT 5000;
+
+",583,UPI Growth Campaign Tracker,table,1653,[Growth] Push with Conversion,featurehub,

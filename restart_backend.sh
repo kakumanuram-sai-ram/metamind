@@ -20,3 +20,5 @@ fi
 echo "Starting backend..."
 python scripts/api_server.py
 
+
+

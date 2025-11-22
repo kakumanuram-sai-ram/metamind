@@ -255,3 +255,5 @@ When debugging frontend issues, check in this order:
 - All metadata sections are displayed horizontally
 - Dashboard sections are scrollable when many dashboards are processed
 
+
+

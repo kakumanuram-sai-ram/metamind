@@ -171,15 +171,28 @@ class SupersetExtractor:
             'Origin': self.base_url,  # Often required along with Referer for CSRF
         }
         
-        # Try the simpler endpoint first (silent mode - non-critical)
+        # Try the simpler endpoint first
+        import time
+        start_time = time.time()
         endpoint = f"/api/v1/chart/{chart_id}/data"
-        response = self._make_request('GET', endpoint, silent=True, headers=additional_headers)
-        if response:
-            return response
+        print(f"      → Calling GET {endpoint}...", flush=True)
+        try:
+            response = self._make_request('GET', endpoint, silent=True, headers=additional_headers)
+            elapsed = time.time() - start_time
+            if response:
+                print(f"      ✅ GET endpoint succeeded in {elapsed:.2f}s", flush=True)
+                return response
+            else:
+                print(f"      ⚠️  GET endpoint returned empty (took {elapsed:.2f}s)", flush=True)
+        except Exception as e:
+            elapsed = time.time() - start_time
+            print(f"      ❌ GET endpoint failed after {elapsed:.2f}s: {e}", flush=True)
         
-        # If that fails and we have query_context, try POST endpoint (silent mode)
+        # If that fails and we have query_context, try POST endpoint
         if query_context:
+            start_time = time.time()
             endpoint = "/api/v1/chart/data"
+            print(f"      → Trying POST {endpoint}...", flush=True)
             # Extract queries from query_context properly
             queries = query_context.get('queries', []) if isinstance(query_context, dict) else []
             if not queries and isinstance(query_context, dict):
@@ -196,10 +209,19 @@ class SupersetExtractor:
                 "queries": queries
             }
             
-            response = self._make_request('POST', endpoint, silent=True, json=payload, headers=additional_headers)
-            if response:
-                return response
+            try:
+                response = self._make_request('POST', endpoint, silent=True, json=payload, headers=additional_headers)
+                elapsed = time.time() - start_time
+                if response:
+                    print(f"      ✅ POST endpoint succeeded in {elapsed:.2f}s", flush=True)
+                    return response
+                else:
+                    print(f"      ⚠️  POST endpoint returned empty (took {elapsed:.2f}s)", flush=True)
+            except Exception as e:
+                elapsed = time.time() - start_time
+                print(f"      ❌ POST endpoint failed after {elapsed:.2f}s: {e}", flush=True)
         
+        print(f"      ⚠️  No chart data retrieved, will use dataset SQL if available", flush=True)
         return {}
     
     def parse_chart_metrics(self, chart_detail: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -385,7 +407,13 @@ class SupersetExtractor:
                 except:
                     pass
             
+            # Get chart data - this is required for complete extraction
+            print(f"    Getting chart data for chart {chart_id}...", flush=True)
             chart_data = self.get_chart_data_and_query(chart_id, dataset_id, query_context)
+            if chart_data:
+                print(f"    ✅ Chart data retrieved for chart {chart_id}", flush=True)
+            else:
+                print(f"    ⚠️  Chart data not available for chart {chart_id} (will use dataset SQL if available)", flush=True)
             
             # Extract SQL from response
             if chart_data:
@@ -492,7 +520,20 @@ class SupersetExtractor:
             # Try to get chart name from the list if available
             chart_name = chart_names_list[idx] if idx < len(chart_names_list) else f"Chart {chart_id}"
             
-            chart_info = self.extract_chart_info(chart_id, chart_name)
+            print(f"  Extracting chart ID: {chart_id} ({idx+1}/{len(chart_ids)})", flush=True)
+            try:
+                chart_info = self.extract_chart_info(chart_id, chart_name)
+                if chart_info:
+                    charts_info.append(chart_info)
+                    print(f"  ✅ Chart {chart_id} extracted successfully", flush=True)
+                else:
+                    print(f"  ⚠️  Chart {chart_id} extraction returned None", flush=True)
+            except Exception as e:
+                import traceback
+                print(f"  ❌ Error extracting chart {chart_id}: {e}", flush=True)
+                print(f"  Traceback: {traceback.format_exc()}", flush=True)
+                # Continue with next chart instead of failing completely
+                continue
             if chart_info:
                 charts_info.append(chart_info)
         

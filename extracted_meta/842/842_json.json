@@ -93,6 +93,210 @@
       "time_range": null
     },
     {
+      "chart_id": 4003,
+      "chart_name": "P2P Inward Transactions",
+      "chart_type": "table",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour_ AS hour___, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000) = 0 then null else\n\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\nend  AS \"today Vs Yesterday\", case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)  = 0 \nthen null else\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\nend AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table GROUP BY hour_ ORDER BY AVG(hour_) ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000) = 0 then null else\n\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\nend ",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "case when (COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)  = 0 \nthen null else\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\nend",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [
+        "hour_"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE",
+          "operator": "TEMPORAL_RANGE",
+          "subject": "created_on"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4005,
+      "chart_name": "P2P Inward Transaction (Payee Psp = yes)",
+      "chart_type": "table",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour_ AS hour___, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1 AS \"today Vs Yesterday\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1 AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table \nWHERE payee_handle IN ('ptyes') AND ((hour_<=lastest_hour)) GROUP BY hour_ ORDER BY AVG(hour_) ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\n"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [
+        "hour_"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_346lmf66t9t_1vupbur4mvf",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": [
+            "ptyes"
+          ],
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_j8wnocb9q5p_4mkyvdukwce",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IN",
+          "operatorId": "IN",
+          "sqlExpression": null,
+          "subject": "payee_handle"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": null,
+          "sqlExpression": "hour_<=lastest_hour",
+          "subject": null
+        }
+      ],
+      "time_range": null
+    },
+    {
       "chart_id": 4005,
       "chart_name": "P2P Inward Transaction (Payee Psp = yes)",
       "chart_type": "table",
@@ -305,6 +509,242 @@
           "operatorId": "IN",
           "comparator": [
             "pthdfc"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j8wnocb9q5p_4mkyvdukwce"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "hour_<=lastest_hour",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4036,
+      "chart_name": "P2P Inward Transaction (Payee Psp = HDFC)",
+      "chart_type": "table",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour_ AS hour___, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1 AS \"today Vs Yesterday\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1 AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table \nWHERE payee_handle IN ('pthdfc') AND ((hour_<=lastest_hour)) GROUP BY hour_ ORDER BY AVG(hour_) ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\n"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [
+        "hour_"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_on",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_346lmf66t9t_1vupbur4mvf"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "payee_handle",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "pthdfc"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j8wnocb9q5p_4mkyvdukwce"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "hour_<=lastest_hour",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4040,
+      "chart_name": "P2P Inward Transaction (Payee Psp = AXIS)",
+      "chart_type": "table",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour_ AS hour___, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1 AS \"today Vs Yesterday\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1 AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table \nWHERE payee_handle IN ('ptaxis') AND ((hour_<=lastest_hour)) GROUP BY hour_ ORDER BY AVG(hour_) ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\n"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [
+        "hour_"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_on",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_346lmf66t9t_1vupbur4mvf"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "payee_handle",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "ptaxis"
           ],
           "clause": "WHERE",
           "sqlExpression": null,
@@ -560,6 +1000,225 @@
           "isNew": false,
           "datasourceWarning": false,
           "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4050,
+      "chart_name": "P2P Inward Transaction (Payee Psp = SBI)",
+      "chart_type": "table",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour_ AS hour___, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1 AS \"today Vs Yesterday\", \n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1 AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table \nWHERE payee_handle IN ('ptsbi') AND ((hour_<=lastest_hour)) GROUP BY hour_ ORDER BY AVG(hour_) ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe",
+          "sqlExpression": "\n(COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1\n"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [
+        "hour_"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_on",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_346lmf66t9t_1vupbur4mvf"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "payee_handle",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "ptsbi"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_j8wnocb9q5p_4mkyvdukwce"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "hour_<=lastest_hour",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4267,
+      "chart_name": "P2P Inward Transactions comp",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 1334,
+      "dataset_name": "p2p_inward_hourly_reporting_dataset",
+      "database_name": "Trino",
+      "sql_query": "SELECT case when \nlower(payer_handle) \nin('paytm',\n'ptyes',\n'ptaxis',\n'pthdfc',\n'ptsbi'\n) then 'Payer = Paytm'\nelse 'Payer = Other'\nEnd AS \"Payer PsP\", hour_ AS hour_, COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day)) AS \"Yesterdays Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month)) AS \"Last month same day Txns\", COUNT(txn_id)filter(where date(created_on) = (current_Date)) AS \"Todays Txns\", \ncase when \nCOUNT(txn_id)filter(where date(created_on) = (current_Date)) >\nCOUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))\nthen\nformat('%s %.2f%%','🔼', abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1) * 100)\nELSE\nformat('%s %.2f%%','🔽' ,abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1) * 100)\nend AS \"today Vs Yesterday\", \ncase when \nCOUNT(txn_id)filter(where date(created_on) = (current_Date)) >\nCOUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))\nthen\nformat('%s %.2f%%','🔼', abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1) * 100)\nELSE\nformat('%s %.2f%%','🔽' ,abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1) * 100)\nend AS \"Today vs Last month Same Day\" \nFROM (select * from user_paytm_payments.p2p_inward_hourly_reporting_dataset\n) AS virtual_table \nWHERE ((hour_<=lastest_hour)) GROUP BY case when \nlower(payer_handle) \nin('paytm',\n'ptyes',\n'ptaxis',\n'pthdfc',\n'ptsbi'\n) then 'Payer = Paytm'\nelse 'Payer = Other'\nEnd, hour_ ORDER BY \"Yesterdays Txns\" ASC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Yesterdays Txns",
+          "optionName": "metric_e970yxbvrwi_in4i0sflho"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Last month same day Txns",
+          "optionName": "metric_t426xrj2lda_29hh17s6tvd"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(txn_id)filter(where date(created_on) = (current_Date))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Todays Txns",
+          "optionName": "metric_pcsu6xvulc9_a6jcysw6n3"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "\ncase when \nCOUNT(txn_id)filter(where date(created_on) = (current_Date)) >\nCOUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))\nthen\nformat('%s %.2f%%','🔼', abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1) * 100)\nELSE\nformat('%s %.2f%%','🔽' ,abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' day))*1.0000) - 1) * 100)\nend",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "today Vs Yesterday",
+          "optionName": "metric_y5coo2z524q_64ngzunzs8p"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "\ncase when \nCOUNT(txn_id)filter(where date(created_on) = (current_Date)) >\nCOUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))\nthen\nformat('%s %.2f%%','🔼', abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1) * 100)\nELSE\nformat('%s %.2f%%','🔽' ,abs((COUNT(txn_id)filter(where date(created_on) = (current_Date))*1.0000)\n/\n(COUNT(txn_id)filter(where date(created_on) = (current_Date - interval '01' month))*1.0000) - 1) * 100)\nend",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Today vs Last month Same Day",
+          "optionName": "metric_92lj8uk0rdv_kva4onclwe"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "hour_",
+        "to_days_hour",
+        "payee_handle",
+        "payer_handle",
+        "payee_customer_id",
+        "txn_id",
+        "amount",
+        "krn",
+        "lastest_hour"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_346lmf66t9t_1vupbur4mvf",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "filterOptionName": "filter_y3iwqjhdj4o_udi46hu4z8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": null,
+          "sqlExpression": "hour_<=lastest_hour",
+          "subject": null
         }
       ],
       "time_range": null

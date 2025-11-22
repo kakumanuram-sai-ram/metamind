@@ -6,10 +6,10 @@ to an n8n webhook endpoint.
 """
 
 # n8n Webhook Configuration
-N8N_WEBHOOK_URL = "https://your-n8n-instance.com/webhook/kb-upload"  # Replace with your n8n webhook URL
+N8N_WEBHOOK_URL = "https://n8n.internal.ap-south-1.staging.osmose.risk.pai.mypaytm.com/webhook/upi-dashboard-bot-metadata"
 
 # Knowledge Base (KB) Configuration
-KB_ZIP_FILE_PATH = "/home/devuser/sai_dev/metamind/extracted_meta/knowledge_base/knowledge_base.zip"  # Path to the KB ZIP file
+KB_ZIP_FILE_PATH = "/home/devuser/sai_dev/metamind/extracted_meta/knowledge_base/knowledge_base_csv.zip"  # Path to the KB ZIP file
 
 # Request Configuration (Optional)
 # Additional headers if needed for authentication or other purposes

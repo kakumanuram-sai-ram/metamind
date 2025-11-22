@@ -456,6 +456,11 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_table_metadata.csv")
+            progress_tracker.update_dashboard_status(
+                dashboard_id, 'processing',
+                current_phase='Phase 4: Table Metadata',
+                current_file=f"{dashboard_id}_table_metadata.csv"
+            )
         
         phase4_time = time.time() - phase4_start
         print(f"\n{'─'*80}", flush=True)
@@ -560,6 +565,11 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_columns_metadata.csv")
+            progress_tracker.update_dashboard_status(
+                dashboard_id, 'processing',
+                current_phase='Phase 5: Column Metadata',
+                current_file=f"{dashboard_id}_columns_metadata.csv"
+            )
         
         phase5_time = time.time() - phase5_start
         print(f"\n{'─'*80}", flush=True)
@@ -671,6 +681,11 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             print(f"  💾 Saved empty file to: {joins_file} (no multi-table joins found)", flush=True)
             if progress_tracker:
                 progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_joining_conditions.csv")
+                progress_tracker.update_dashboard_status(
+                    dashboard_id, 'processing',
+                    current_phase='Phase 6: Joining Conditions',
+                    current_file=f"{dashboard_id}_joining_conditions.csv"
+                )
         
         phase6_time = time.time() - phase6_start
         print(f"\n{'─'*80}", flush=True)
@@ -772,6 +787,11 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_filter_conditions.txt")
+            progress_tracker.update_dashboard_status(
+                dashboard_id, 'processing',
+                current_phase='Phase 7: Filter Conditions',
+                current_file=f"{dashboard_id}_filter_conditions.txt"
+            )
         
         phase7_time = time.time() - phase7_start
         print(f"\n{'─'*80}", flush=True)
@@ -889,6 +909,14 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             # Validate: definitions must not be empty
             if len(terms_df) == 0:
                 raise ValueError(f"CRITICAL: definitions.csv is empty for dashboard {dashboard_id}. Extraction failed.")
+            
+            if progress_tracker:
+                progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_definitions.csv")
+                progress_tracker.update_dashboard_status(
+                    dashboard_id, 'processing',
+                    current_phase='Phase 8: Term Definitions',
+                    current_file=f"{dashboard_id}_definitions.csv"
+                )
         else:
             # Create empty file with headers
             terms_file = f"{dashboard_dir}/{dashboard_id}_definitions.csv"

@@ -1,6 +1,6 @@
 {
-  "status": "merging",
-  "current_operation": "merge",
+  "status": "completed",
+  "current_operation": null,
   "total_dashboards": 1,
   "completed_dashboards": 1,
   "failed_dashboards": 0,
@@ -19,26 +19,32 @@
         "511_columns_metadata.csv",
         "511_joining_conditions.csv",
         "511_filter_conditions.txt",
+        "511_definitions.csv",
         "511_quality_report.json",
-        "511_tables_columns.csv",
-        "511_definitions.csv"
+        "511_tables_columns.csv"
       ],
       "total_files": 11,
       "completed_files_count": 11,
       "error": null,
-      "start_time": "2025-11-21T12:41:48.313923",
-      "end_time": "2025-11-21T12:42:26.729335"
+      "start_time": "2025-11-22T21:41:54.418069",
+      "end_time": "2025-11-22T21:42:54.508053"
     }
   },
   "merge_status": {
-    "status": "processing",
-    "current_step": "initializing",
-    "completed_steps": []
+    "status": "completed",
+    "current_step": null,
+    "completed_steps": [
+      "table_metadata",
+      "columns_metadata",
+      "joining_conditions",
+      "definitions",
+      "filter_conditions"
+    ]
   },
   "kb_build_status": {
     "status": "completed",
     "current_step": null
   },
-  "start_time": "2025-11-21T12:41:48.313513",
-  "last_update": "2025-11-21T12:42:26.738393"
+  "start_time": "2025-11-22T21:41:54.417668",
+  "last_update": "2025-11-22T21:42:54.568865"
 }

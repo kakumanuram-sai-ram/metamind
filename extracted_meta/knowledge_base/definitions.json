@@ -1,482 +1,116 @@
 [
   {
-    "term": "3P Online",
-    "type": "Category",
-    "definition": "Third-party online merchants and their associated transactions, representing external online service providers",
-    "business_alias": "Third-party Online, 3P, Third Party Online"
-  },
-  {
-    "term": "MTD",
-    "type": "Synonym",
-    "definition": "Month-to-Date, referring to the time period from the beginning of the current month until the current date",
-    "business_alias": "Month-to-Date"
-  },
-  {
-    "term": "LMTD",
-    "type": "Synonym",
-    "definition": "Last Month-to-Date time period representing equivalent timeframe in the previous month for comparison purposes",
-    "business_alias": "Last Month-to-Date"
-  },
-  {
-    "term": "MTD Users",
-    "type": "Metric",
-    "definition": "Total count of unique users who performed transactions in the current month-to-date period",
-    "business_alias": NaN
-  },
-  {
-    "term": "MTD Txns",
-    "type": "Metric",
-    "definition": "Total count of transactions completed in the current month-to-date period",
-    "business_alias": "MTD Transactions"
-  },
-  {
-    "term": "MTD Gmv",
-    "type": "Metric",
-    "definition": "Total Gross Merchandise Value of all transactions in the current month-to-date period",
-    "business_alias": "MTD Gross Merchandise Value"
-  },
-  {
-    "term": "TPU",
-    "type": "Metric / Calculated Field",
-    "definition": "Transactions Per User calculated as total MTD transactions divided by total MTD users",
-    "business_alias": "Transactions Per User"
-  },
-  {
-    "term": "LMTD Users",
-    "type": "Metric",
-    "definition": "Total count of unique users who performed transactions in the last month-to-date period",
-    "business_alias": NaN
-  },
-  {
-    "term": "LMTD Txns",
-    "type": "Metric",
-    "definition": "Total count of transactions completed in the last month-to-date period",
-    "business_alias": "LMTD Transactions"
-  },
-  {
-    "term": "LMTD Gmv",
-    "type": "Metric",
-    "definition": "Total Gross Merchandise Value of all transactions in the last month-to-date period",
-    "business_alias": "LMTD Gross Merchandise Value"
-  },
-  {
-    "term": "LMTD TPU",
-    "type": "Metric / Calculated Field",
-    "definition": "Transactions Per User for the last month-to-date period calculated as total LMTD transactions divided by total LMTD users",
-    "business_alias": "Last Month-to-Date Transactions Per User"
-  },
-  {
-    "term": "MTD User Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of users calculated as (MTD Users / LMTD Users) - 1, representing the percentage change in user count",
-    "business_alias": NaN
-  },
-  {
-    "term": "MTD Txn Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of transactions calculated as (MTD Transactions / LMTD Transactions) - 1, representing the percentage change in transaction count",
-    "business_alias": "MTD Transaction Growth, Month-to-Date Transaction Growth"
-  },
-  {
-    "term": "MTD Gmv Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of Gross Merchandise Value calculated as (MTD GMV / LMTD GMV) - 1, representing the percentage change in GMV",
-    "business_alias": "Month-to-Date GMV Growth, MTD Gross Merchandise Value Growth"
-  },
-  {
-    "term": "GMV",
-    "type": "Synonym",
-    "definition": "Gross Merchandise Value, the total value of all transactions processed through the platform",
-    "business_alias": "Gross Merchandise Value"
-  },
-  {
-    "term": "Txns",
-    "type": "Synonym",
-    "definition": "Transactions, referring to completed payment or purchase activities on the platform",
-    "business_alias": "Transactions"
-  },
-  {
-    "term": "Txns(>100)",
-    "type": "Metric / Calculated Field",
-    "definition": "Count of transactions grouped by payee VPA and merchant name, filtered to only include merchants with more than 100 transactions in the current month",
-    "business_alias": "Transaction Count (filtered)"
-  },
-  {
-    "term": "payee_vpa",
-    "type": "Metric",
-    "definition": "Virtual Payment Address of the payee or merchant receiving the payment in UPI transactions",
-    "business_alias": "VPA, Virtual Payment Address"
-  },
-  {
-    "term": "online_merchant_name",
-    "type": "Metric",
-    "definition": "The business name of the online merchant or service provider in the transaction",
-    "business_alias": "Merchant Name"
-  },
-  {
-    "term": "VPA mapping",
-    "type": "Category",
-    "definition": "The process of associating Virtual Payment Addresses with corresponding merchant information and business details",
-    "business_alias": "VPA Association"
-  },
-  {
     "term": "UPI",
     "type": "Category",
-    "definition": "Unified Payments Interface - India's instant real-time payment system that facilitates inter-bank peer-to-peer and person-to-merchant transactions, enabling instant money transfers and digital payments",
+    "definition": "Unified Payments Interface - a real-time payment system that facilitates inter-bank transactions through mobile platforms.",
     "business_alias": "Unified Payments Interface"
   },
   {
-    "term": "MTD New users",
-    "type": "Metric",
-    "definition": "Total count of new users acquired in the current Month-to-Date period",
-    "business_alias": "Month-to-Date New Users"
+    "term": "P2P",
+    "type": "Category",
+    "definition": "Person-to-Person transactions including VPA2ACCOUNT and VPA2VPA transaction categories",
+    "business_alias": "Person to Person, Person-to-Person, Peer-to-Peer"
   },
   {
-    "term": "MTD React Users",
-    "type": "Metric",
-    "definition": "Total count of reactivated users (React2Mplus_Users) within the current month-to-date period",
-    "business_alias": "Month-to-Date Reactivated Users, React2Mplus Users"
+    "term": "P2M",
+    "type": "Category",
+    "definition": "Person-to-Merchant transactions, specifically VPA2MERCHANT transaction types.",
+    "business_alias": "Person-to-Merchant, Person to Merchant"
   },
   {
-    "term": "LMTD New Users",
-    "type": "Metric",
-    "definition": "Total count of new users acquired in the Last Month-to-Date period for comparison",
-    "business_alias": "Last Month-to-Date New Users"
-  },
-  {
-    "term": "LMTD React Users",
-    "type": "Metric",
-    "definition": "Total count of reactivated users (React2Mplus) in the Last Month-to-Date period for comparison",
-    "business_alias": "Last Month-to-Date Reactivated Users"
-  },
-  {
-    "term": "MTD New + React Users",
+    "term": "SR",
     "type": "Metric / Calculated Field",
-    "definition": "Combined total of new users and reactivated users for the current month-to-date period, calculated as SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users)",
+    "definition": "Success Rate calculated as the count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, representing the percentage of successful UPI transactions.",
+    "business_alias": "Success Rate"
+  },
+  {
+    "term": "P2P_P2M",
+    "type": "Category",
+    "definition": "Transaction categorization field that classifies UPI transactions as either P2P or P2M based on transaction category",
     "business_alias": NaN
   },
   {
-    "term": "LMTD New + React Users",
-    "type": "Metric / Calculated Field",
-    "definition": "Combined total of new users and reactivated users for the last month-to-date period, calculated as SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users)",
+    "term": "Day",
+    "type": "Metric",
+    "definition": "The day of the month extracted from the transaction date, used for daily trend analysis.",
     "business_alias": NaN
   },
   {
-    "term": "New user Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of new users calculated as (MTD New Users / LMTD New Users) - 1, showing percentage change in new user acquisition",
-    "business_alias": "New User Growth Rate"
-  },
-  {
-    "term": "React User Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of reactivated users calculated as (MTD React Users / LMTD React Users) - 1, showing percentage change in user reactivation",
-    "business_alias": "Reactivated User Growth Rate"
-  },
-  {
-    "term": "New+React User Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of combined new and reactivated users comparing current MTD to last MTD, calculated as ((MTD New + React Users) / (LMTD New + React Users)) - 1",
-    "business_alias": "Total User Growth Rate"
-  },
-  {
-    "term": "React Users",
-    "type": "Synonym",
-    "definition": "Reactivated users who returned after being inactive for 2 months or more",
-    "business_alias": "Reactivated Users, React2Mplus Users, React2Mplus Users, Reactivated Users"
-  },
-  {
-    "term": "FT/RT",
-    "type": "Category",
-    "definition": "First Time/Repeat Time user classification system used for analyzing user behavior patterns",
-    "business_alias": "First Time/Repeat Time"
-  },
-  {
-    "term": "3P",
-    "type": "Synonym",
-    "definition": "Third Party - refers to external merchants or partners operating on the platform",
-    "business_alias": "Third Party"
-  },
-  {
-    "term": "DAU",
+    "term": "Month",
     "type": "Metric",
-    "definition": "Daily Active Users - count of unique users who were active on a specific day",
-    "business_alias": "Daily Active Users"
-  },
-  {
-    "term": "7d avg DAU",
-    "type": "Metric / Calculated Field",
-    "definition": "7-day average of Daily Active Users, calculated as the mean DAU over the past 7 days",
-    "business_alias": "7-day average DAU"
-  },
-  {
-    "term": "Yday DAU",
-    "type": "Metric",
-    "definition": "Yesterday's Daily Active Users count",
-    "business_alias": "Yesterday DAU"
-  },
-  {
-    "term": "Yday DAU Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of yesterday's DAU compared to 7-day average DAU, calculated as (Yday DAU / 7d avg DAU) - 1",
-    "business_alias": "Yesterday DAU Growth"
-  },
-  {
-    "term": "MAU",
-    "type": "Metric",
-    "definition": "Monthly Active Users - count of unique users who were active within a month",
-    "business_alias": "Monthly Active Users"
-  },
-  {
-    "term": "LMTD MAU",
-    "type": "Metric",
-    "definition": "Last Month-to-Date Monthly Active Users for the equivalent period in the previous month",
-    "business_alias": "Last Month-to-Date MAU"
-  },
-  {
-    "term": "MTD MAU",
-    "type": "Metric",
-    "definition": "Month-to-Date Monthly Active Users for the current month period",
-    "business_alias": "Month-to-Date MAU"
-  },
-  {
-    "term": "MTD MAU Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of current month-to-date MAU compared to last month-to-date MAU, calculated as (MTD MAU / LMTD MAU) - 1",
-    "business_alias": "Month-to-Date MAU Growth"
-  },
-  {
-    "term": "7d avg Txns",
-    "type": "Metric / Calculated Field",
-    "definition": "7-day average of transaction count, calculated as the mean transactions over the past 7 days",
-    "business_alias": "7-day average Transactions"
-  },
-  {
-    "term": "Yday Txn Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of yesterday's transactions compared to 7-day average transactions, calculated as (Yday txns / 7d avg txns) - 1",
-    "business_alias": "Yesterday Transaction Growth"
-  },
-  {
-    "term": "7d avg Gmv",
-    "type": "Metric / Calculated Field",
-    "definition": "7-day average of Gross Merchandise Value, calculated as the mean GMV over the past 7 days",
-    "business_alias": "7-day average GMV"
-  },
-  {
-    "term": "Yday Gmv Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of yesterday's GMV compared to 7-day average GMV, calculated as (Yday gmv / 7d avg gmv) - 1",
-    "business_alias": "Yesterday GMV Growth"
-  },
-  {
-    "term": "NR",
-    "type": "Metric",
-    "definition": "Net Revenue - total revenue after deducting costs and fees",
-    "business_alias": "Net Revenue"
-  },
-  {
-    "term": "7d avg NR",
-    "type": "Metric / Calculated Field",
-    "definition": "7-day average of Net Revenue, calculated as the mean NR over the past 7 days",
-    "business_alias": "7-day average Net Revenue"
-  },
-  {
-    "term": "Yday NR Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of yesterday's Net Revenue compared to 7-day average NR, calculated as (Yday nr / 7d avg nr) - 1",
-    "business_alias": "Yesterday Net Revenue Growth"
-  },
-  {
-    "term": "MTD NR Growth",
-    "type": "Metric / Calculated Field",
-    "definition": "Growth rate of current month-to-date Net Revenue compared to last month-to-date NR, calculated as (MTD nr / LMTD nr) - 1",
-    "business_alias": "Month-to-Date Net Revenue Growth"
-  },
-  {
-    "term": "Top 1k",
-    "type": "Category",
-    "definition": "Top 1000 merchants ranked by performance metrics such as transaction volume or revenue",
-    "business_alias": "Top 1000"
-  },
-  {
-    "term": "Yday",
-    "type": "Synonym",
-    "definition": "Yesterday - metrics from the previous day",
-    "business_alias": "Yesterday"
-  },
-  {
-    "term": "Overall_MTU",
-    "type": "Metric",
-    "definition": "Total Monthly Transacting Users across all merchants, representing the sum of all users who made transactions in a given month.",
-    "business_alias": "MTU"
-  },
-  {
-    "term": "Live_Merchants",
-    "type": "Metric",
-    "definition": "Monthly Transacting Users for merchants classified as 'Live' based on a predefined list of active online merchants including major platforms like Flipkart, Zomato, Swiggy, etc.",
+    "definition": "Month truncated date from transaction date for monthly analysis",
     "business_alias": NaN
   },
   {
-    "term": "Non_Live(Excl. Live)",
+    "term": "SnP",
+    "type": "Category",
+    "definition": "Scan and Pay transactions, including 3P QR and Paytm QR flow categories.",
+    "business_alias": "Scan and Pay"
+  },
+  {
+    "term": "Transaction Status",
+    "type": "Category",
+    "definition": "Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
+    "business_alias": NaN
+  },
+  {
+    "term": "PSP",
+    "type": "Category",
+    "definition": "Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",
+    "business_alias": "Payment Service Provider"
+  },
+  {
+    "term": "Flow Category",
+    "type": "Category",
+    "definition": "Classification of UPI transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Online",
+    "type": "Category",
+    "definition": "Online transaction category including Intent, P2M Collect, and Mandate_Online flow categories.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Onus",
+    "type": "Category",
+    "definition": "On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system.",
+    "business_alias": "On-us"
+  },
+  {
+    "term": "DEEMED",
     "type": "Metric",
-    "definition": "Monthly Transacting Users for merchants that are not classified as 'Live' merchants, excluding all Live merchant transactions.",
-    "business_alias": "Non_Live"
+    "definition": "A transaction status category considered as successful for success rate calculations along with SUCCESS status",
+    "business_alias": NaN
   },
   {
-    "term": "Top_15_Merch",
+    "term": "SUCCESS",
     "type": "Metric",
-    "definition": "Monthly Transacting Users for the top 15 merchants, which is a subset of Live merchants including major platforms like Meesho, Flipkart, Zomato, Reliance, Myntra, etc.",
-    "business_alias": "Top_15_Merchants"
-  },
-  {
-    "term": "MTU",
-    "type": "Synonym",
-    "definition": "Monthly Transacting Users - refers to Overall_MTU",
-    "business_alias": "Monthly Transacting Users"
-  },
-  {
-    "term": "3P Online Merchants",
-    "type": "Category",
-    "definition": "Third-party online merchants categorized into Live, Non-Live, and Top 15 segments for transaction user analysis.",
-    "business_alias": "Third Party Online Merchants"
-  },
-  {
-    "term": "DoD",
-    "type": "Category",
-    "definition": "Day over Day comparison methodology for measuring short-term performance changes",
-    "business_alias": "Day over Day"
-  },
-  {
-    "term": "Cashback",
-    "type": "Metric / Calculated Field",
-    "definition": "Total sum of standardized cashburn amounts aggregated over time, representing the monetary value of cashback given to users",
+    "definition": "A transaction status indicating the transaction was completed successfully",
     "business_alias": NaN
   },
   {
-    "term": "Cashburn",
-    "type": "Metric / Calculated Field",
-    "definition": "Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount. This metric provides the cash equivalent value for different types of cashback redemptions.",
-    "business_alias": "Cash Burn Amount, Burn Value"
-  },
-  {
-    "term": "SuperCash",
+    "term": "Category",
     "type": "Category",
-    "definition": "Reward system offering cash benefits through various redemption types including coins, goldcoins, and UPI transactions",
-    "business_alias": NaN
+    "definition": "Classification of UPI transactions into different payment flows and types",
+    "business_alias": "final_category"
   },
   {
-    "term": "Redemption Type",
-    "type": "Category",
-    "definition": "Classification of how cashback is redeemed including coins, goldcoins, and UPI methods, each with different conversion rates",
-    "business_alias": "Reward Type, Redemption Method"
-  },
-  {
-    "term": "Fulfillment Status",
-    "type": "Category",
-    "definition": "Status tracking for cashback processing including Given (3), Processing (2), and Pending (1) states",
-    "business_alias": NaN
-  },
-  {
-    "term": "#Users",
+    "term": "Handle",
     "type": "Metric",
-    "definition": "Count of distinct users who have SuperCash transactions in the selected time period",
-    "business_alias": "Users, Unique Users, Number of Users, User Count"
+    "definition": "UPI identifier handles for payer and payee, used to classify transactions by PSP (e.g., paytm, ptyes, ptaxis).",
+    "business_alias": "Payer Handle, UPI Handle, UPI Handle"
   },
   {
-    "term": "SUM(cashburn)",
-    "type": "Metric / Calculated Field",
-    "definition": "Total sum of cashburn amounts across all transactions, aggregated from individual cashburn calculations",
-    "business_alias": "Total Cash Burn, Cash Burn Sum, Total Cashburn, Cashburn Sum"
-  },
-  {
-    "term": "Campaign",
-    "type": "Category",
-    "definition": "UPI SuperCash campaign identifier that groups transactions by specific promotional campaigns and serves as a marketing campaign identifier associated with SuperCash offers and promotions",
-    "business_alias": "Campaign Name, Promo Campaign, Campaign ID"
-  },
-  {
-    "term": "Status",
-    "type": "Category",
-    "definition": "Current state of SuperCash transaction indicating completion state. Status values include: Given (completed), Processing (in progress), Pending (awaiting fulfillment), and Unscratched (not activated).",
-    "business_alias": "Transaction Status, Fulfillment Status"
-  },
-  {
-    "term": "Wallet",
-    "type": "Category",
-    "definition": "Digital wallet platform, service, or payment method associated with SuperCash campaigns and transactions. Encompasses both the wallet provider/service and the specific digital wallet type used for payments.",
-    "business_alias": "Wallet Provider, Payment Wallet"
-  },
-  {
-    "term": "Cash Burn",
-    "type": "Metric / Calculated Field",
-    "definition": "Calculated cashback amount based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types",
-    "business_alias": "Cashburn"
-  },
-  {
-    "term": "Given",
-    "type": "Category",
-    "definition": "Status category for cashback that has been successfully delivered to users (status=1, fulfillment_status=3)",
-    "business_alias": NaN
-  },
-  {
-    "term": "Processing",
-    "type": "Category",
-    "definition": "Status category for cashback that is currently being processed (status=1, fulfillment_status=2)",
-    "business_alias": NaN
-  },
-  {
-    "term": "Pending",
-    "type": "Category",
-    "definition": "Cashback status when status=1 and fulfillment_status=1, indicating cashback is awaiting processing",
-    "business_alias": NaN
-  },
-  {
-    "term": "Unscratched",
-    "type": "Category",
-    "definition": "Status category for scratch cards that have not been scratched by users (status=2, fulfillment_status=1)",
-    "business_alias": NaN
-  },
-  {
-    "term": "Coins",
-    "type": "Category",
-    "definition": "Redemption type for cashback where amount is divided by 166.67 to calculate cash burn",
-    "business_alias": NaN
-  },
-  {
-    "term": "Goldcoins",
-    "type": "Category",
-    "definition": "Redemption type for cashback where amount is divided by 100 to calculate cash burn",
-    "business_alias": NaN
-  },
-  {
-    "term": "MTD Daily Users",
-    "type": "Metric / Calculated Field",
-    "definition": "Month-to-date count of unique users who performed transactions on a daily basis",
-    "business_alias": "Month-to-Date Daily Users"
-  },
-  {
-    "term": "COUNT_DISTINCT(user_id)",
+    "term": "Payer Handle",
     "type": "Metric",
-    "definition": "Unique count of user identifiers, representing the number of distinct users",
-    "business_alias": "Unique Users, Daily Active Users"
+    "definition": "The UPI handle of the entity making the payment in a UPI transaction",
+    "business_alias": "Handle"
   },
   {
-    "term": "MTD Gratified Users",
-    "type": "Metric",
-    "definition": "Month-to-date count of unique users who have been gratified (received benefits) through the UPI SuperCash program",
-    "business_alias": "Gratified Users"
-  },
-  {
-    "term": "UPI SuperCash",
+    "term": "Paytm",
     "type": "Category",
-    "definition": "Cashback program related to UPI transactions offering rewards through various redemption types including coins, goldcoins, and direct UPI transfers",
-    "business_alias": "SuperCash"
-  },
-  {
-    "term": "redemption_type",
-    "type": "Category",
-    "definition": "Type of SuperCash redemption method including coins, goldcoins, UPI, and other payment methods",
-    "business_alias": "Redemption Method"
+    "definition": "Payment service provider handles including paytm, ptyes, ptaxis, pthdfc, ptsbi for payer classification",
+    "business_alias": "Payer as Paytm"
   }
 ]

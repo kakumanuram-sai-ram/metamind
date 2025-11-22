@@ -7,6 +7,10 @@ const SectionContainer = styled.div`
   border-radius: ${props => props.theme.borderRadius.lg};
   padding: ${props => props.theme.spacing.xl};
   box-shadow: ${props => props.theme.shadows.md};
+  display: flex;
+  flex-direction: column;
+  /* Ensure proper scrolling behavior */
+  overflow: visible;
 `;
 
 const DashboardHeader = styled.h3`
@@ -14,6 +18,7 @@ const DashboardHeader = styled.h3`
   margin-bottom: ${props => props.theme.spacing.lg};
   font-size: ${props => props.theme.typography.fontSize['2xl']};
   font-weight: ${props => props.theme.typography.fontWeight.bold};
+  /* Removed sticky positioning - header should persist in normal flow */
 `;
 
 const MetadataSections = styled.div`
@@ -21,6 +26,8 @@ const MetadataSections = styled.div`
   gap: ${props => props.theme.spacing.md};
   overflow-x: auto;
   padding-bottom: ${props => props.theme.spacing.sm};
+  /* Removed sticky positioning - cards should persist in normal flow */
+  margin-bottom: ${props => props.theme.spacing.lg};
   
   &::-webkit-scrollbar {
     height: 6px;
@@ -44,9 +51,20 @@ const MetadataSections = styled.div`
 const MetadataCard = styled.div`
   min-width: 200px;
   padding: ${props => props.theme.spacing.md};
-  border: 1px solid ${props => props.theme.colors.gray[300]};
+  border: 2px solid ${props => props.selected ? props.theme.colors.primary : props.theme.colors.gray[300]};
   border-radius: ${props => props.theme.borderRadius.md};
-  background: ${props => props.theme.colors.gray[50]};
+  background: ${props => props.selected ? props.theme.colors.primary + '10' : props.theme.colors.gray[50]};
+  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    ${props => props.clickable ? `
+      border-color: ${props.theme.colors.primary};
+      background: ${props.theme.colors.primary + '15'};
+      transform: translateY(-2px);
+      box-shadow: ${props.theme.shadows.md};
+    ` : ''}
+  }
 `;
 
 const MetadataTitle = styled.div`
@@ -85,6 +103,18 @@ const StatusText = styled.div`
     return props.theme.colors.gray[600];
   }};
   margin-bottom: ${props => props.theme.spacing.xs};
+`;
+
+const CurrentPhaseDisplay = styled.div`
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  color: ${props => props.theme.colors.primary};
+  margin-bottom: ${props => props.theme.spacing.md};
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.md};
+  background: ${props => props.theme.colors.primary + '10'};
+  border-radius: ${props => props.theme.borderRadius.md};
+  border-left: 3px solid ${props => props.theme.colors.primary};
+  font-weight: ${props => props.theme.typography.fontWeight.medium};
+  /* Removed sticky positioning - should persist in normal flow */
 `;
 
 const DownloadButtons = styled.div`
@@ -137,7 +167,7 @@ const FileIcon = ({ size = 16 }) => (
   </svg>
 );
 
-const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, currentStep, useExisting = false }) => {
+const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, currentStep, useExisting = false, isSelected = false, onClick = null }) => {
   const [fileAvailable, setFileAvailable] = useState(false);
 
   useEffect(() => {
@@ -157,24 +187,39 @@ const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, c
       return;
     }
 
-    // Check if file is available
-    const checkFile = async () => {
-      try {
-        const files = await dashboardAPI.getDashboardFiles(dashboardId);
-        const hasFile = files.files?.some(f => f.type === fileType);
-        setFileAvailable(hasFile);
-      } catch (error) {
-        console.error(`Error checking file availability for ${fileType}:`, error);
-        setFileAvailable(false);
-      }
-    };
-
-    if (status === 'completed') {
-      checkFile();
-    } else {
+    // For fresh extraction: check based on progress.completed_files, not file existence
+    // This ensures we only show files from the current extraction
+    if (!progress) {
       setFileAvailable(false);
+      return;
     }
-  }, [dashboardId, fileType, status, useExisting]);
+    
+    // Check if file is marked as completed in progress tracking
+    const completedFiles = progress.completed_files || [];
+    const fileName = `${dashboardId}_${fileType}.${fileType === 'filter_conditions' ? 'txt' : 'csv'}`;
+    const isCompleted = completedFiles.includes(fileName);
+    
+    if (isCompleted) {
+      setFileAvailable(true);
+    } else {
+      // File not yet completed in current extraction
+      setFileAvailable(false);
+      
+      // Also check periodically if processing (every 5 seconds) to catch newly completed files
+      if (status === 'processing') {
+        const interval = setInterval(() => {
+          // Re-check progress for completed files
+          const currentCompleted = progress.completed_files || [];
+          if (currentCompleted.includes(fileName)) {
+            setFileAvailable(true);
+            clearInterval(interval);
+          }
+        }, 5000);
+        
+        return () => clearInterval(interval);
+      }
+    }
+  }, [dashboardId, fileType, status, useExisting, progress]);
 
   const handleDownload = async (format) => {
     try {
@@ -208,9 +253,19 @@ const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, c
 
   const isCompleted = (useExisting && fileAvailable) || (status === 'completed' && fileAvailable);
   const progressPercent = isCompleted ? 100 : (progress || 0);
+  // Make card clickable even if not completed - will show appropriate state in viewer
+  const isClickable = onClick !== null;
 
   return (
-    <MetadataCard>
+    <MetadataCard 
+      selected={isSelected}
+      clickable={isClickable}
+      onClick={() => {
+        if (onClick) {
+          onClick(fileType);
+        }
+      }}
+    >
       <MetadataTitle>{title}</MetadataTitle>
       <ProgressBar>
         <ProgressFill progress={progressPercent} status={status} />
@@ -246,7 +301,280 @@ const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, c
   );
 };
 
+// Styled components for file content viewer
+const FileContentViewer = styled.div`
+  width: 100%;
+  max-width: 100%;
+  border-top: 2px solid ${props => props.theme.colors.gray[200]};
+  padding-top: ${props => props.theme.spacing.lg};
+  margin-top: ${props => props.theme.spacing.lg};
+  /* Positioned directly below metadata cards in normal document flow */
+  position: relative;
+  z-index: 1;
+`;
+
+const ViewerHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${props => props.theme.spacing.md};
+  padding-bottom: ${props => props.theme.spacing.sm};
+  border-bottom: 1px solid ${props => props.theme.colors.gray[200]};
+  /* Removed sticky positioning - header should be in normal flow */
+`;
+
+const ViewerTitle = styled.h4`
+  color: ${props => props.theme.colors.primary};
+  font-size: ${props => props.theme.typography.fontSize.lg};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+`;
+
+const ContentContainer = styled.div`
+  width: 100%;
+  max-width: 100%;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid ${props => props.theme.colors.gray[300]};
+  border-radius: ${props => props.theme.borderRadius.md};
+  background: ${props => props.theme.colors.gray[50]};
+  /* Ensure scrolling happens only within this container */
+  position: relative;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${props => props.theme.colors.gray[100]};
+    border-radius: ${props => props.theme.borderRadius.md};
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${props => props.theme.colors.gray[400]};
+    border-radius: ${props => props.theme.borderRadius.md};
+    
+    &:hover {
+      background: ${props => props.theme.colors.gray[500]};
+    }
+  }
+  
+  /* Ensure table is visible and scrollable */
+  table {
+    display: table;
+    width: 100%;
+  }
+`;
+
+const CSVTable = styled.table`
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  table-layout: auto;
+`;
+
+const CSVTableHeader = styled.thead`
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Sticky within ContentContainer, not page */
+`;
+
+const CSVTableHeaderCell = styled.th`
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.md};
+  text-align: left;
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  word-wrap: break-word;
+  white-space: normal;
+`;
+
+const CSVTableRow = styled.tr`
+  border-bottom: 1px solid ${props => props.theme.colors.gray[200]};
+  
+  &:hover {
+    background: ${props => props.theme.colors.gray[50]};
+  }
+`;
+
+const CSVTableCell = styled.td`
+  padding: ${props => props.theme.spacing.sm} ${props => props.theme.spacing.md};
+  color: ${props => props.theme.colors.gray[700]};
+  word-break: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  max-width: 400px;
+  min-width: 100px;
+  vertical-align: top;
+`;
+
+const TextContent = styled.pre`
+  padding: ${props => props.theme.spacing.md};
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: ${props => props.theme.typography.fontFamily.mono};
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  color: ${props => props.theme.colors.gray[800]};
+  line-height: 1.6;
+`;
+
+const LoadingText = styled.div`
+  padding: ${props => props.theme.spacing.xl};
+  text-align: center;
+  color: ${props => props.theme.colors.gray[600]};
+`;
+
+const ErrorText = styled.div`
+  padding: ${props => props.theme.spacing.md};
+  background: ${props => props.theme.colors.error}15;
+  color: ${props => props.theme.colors.error};
+  border-radius: ${props => props.theme.borderRadius.md};
+  border: 1px solid ${props => props.theme.colors.error};
+`;
+
+const MetadataFileViewer = ({ dashboardId, fileType, title }) => {
+  const [fileContent, setFileContent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!dashboardId || !fileType) {
+      setFileContent(null);
+      return;
+    }
+
+    const fetchFileContent = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const content = await dashboardAPI.getMetadataFileContent(dashboardId, fileType);
+        setFileContent(content);
+      } catch (err) {
+        setError(err.response?.data?.detail || err.message || 'Failed to load file content');
+        console.error('Error fetching file content:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFileContent();
+  }, [dashboardId, fileType]);
+
+  if (!fileType) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <FileContentViewer>
+        <ViewerHeader>
+          <ViewerTitle>Select a metadata section to view content</ViewerTitle>
+        </ViewerHeader>
+        <ContentContainer>
+          <LoadingText>Loading {title}...</LoadingText>
+        </ContentContainer>
+      </FileContentViewer>
+    );
+  }
+
+  if (error) {
+    return (
+      <FileContentViewer>
+        <ViewerHeader>
+          <ViewerTitle>{title}</ViewerTitle>
+        </ViewerHeader>
+        <ContentContainer>
+          <ErrorText>{error}</ErrorText>
+        </ContentContainer>
+      </FileContentViewer>
+    );
+  }
+
+  if (!fileContent) {
+    return (
+      <FileContentViewer>
+        <ViewerHeader>
+          <ViewerTitle>Select a metadata section to view content</ViewerTitle>
+        </ViewerHeader>
+        <ContentContainer>
+          <LoadingText>Click on any completed metadata section above to view its content</LoadingText>
+        </ContentContainer>
+      </FileContentViewer>
+    );
+  }
+
+  return (
+    <FileContentViewer>
+      <ViewerHeader>
+        <ViewerTitle>{title} ({fileContent.filename})</ViewerTitle>
+        {fileContent.type === 'csv' && (
+          <span style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+            {fileContent.total_rows} rows
+          </span>
+        )}
+      </ViewerHeader>
+      <ContentContainer>
+        {fileContent.type === 'csv' ? (
+          fileContent.columns && fileContent.columns.length > 0 ? (
+            <CSVTable>
+              <CSVTableHeader>
+                <tr>
+                  {fileContent.columns.map((column) => (
+                    <CSVTableHeaderCell key={column}>{column}</CSVTableHeaderCell>
+                  ))}
+                </tr>
+              </CSVTableHeader>
+              <tbody>
+                {fileContent.data && fileContent.data.length > 0 ? (
+                  // Limit to 20 rows max as per requirements
+                  fileContent.data.slice(0, 20).map((row, index) => (
+                    <CSVTableRow key={index}>
+                      {fileContent.columns.map((column) => {
+                        const cellValue = row[column] !== null && row[column] !== undefined ? String(row[column]) : '';
+                        return (
+                          <CSVTableCell key={column} title={cellValue}>
+                            {cellValue}
+                          </CSVTableCell>
+                        );
+                      })}
+                    </CSVTableRow>
+                  ))
+                ) : (
+                  <CSVTableRow>
+                    <CSVTableCell colSpan={fileContent.columns.length} style={{ textAlign: 'center', padding: '2rem', color: '#6B7280' }}>
+                      No data available
+                    </CSVTableCell>
+                  </CSVTableRow>
+                )}
+                {fileContent.data && fileContent.data.length > 20 && (
+                  <CSVTableRow>
+                    <CSVTableCell colSpan={fileContent.columns.length} style={{ textAlign: 'center', padding: '1rem', color: '#6B7280', fontStyle: 'italic' }}>
+                      Showing first 20 of {fileContent.total_rows} rows. Scroll to see more.
+                    </CSVTableCell>
+                  </CSVTableRow>
+                )}
+              </tbody>
+            </CSVTable>
+          ) : (
+            <LoadingText>No columns found in file</LoadingText>
+          )
+        ) : (
+          <TextContent>{fileContent.content}</TextContent>
+        )}
+      </ContentContainer>
+    </FileContentViewer>
+  );
+};
+
 const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
+  const [selectedFileType, setSelectedFileType] = useState(null);
+  
   const metadataTypes = [
     { key: 'table_metadata', title: 'Table Metadata', fileType: 'table_metadata', phase: 'Phase 4: Table Metadata' },
     { key: 'columns_metadata', title: 'Column Metadata', fileType: 'columns_metadata', phase: 'Phase 5: Column Metadata' },
@@ -276,7 +604,12 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
       return { status: 'completed', step: 'Using Existing' };
     }
     
-    if (!progress) return { status: 'pending', step: 'Waiting to start' };
+    if (!progress) return { status: 'pending', step: 'Waiting...' };
+    
+    // Check if dashboard is actually being processed (status should be processing or completed)
+    if (progress.status !== 'processing' && progress.status !== 'completed') {
+      return { status: 'pending', step: 'Waiting...' };
+    }
     
     const completedFiles = progress.completed_files || [];
     const fileName = `${dashboardId}_${fileType}.${fileType === 'filter_conditions' ? 'txt' : 'csv'}`;
@@ -300,7 +633,7 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
       return { status: 'processing', step: getStepFromPhase(currentPhase) };
     }
     
-    // If dashboard is processing, show the current phase name
+    // If dashboard is processing, show status based on phase comparison
     if (progress.status === 'processing' && currentPhase) {
       // Check if we're past this phase
       const phaseOrder = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5', 'Phase 6', 'Phase 7', 'Phase 8'];
@@ -313,12 +646,12 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
       }
       
       if (currentPhaseIndex < thisPhaseIndex) {
-        // Still waiting for this phase, but show current phase being processed
-        return { status: 'pending', step: `Current: ${getStepFromPhase(currentPhase)}` };
+        // Still waiting for this phase
+        return { status: 'pending', step: 'Waiting...' };
       }
       
-      // Show current phase if we're at or before this phase
-      return { status: 'pending', step: getStepFromPhase(currentPhase) };
+      // We're at this phase - show processing
+      return { status: 'processing', step: 'Processing...' };
     }
     
     return { status: 'pending', step: 'Waiting to start' };
@@ -356,6 +689,23 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
     }
   }, [useExisting]);
 
+  // Get current phase for display (only show once below header)
+  const currentPhase = progress?.current_phase || null;
+  const getPhaseDisplayName = (phase) => {
+    if (!phase) return null;
+    if (phase.includes('Phase 1')) return 'Dashboard Extraction';
+    if (phase.includes('Phase 2')) return 'Tables & Columns';
+    if (phase.includes('Phase 3')) return 'Schema Enrichment';
+    if (phase.includes('Phase 4')) return 'Table Metadata';
+    if (phase.includes('Phase 5')) return 'Column Metadata';
+    if (phase.includes('Phase 6')) return 'Joining Conditions';
+    if (phase.includes('Phase 7')) return 'Filter Conditions';
+    if (phase.includes('Phase 8')) return 'Term Definitions';
+    if (phase.includes('Phase 9')) return 'Quality Judging';
+    if (phase === 'Completed') return 'Completed';
+    return phase;
+  };
+
   return (
     <SectionContainer>
       <DashboardHeader>
@@ -371,9 +721,15 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
           </span>
         )}
       </DashboardHeader>
+      {currentPhase && progress?.status === 'processing' && !useExisting && (
+        <CurrentPhaseDisplay>
+          Current Phase: {getPhaseDisplayName(currentPhase)}
+        </CurrentPhaseDisplay>
+      )}
       <MetadataSections>
         {metadataTypes.map(({ key, title, fileType, phase }) => {
           const statusInfo = getStatus(fileType, phase);
+          // Make sections clickable even if not completed (will show loading/error state)
           return (
             <MetadataCardContent
               key={key}
@@ -384,10 +740,19 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
               status={statusInfo.status}
               currentStep={statusInfo.step}
               useExisting={useExisting}
+              isSelected={selectedFileType === fileType}
+              onClick={setSelectedFileType}
             />
           );
         })}
       </MetadataSections>
+      
+      {/* Table viewer directly below metadata cards - in normal document flow */}
+      <MetadataFileViewer
+        dashboardId={dashboardId}
+        fileType={selectedFileType}
+        title={metadataTypes.find(m => m.fileType === selectedFileType)?.title || 'Metadata Content'}
+      />
     </SectionContainer>
   );
 };

@@ -3,6 +3,7 @@ import { ThemeProvider } from 'styled-components';
 import { paytmTheme } from './styles/theme';
 import styled from 'styled-components';
 import TabNavigation from './components/TabNavigation';
+import BusinessVertical from './components/BusinessVertical';
 import SupersetTab from './components/SupersetTab';
 import GoogleDocsTab from './components/GoogleDocsTab';
 import ConfluenceTab from './components/ConfluenceTab';
@@ -69,6 +70,8 @@ const MainContent = styled.main`
 
 function App() {
   const [activeTab, setActiveTab] = useState('superset');
+  const [selectedVertical, setSelectedVertical] = useState(null);
+  const [selectedSubVertical, setSelectedSubVertical] = useState(null);
   
   // Preserve SupersetTab state across tab switches
   const [supersetState, setSupersetState] = useState({
@@ -111,10 +114,17 @@ function App() {
               <Logo>
                 <MetaText>Meta</MetaText><MindText>Mind</MindText>
               </Logo>
-              <Subtitle>Extract and visualize dashboard metadata from Apache Superset</Subtitle>
+              <Subtitle>Intelligence Embedded in Every Query. Insight Extracted Automatically</Subtitle>
             </div>
           </HeaderContent>
         </Header>
+
+        <BusinessVertical
+          selectedVertical={selectedVertical}
+          selectedSubVertical={selectedSubVertical}
+          onVerticalChange={setSelectedVertical}
+          onSubVerticalChange={setSelectedSubVertical}
+        />
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 

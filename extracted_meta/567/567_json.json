@@ -1,0 +1,1005 @@
+{
+  "dashboard_id": 567,
+  "dashboard_title": "BBD Flipkart Tracking",
+  "dashboard_url": "https://cdp-dataview.platform.mypaytm.com/superset/dashboard/567/",
+  "owner": "Unknown",
+  "created_on": "",
+  "changed_on": "2025-10-23T06:21:10.781712",
+  "charts": [
+    {
+      "chart_id": 2780,
+      "chart_name": "BBD Flipkart Tracking",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 1089,
+      "dataset_name": "Flipkart BBD Tracking",
+      "database_name": "Trino",
+      "sql_query": "SELECT mnt_mtd AS mnt_mtd, sum(\"MAU\") AS \"MAU__\", sum(\"NR\") AS \"NR\", sum(\"New\") AS \"New\", sum(\"React\") AS \"React\", sum(txns) AS \"Txns\", sum(\"Gvm\") AS \"Gmv\", sum(card_issued) AS \"#Card Issued\", sum(card_scrached) AS \"#Card Scrached\", sum(\"card_scrached_same_Day\") AS \"#Card Scrached D0\", sum(card_scrached_same_Day*1.0000)/sum(card_scrached*1.0000) AS \"D0 Scrach Rate\", sum(burn_issued) AS \"Burn Issued\", sum(burn_processed) AS \"Burn Processed\" \nFROM (with upi_online_txns AS (\n      SELECT day_id, payer_cust_id, txn_id, amount, payee_vpa,final_category,txn_timestamp\nFROM (\n-- select\n-- date(txn_timestamp) day_id, \n-- payer_cust_id AS payer_cust_id,\n-- txn_timestamp,\n-- txn_id,\n-- amount,\n-- payee_vpa,\n-- final_category,\n-- row_number() over (partition by payer_cust_id, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\n-- from hive.user_paytm_payments.upi_flow_wise_base_cm                     --#Change 1 Table: Done\n-- where day_id >=DATE'2025-09-01'                                         --#Change 2 dates : Done\n\n-- CASE                        \n--         WHEN flow_category IN ('P2P') THEN 'P2P'\n--         WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n--         WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n--         WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n--         ELSE 'Others' \n-- END AS final_category,\n-- row_number() over (partition by customer_id_payer, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft --\n\n-- row_number() over (partition by customer_id_payer, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\n-- FROM  hive.cdo.fact_upi_transactions_snapshot_v3\n-- WHERE dl_last_updated >=date_trunc('MONTH', DATE_ADD('month',-1, date_add('day',-1,current_date)))\n--   AND transaction_date_key  >= date_trunc('MONTH', DATE_ADD('month',-1, date_add('day',-1,current_date)))\n--   AND status IN ('SUCCESS','DEEMED')\n--   AND transaction_type IN ('PAY','COLLECT')\n--   AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n--   and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n  \n        \n        \n        \n          select day_id, payer_cust_id, txn_id, amount, payee_vpa,final_category,txn_timestamp,\n          row_number() over (partition by payer_cust_id, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\n          from user_paytm_payments.upi_flow_wise_base_cm -- MTD Source\n          where  day_id >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          and day(day_id) <= day(current_date  - interval '01' day)\n        union all\n          select day_id, payer_cust_id, txn_id, amount, payee_vpa,final_category,txn_timestamp,\n          row_number() over (partition by payer_cust_id, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\n          from user_paytm_payments.upi_flow_wise_base_partitioned \n        --   where day_id >= date'2025-07-01'\n          where  day_id >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          and day(day_id) <= day(current_date  - interval '01' day)\n          -- date_trunc(current_date  - interval '01' day - interval  '01' month)\n          -- date_trunc('MONTH', DATE_ADD('month',-1, date_add('day',-1,current_date)))\n      )\n      )\n,final_online as\n(\n   select a.*\n   from (\n     select *, row_number() over(partition by payer_cust_id , date_trunc('month',day_id) order by txn_timestamp) krn \n     from upi_online_txns\n    ) a\n    join user_paytm_payments.upi_3p_online_merchant_vpa_mapping b1\n    ON lower(a.payee_vpa) = lower(b1.payee_vpa)\n        where final_category = 'Online'\n    and  lower(a.payee_vpa) in (\n    'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n    'flipkartgrocery.payu@hdfcbank'\n,'idfcfirstbank.payu@mairtel'\n,'idfcbankloanrepayment.payu@hdfcbank'\n,'idfc.payu@icici'\n,'flipkart.hyperpg@axb'\n,'flipkart.hypg@yespay'\n,'setu.flipkart@pineaxis'\n,'79003574@ptybl'\n,'fkrt@axl'\n,'fkrt@ybl'\n,'flipkart.payu@axisbank'\n,'flipkart.payu@hdfcbank'\n,'flipkart.payu@icici'\n,'flipkart1.payu@hdfcbank'\n,'flipkart1.payu@indus'\n,'flipkart1@indus'\n,'flipkart2020paytm@hdfcbank'\n,'flipkartinterne.payu@mairtel'\n,'flipkartinterne814.rzp@icici'\n,'flipkartinternetprivatelimited.rzp@hdfcbank'\n,'flipkartinternetprivatelimited28.paytm@hdfcbank'\n,'flipkartinternetprivatelimited59.paytm@hdfcbank'\n,'flipkartwholesale.cca@icici'\n,'mswipe.1400062924022657@kotak'\n,'mswipe.1400062924023153@kotak'\n,'paytm-56505013@paytm'\n,'paytm-56505013@ptybl'\n,'paytm-78824088@paytm'\n,'paytm-78824088@ptybl'\n,'sbipmopad.022211900326629-ym571606@sbipay'\n,'sbipmopad.02sob0000046783-yc019760@sbipay'\n,'flipkartinternetgroce.payu@mairtel'\n,'flipkartgrocery-12611431.payu@indus'\n,'paytm-78959480@ptybl'\n,'flipkartgiftcard.payu@hdfcbank'\n,'paytm-82335889@ptybl'\n,'flipkart12474444.payu@icici'\n,'flipkartpayments-8599699.payu@indus'\n,'flipkartinternetpriva.payu@mairtel'\n,'flipkart8599699.payu@icici'\n,'flipkart-135670.payu@indus'\n,'flipkart-149223.payu@indus'\n,'flipkart-12474444.payu@indus'\n,'flipkartpayments-173405.payu@indus'\n,'flipkart149223.payu@axisbank'\n,'flipkart8599699.payu@axisbank'\n,'flipkart12474444.payu@axisbank'\n,'flipkart173405.payu@axisbank'\n,'flipkart12611431.payu@axisbank'\n,'flipkart149223.payu@mairtel'\n,'flipkart12474444.payu@mairtel'\n,'flipkart173405.payu@mairtel'\n,'flipkart149223.payu@hdfcbank'\n,'flipkart173405.payu@hdfcbank'\n,'flipkart149223.payu@icici'\n,'flipkart12611431.payu@icici'\n,'flipkartpayin3.hypg@yespay'\n)\n)\n\n,paytm_nrr_rolling as\n(\nSELECT dt, payer_cust_id cust_id , user_type\nFROM (\nselect txn_date as dt,user_type,customer_Id as payer_cust_id\nfrom \n(\nselect customer_Id,\nCASE\nWHEN user_type = 'New' THEN 'New'\nelse 'React_2M+'\nEND AS user_type,\nuser_type as user_type_bucket,\ntxn_date,\nrow_number()over(partition by customer_Id order by txn_date) as rn\nfrom user_paytm_payments.rolling_nrr_v1 -- this is rolling table for rolling data.\nwhere txn_date >= date_trunc('month',current_date  - interval '01' day - interval  '01' month) \nand day(txn_date) <= day(current_Date - interval '01' day)\nand user_type not in ('Repeat') and customer_Id not in (\nSelect cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm\nwhere dt >= date_trunc('month',current_date  - interval '01' day)\nand channel in ('FMCG','MASU Online','MASU Offline') \nunion all\nSelect cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online\nwhere dt >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\nand channel in ('FMCG','MASU Online','MASU Offline'))\n)t1\nwhere rn = 1\n)\n\n)\n\n,summary_ as (\nselect \ndate_Trunc('month',day_id) mnt_mtd,\n-- user_type,\ncount(distinct payer_cust_id) MAU,\ncount(distinct payer_cust_id) filter(where krn = 1 and user_type in('New','React_2M+')) NR,\ncount(distinct payer_cust_id) filter(where krn = 1 and user_type in('New'))  New,\ncount(distinct payer_cust_id) filter(where krn = 1 and user_type in('React_2M+'))  React,\ncount(txn_id)txns, \nsum(amount) Gvm \n--payee_vpa,final_category \nfrom final_online a \nleft join  \npaytm_nrr_rolling\n--paytm_nrr \nb on a.payer_cust_id  = b.cust_id and date_Trunc('month',a.day_id) = date_Trunc('month',b.dt)\nwhere day(day_id) <= day(current_Date - interval '01' day)\ngroup by 1\n) \n\n,burn as (\n    select *,\n      case\n          when a.status = 1 and a.fulfillment_status = 3 then 'Given'\n          when a.status = 1 and a.fulfillment_status = 2 then 'Processing'\n          when a.status = 2 and a.fulfillment_status = 1 then 'Unscratched' -- need to remove \n          when a.status = 1 and a.fulfillment_status = 1 then 'Pending'\n      end as status_1,\n      case\n        when a.redemption_type = 'coins' then (a.amount/166.67)\n        else a.amount\n              end as cashburn,\n              json_extract_scalar(info, '$.scratchCardId') AS scratchCardId,\n              json_extract_scalar(info, '$.scratched') AS scratched\n            from\n      (\n          select *\n          from hive.promocard.supercash_task_snapshot_v3\n          where dl_last_updated >=date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          and date(created_at) >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n          and day(date(created_at))<= day(current_date  - interval '01' day)\n          and status in (1,2)\n          and fulfillment_status in (1,2,3)\n          and campaign in ('UPI_3P_FLIPKART_30CB_11SEP25')\n      ) a\n),\n\nburn_summary as (\nselect \ndate_trunc('month',date(created_at)) mnt,\n-- case when date_diff('hour',created_at, b.scratched_at) is null then null\n-- when date_diff('hour',created_at, b.scratched_at) <=23 then 'within 24 hr' else 'after 24 hr' end as time_diff,\n-- status_1, \n-- scratched,\ncount(a.id) cards,\ncount(a.id) filter (where  scratched = 'true') card_scrached ,\ncount(a.id) filter (where  scratched = 'true' and date_diff('hour',created_at, b.scratched_at) <=23 ) card_scrached_same_Day ,\nsum(cashburn) burn_issued,\nsum(cashburn) filter (where  status_1 in('Given','Processing','Pending')) burn_processed\nfrom burn a \nleft join (\n    SELECT id,scratched_at FROM \"hive\".\"scratchcard\".\"scratch_card_snapshot_v3\" where dl_last_updated >= date_trunc('month',current_date  - interval '01' day - interval  '01' month)\n)b on a.scratchCardId = cast(b.id as varchar)\ngroup by 1\n)\n-- select * from burn_summary\n\nselect\na.mnt_mtd,\na.MAU,\na.NR,\na.New,\na.React,\na.txns, \na.Gvm ,\nb.cards card_issued,\nb.card_scrached card_scrached,\nb.card_scrached_same_Day card_scrached_same_Day,\n(b.card_scrached_same_Day*1.0000)/(b.card_scrached*1.0000) SameDay_scrach_rate,\nb.burn_issued,\nb.burn_processed\nfrom summary_ a \nleft join burn_summary b on a.mnt_mtd = b.mnt\n) AS virtual_table GROUP BY mnt_mtd ORDER BY sum(\"MAU\") DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "MAU",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23872,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "MAU",
+          "optionName": "metric_dbvavzcr8i_00uvcftodrfva"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "NR",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23873,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "NR",
+          "optionName": "metric_w449p6n4y1e_ec8xcq49ieh"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "New",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23874,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "New",
+          "optionName": "metric_t5hdtooyt0l_8de5o3eo2p2"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "React",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23875,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "React",
+          "optionName": "metric_637iarwjt9c_ttksodd2xpd"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txns",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23876,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Txns",
+          "optionName": "metric_j5axey81w3h_fjq36nhk5wj"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "Gvm",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23877,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DOUBLE",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Gmv",
+          "optionName": "metric_cl4yl89vugf_q7li0obbdro"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "card_issued",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23878,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "#Card Issued",
+          "optionName": "metric_5pngvumbyme_n4fw5c65hs"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "card_scrached",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23879,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "#Card Scrached",
+          "optionName": "metric_m9lt6a7ticp_odkf4wpt0da"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "card_scrached_same_Day",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23880,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "#Card Scrached D0",
+          "optionName": "metric_rowk37tcdsl_ct98dm8cbo"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(card_scrached_same_Day*1.0000)/sum(card_scrached*1.0000)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "D0 Scrach Rate",
+          "optionName": "metric_k4kv66cw96_qbcke31okl"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "burn_issued",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23882,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(38, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Burn Issued",
+          "optionName": "metric_klg18ewltqq_k7keo2incqj"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "burn_processed",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 23883,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(38, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Burn Processed",
+          "optionName": "metric_76l3dg2h62h_by4e5130uc4"
+        }
+      ],
+      "columns": [
+        "mnt_mtd",
+        "MAU",
+        "NR",
+        "New",
+        "React",
+        "txns",
+        "Gvm",
+        "card_issued",
+        "card_scrached",
+        "card_scrached_same_Day",
+        "SameDay_scrach_rate",
+        "burn_issued",
+        "burn_processed"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "subject": "mnt_mtd",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2788,
+      "chart_name": "Flipkart BBD",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 1112,
+      "dataset_name": "Flipkart BBD",
+      "database_name": "Trino",
+      "sql_query": "SELECT day_id AS day_id, sum(dau) AS \"Dau__\", sum(mau) AS \"Mau\", sum(\"NR\") AS \"NR\", sum(new) AS \"New\", sum(\"React\") AS \"React\", sum(n_txns) AS n_txns, sum(gmv) AS gmv \nFROM (with upi_reference_table as (\nselect a.*, date_trunc('month',day_id) mnt\nfrom (\nselect\ndate(txn_timestamp) day_id, \ncustomer_id_payer AS customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\npayee_vpa,\n-- from hive.user_paytm_payments.upi_flow_wise_base_cm                     --#Change 1 Table: Done\n-- where day_id >=DATE'2025-09-01'                                         --#Change 2 dates : Done\n\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nrow_number() over (partition by customer_id_payer, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\n\n-- row_number() over (partition by customer_id_payer, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft\nFROM  hive.cdo.fact_upi_transactions_snapshot_v3\nWHERE dl_last_updated >=DATE'2025-09-01'\n  AND transaction_date_key  >= DATE'2025-09-01'\n  AND status IN ('SUCCESS','DEEMED')\n  AND transaction_type IN ('PAY','COLLECT')\n  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n  \n\n\n-- dl_last_updated>= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\n                                                                    --#Change 3Add VPA 2: Done\n      -- AND PAYEE_VPA IN ('flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n      -- 'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n    and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n    and status = 'SUCCESS'\n    and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n    )a\n\n    WHERE PAYEE_VPA IN ('paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n    'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay', 'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n\n\n\n\n--       JOIN  hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on LOWER(a.payee_vpa) = LOWER(b.payee_vpa)\n-- WHERE b.online_merchant_name = 'flipkart' --## change later\n    ),\npaytm_nrr AS (\n      SELECT customer_id customer_id, date_trunc('month',date(txn_date) ) mnt,\n      CASE\n      WHEN user_type = 'New' THEN 'New'\n      WHEN user_type = 'Repeat' THEN 'Repeat'\n      ELSE 'React_2M+'\n      END AS user_type\n      FROM  hive.user_paytm_payments.rolling_nrr_v1\n      WHERE txn_date >= date'2025-09-01'\n      and user_type not IN ('Repeat')\n       and\n        customer_Id not in (\n        Select cust_id from hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online --set of user is already tagged\n        where dt >=  date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)\n        and channel in ('FMCG','MASU Online','MASU Offline')\n        union all\n        Select cust_id from hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm\n        where dt >=  date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)\n        and channel in ('FMCG','MASU Online','MASU Offline')\n        )\n      )\n----------------------------------------------------------------------------------------------------------------------------------------------------------------\nselect\nday_id,\n    count(distinct a.customer_id) as dau,\n    count(distinct case when a.rn_mau = 1 then a.customer_id end) as mau,\n    count(distinct case when a.rn_ft = 1 and b.customer_id is not null then a.customer_id  end) as NR, --- paytm new/react\n    count(distinct case when a.rn_ft = 1 and b.user_type = 'New' then a.customer_id  end) as new, --- paytm new/react\n    count(distinct case when a.rn_ft = 1 and  b.user_type = 'React_2M+' then a.customer_id  end) as React, --- paytm new/react\n    count(distinct a.txn_id) as n_txns,\n    sum(cast (amount as double)) as gmv\nfrom\n(\nselect day_id,txn_id,customer_id,amount,rn_ft,mnt,\nrow_number() over (partition by customer_id, date_trunc('month', day_id) , day_id>= date'2025-09-18' order by day_id) as rn_mau\nfrom  upi_reference_table a\n        where   final_category = 'Online'\n            and day_id >= date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)\n)a\nleft join paytm_nrr b on a.customer_id = b.customer_id  and a.mnt = b.mnt\ngroup by 1\nORDER BY 1\n) AS virtual_table GROUP BY day_id ORDER BY sum(dau) DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "dau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24276,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Dau",
+          "optionName": "metric_r2x3vtiw27k_rmbxkbn4t2m",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "mau",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24277,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Mau",
+          "optionName": "metric_911muc8ettf_ooyu7g7r3q",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "NR",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24278,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "NR",
+          "optionName": "metric_fdu1jkdnida_qqngipipoy",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "new",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24279,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "New",
+          "optionName": "metric_emu5xzyak2_gocixu9dp2e",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "React",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24280,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "React",
+          "optionName": "metric_mowriwc79gj_wam72ofjhn",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "n_txns",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24281,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "n_txns",
+          "optionName": "metric_5hbvgszodwk_tiv19mkmkq",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "gmv",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 24282,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DOUBLE",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "gmv",
+          "optionName": "metric_sjgikoa5mlf_4xnsvn4acf8",
+          "sqlExpression": null
+        }
+      ],
+      "columns": [
+        "day_id",
+        "dau",
+        "mau",
+        "NR",
+        "new",
+        "React",
+        "n_txns",
+        "gmv"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "expressionType": "SIMPLE",
+          "operator": "TEMPORAL_RANGE",
+          "subject": "day_id"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2868,
+      "chart_name": "Flipkart BBD DAU",
+      "chart_type": "big_number_total",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT count(DISTINCT payer_cust_id) AS \"DAU\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table \nWHERE created_on >= TIMESTAMP '2025-11-22 00:00:00.000000' AND created_on < TIMESTAMP '2025-11-23 00:00:00.000000'\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "payer_cust_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25438,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "VARCHAR",
+            "type_generic": 1,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "COUNT_DISTINCT",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "DAU",
+          "optionName": "metric_o1g7y8tbws_pg3vmaxtr7"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_on",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "Current day",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2870,
+      "chart_name": "Flipkart BBD Txns",
+      "chart_type": "big_number_total",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT count(txn_id) AS \"Transactions\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table \nWHERE created_on >= TIMESTAMP '2025-11-22 00:00:00.000000' AND created_on < TIMESTAMP '2025-11-23 00:00:00.000000'\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txn_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25436,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "VARCHAR",
+            "type_generic": 1,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "COUNT",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Transactions",
+          "optionName": "metric_8bnh57fr3z9_5yho47fyxg5"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "Current day",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2872,
+      "chart_name": "Flipkart BBD Gmv",
+      "chart_type": "big_number_total",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT sum(amount) AS \"Gmv\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table \nWHERE created_on >= TIMESTAMP '2025-11-22 00:00:00.000000' AND created_on < TIMESTAMP '2025-11-23 00:00:00.000000'\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "amount",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25437,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(10, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Gmv",
+          "optionName": "metric_88i3gmhtbbr_uysngsxbqo"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "Current day",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2873,
+      "chart_name": "Flipkart BBD hourly users",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour(created_on) AS hour, dt AS dt, count(DISTINCT payer_cust_id) AS \"Users\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table GROUP BY hour(created_on), dt ORDER BY \"Users\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "payer_cust_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25438,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "VARCHAR",
+            "type_generic": 1,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "COUNT_DISTINCT",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Users",
+          "optionName": "metric_53iixy67snj_8985i935qvi"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [
+        "dt"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "created_on",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2874,
+      "chart_name": "Flipkart BBD hourly txns",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour(created_on) AS hour, dt AS dt, count(txn_id) AS \"Txns\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table GROUP BY hour(created_on), dt ORDER BY \"Txns\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "txn_id",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25436,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "VARCHAR",
+            "type_generic": 1,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "COUNT",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Txns",
+          "optionName": "metric_r5hmr7cw7qi_etc5d2sfi0e"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [
+        "dt"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 2875,
+      "chart_name": "Flipkart BBD hourly Gmv",
+      "chart_type": "echarts_timeseries_line",
+      "dataset_id": 1154,
+      "dataset_name": "Flipkart BBD Todays Metrics",
+      "database_name": "Trino",
+      "sql_query": "SELECT hour(created_on) AS hour, dt AS dt, sum(amount) AS \"Gmv\" \nFROM (with ti as (\nselect \ncreated_on,\ntxn_id,\namount\nFROM hive.switch.txn_info_snapshot_v3\n            WHERE dl_last_updated >= current_date - interval '01' day\n            and date(created_on) >= current_date - interval '01' day\n            and type in ('PAY','COLLECT')\n            AND category in('VPA2MERCHANT')\n            AND status in('SUCCESS','DEEMED')\n            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\nand(\n    (type = 'COLLECT' and (business_type is null or business_type <> 'MANDATE'))\n    or(type = 'PAY' and upper(channel_code) = 'PAYTM'\n    and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03'))\n    or(type = 'PAY' and upper(channel_code) in ('ONLINE_3P_NATIVE')\n    )\n)\n\n),\ntp1 as (\nselect txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day \nand lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') \nand participant_type = 'PAYER'\n),\ntp2 as (\nselect txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from \nhive.switch.txn_participants_snapshot_v3 p\nwhere dl_last_updated >=  current_date - interval '01' day\nand participant_type = 'PAYEE'\nAND lower(vpa) IN (\n'paytm-79192590@ptybl','paytm-79192716@ptybl','flipkart.hypg@kotakpay','paytm-64090553@paytm','paytm-64090553@ptybl',\n'flipkartgrocery.payu@hdfcbank','idfcfirstbank.payu@mairtel','idfcbankloanrepayment.payu@hdfcbank','idfc.payu@icici',\n       'flipkart.hyperpg@axb','flipkart.hypg@yespay','setu.flipkart@pineaxis','79003574@ptybl','fkrt@axl','fkrt@ybl','flipkart.payu@axisbank','flipkart.payu@hdfcbank','flipkart.payu@icici','flipkart1.payu@hdfcbank','flipkart1.payu@indus','flipkart1@indus','flipkart2020paytm@hdfcbank','flipkartinterne.payu@mairtel','flipkartinterne814.rzp@icici','flipkartinternetprivatelimited.rzp@hdfcbank','flipkartinternetprivatelimited28.paytm@hdfcbank','flipkartinternetprivatelimited59.paytm@hdfcbank','flipkartwholesale.cca@icici','mswipe.1400062924022657@kotak','mswipe.1400062924023153@kotak','paytm-56505013@paytm','paytm-56505013@ptybl','paytm-78824088@paytm','paytm-78824088@ptybl','sbipmopad.022211900326629-ym571606@sbipay','sbipmopad.02sob0000046783-yc019760@sbipay','flipkartinternetgroce.payu@mairtel','flipkartgrocery-12611431.payu@indus','paytm-78959480@ptybl','flipkartgiftcard.payu@hdfcbank','paytm-82335889@ptybl','flipkart12474444.payu@icici','flipkartpayments-8599699.payu@indus','flipkartinternetpriva.payu@mairtel','flipkart8599699.payu@icici','flipkart-135670.payu@indus','flipkart-149223.payu@indus','flipkart-12474444.payu@indus','flipkartpayments-173405.payu@indus','flipkart149223.payu@axisbank','flipkart8599699.payu@axisbank','flipkart12474444.payu@axisbank','flipkart173405.payu@axisbank','flipkart12611431.payu@axisbank','flipkart149223.payu@mairtel','flipkart12474444.payu@mairtel','flipkart173405.payu@mairtel','flipkart149223.payu@hdfcbank','flipkart173405.payu@hdfcbank','flipkart149223.payu@icici','flipkart12611431.payu@icici','flipkartpayin3.hypg@yespay','flipkart12474444.payu@axisbank','flipkart12611431.payu@axisbank')\n)\n\n\nselect \nti.created_on\n,date(ti.created_on) dt\n,ti.txn_id\n,ti.amount\n,tp1.payer_cust_id\n from  ti  \n join tp1 on ti.txn_id = tp1.txn_id\n join tp2 on ti.txn_id = tp2.txn_id\n) AS virtual_table GROUP BY hour(created_on), dt ORDER BY \"Gmv\" DESC\nLIMIT 10000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "amount",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 25437,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "DECIMAL(10, 2)",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "SUM",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Gmv",
+          "optionName": "metric_t4qd7bfnb1t_q2pzt2rub9"
+        }
+      ],
+      "columns": [
+        "created_on",
+        "dt",
+        "txn_id",
+        "amount",
+        "payer_cust_id"
+      ],
+      "groupby_columns": [
+        "dt"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_b8f11isuxef_vm1b1whz2md",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "created_on"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 3164,
+      "chart_name": "NR Table updated As Of",
+      "chart_type": "big_number_total",
+      "dataset_id": 1335,
+      "dataset_name": "rolling_nrr_v1",
+      "database_name": "Trino",
+      "sql_query": "SELECT max(nr_updated_as_of) AS \"MAX(nr_updated_as_of)\" \nFROM (SELECT max(txn_date) nr_updated_as_of from hive.user_paytm_payments.rolling_nrr_v1\n) AS virtual_table\nLIMIT 50000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SIMPLE",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "nr_updated_as_of",
+            "description": null,
+            "expression": "",
+            "filterable": true,
+            "groupby": true,
+            "id": 29170,
+            "is_certified": false,
+            "is_dttm": true,
+            "python_date_format": null,
+            "type": "DATE",
+            "type_generic": 2,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "aggregate": "MAX",
+          "sqlExpression": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": false,
+          "label": "MAX(nr_updated_as_of)",
+          "optionName": "metric_hkbwi7722ed_yc50d6nh4o"
+        }
+      ],
+      "columns": [
+        "nr_updated_as_of"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "nr_updated_as_of",
+          "operator": "TEMPORAL_RANGE",
+          "operatorId": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_wrudjfageic_fnbr3q5wl"
+        }
+      ],
+      "time_range": null
+    }
+  ]
+}

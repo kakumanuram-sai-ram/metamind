@@ -98,51 +98,59 @@ def upload_kb_to_n8n() -> dict:
     print_info(f"KB ZIP File: {kb_path}")
     print_info(f"File Size: {kb_path.stat().st_size / (1024*1024):.2f} MB")
     
-    # Prepare headers
+    # Prepare headers - matching curl command format
     headers = {
-        'User-Agent': 'KB-Upload-Script/1.0',
+        'Content-Type': 'application/zip',
     }
     
     # Add custom headers from config if provided
     if hasattr(n8n_config, 'N8N_HEADERS') and n8n_config.N8N_HEADERS:
         headers.update(n8n_config.N8N_HEADERS)
     
-    # Prepare files for multipart/form-data
-    files = {
-        'file': (kb_path.name, open(kb_path, 'rb'), 'application/zip')
-    }
-    
-    # Prepare additional form data if provided
-    data = {}
-    if hasattr(n8n_config, 'ADDITIONAL_FORM_DATA') and n8n_config.ADDITIONAL_FORM_DATA:
-        data.update(n8n_config.ADDITIONAL_FORM_DATA)
-    
     # Get timeout from config or use default
     timeout = getattr(n8n_config, 'REQUEST_TIMEOUT', 300)
     
     print()
-    if data:
-        print_info(f"Additional form data: {json.dumps(data, indent=2)}")
     print_info(f"Request timeout: {timeout} seconds")
     print()
     
     try:
         print("Uploading KB ZIP file to n8n webhook...")
+        
+        # Read file as binary data (matching curl --data-binary)
+        with open(kb_path, 'rb') as f:
+            file_data = f.read()
+        
+        # Send as binary data with Content-Type: application/zip
+        # Allow redirects (matching curl --location flag)
         response = requests.post(
             webhook_url,
-            files=files,
-            data=data,
+            data=file_data,
             headers=headers,
-            timeout=timeout
+            timeout=timeout,
+            allow_redirects=True
         )
         
-        # Close the file
-        files['file'][1].close()
-        
         # Check response status
-        response.raise_for_status()
-        
-        print_success("KB uploaded successfully to n8n!")
+        # Note: n8n workflows might return 500 if they don't have a response configured
+        # but the file was still received successfully
+        if response.status_code == 500:
+            # Try to parse error message
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('message', 'Unknown error')
+                print_info(f"n8n workflow returned 500: {error_msg}")
+                print_info("This might indicate the file was received but the workflow has no response configured.")
+                print_info("Check n8n workflow logs to confirm file was processed.")
+                
+                # Still try to return the response
+                return {"status": "received_but_error", "error": error_data, "status_code": response.status_code}
+            except json.JSONDecodeError:
+                print_error(f"HTTP error: {response.status_code} - {response.text[:200]}")
+                response.raise_for_status()
+        else:
+            response.raise_for_status()
+            print_success("KB uploaded successfully to n8n!")
         
         # Try to parse JSON response
         try:
@@ -165,13 +173,6 @@ def upload_kb_to_n8n() -> dict:
     except requests.exceptions.RequestException as e:
         print_error(f"Request failed: {e}")
         raise
-    finally:
-        # Ensure file is closed
-        if 'files' in locals() and files['file'][1]:
-            try:
-                files['file'][1].close()
-            except:
-                pass
 
 
 def main():

@@ -1,0 +1,299 @@
+-- SQL Queries for Dashboard: UPI Sub-Category Traffic Dashboard
+-- Dashboard ID: 915
+-- Total Charts: 6
+================================================================================
+
+-- Chart 1: UPI Sub-Category Traffic Dashboard - MTD (ID: 4381)
+-- Chart Type: pivot_table_v2
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT month_ AS month_, sub_category_name AS sub_category_name, sum(impressions) AS "Impressions__", sum(clicks) AS "Clicks", sum(clicks*1.0000)/SUM(impressions*1.0000) AS "CTR" 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE month_ IS NOT NULL GROUP BY month_, sub_category_name ORDER BY sum(impressions) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 2: UPI Sub-Category Traffic Dashboard - MTD impressions (ID: 4383)
+-- Chart Type: echarts_timeseries_smooth
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, sub_category_name AS sub_category_name, sum(impressions) AS "Impressions__" 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE dt >= DATE '2025-11-01' AND dt < DATE '2025-12-01' AND month_ IS NOT NULL GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), sub_category_name ORDER BY sum(impressions) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 3: UPI Sub-Category Traffic Dashboard - MTD clicks (ID: 4384)
+-- Chart Type: echarts_timeseries_smooth
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, sub_category_name AS sub_category_name, sum(clicks) AS clicks__ 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE dt >= DATE '2025-11-01' AND dt < DATE '2025-12-01' AND month_ IS NOT NULL GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), sub_category_name ORDER BY sum(clicks) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 4: UPI Sub-Category Traffic Dashboard - CTR (ID: 4385)
+-- Chart Type: echarts_timeseries_smooth
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, sub_category_name AS sub_category_name, sum(clicks*1.0000)/sum(impressions*1.0000) AS "CTR" 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE dt >= DATE '2025-11-01' AND dt < DATE '2025-12-01' AND month_ IS NOT NULL GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), sub_category_name ORDER BY "CTR" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 5: UPI Sub-Category Traffic VIEW-WISE BREAKDOWN (ID: 4614)
+-- Chart Type: pivot_table_v2
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT month_ AS month_, view_type AS view_type, sub_category_name AS sub_category_name, sum(impressions) AS "Impressions__", sum(clicks) AS "Clicks", sum(clicks*1.0000)/SUM(impressions*1.0000) AS "CTR" 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE month_ IS NOT NULL GROUP BY month_, view_type, sub_category_name ORDER BY sum(impressions) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 6: UPI Sub-Category Traffic VIEW X CAMPAIGN WISE BREAKDOWN (ID: 4615)
+-- Chart Type: pivot_table_v2
+-- Dataset: sub_category_view_type_breakdown
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT month_ AS month_, view_type AS view_type, campaign_type_name AS campaign_type_name, sub_category_name AS sub_category_name, sum(impressions) AS "Impressions__", sum(clicks) AS "Clicks", sum(clicks*1.0000)/SUM(impressions*1.0000) AS "CTR" 
+FROM (with sub_category_data as
+      (
+        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks
+        from
+        (
+          select dt,
+          case
+            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and
+              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'
+            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'
+          end as month_,
+          case
+                  when view_type='banner-3_0' then 'Banner-3.0'
+                  when view_type='banner-2_0' then 'banner-2_0'
+                  when view_type='smart-icon-button' then 'Smart-icon-button'
+                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'
+                  when view_type='smart-icon-input-4xn' then 'smart-icon-input-4xn'
+                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'
+              end as view_type,
+          sub_category_name,
+          campaign_type_name,
+          impressions,clicks
+          from  hive.team_measurement.banner_campaigns_mv_v1
+          where storefront_id = 55486
+          and category_name = 'UPI P2M'
+          --and upper(measurement_label) like '%UPI_P2M%'
+          and (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)
+                        and (CURRENT_DATE - INTERVAL '1' DAY))
+        ) as a
+        --where a.view_type is not NULL
+        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name
+      )
+
+      select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name, sd.impressions, sd.clicks
+      from sub_category_data as sd
+) AS virtual_table 
+WHERE month_ IS NOT NULL GROUP BY month_, view_type, campaign_type_name, sub_category_name ORDER BY sum(impressions) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+

@@ -429,6 +429,70 @@ class MetadataMerger:
         
         return metadata
     
+    def load_merged_metadata(self) -> Dict:
+        """
+        Load existing merged metadata from consolidated files.
+        
+        Returns:
+            Dict with keys: table_metadata, columns_metadata, joining_conditions, 
+            definitions, filter_conditions
+        """
+        metadata = {
+            'dashboard_id': 'merged',
+            'table_metadata': None,
+            'columns_metadata': None,
+            'joining_conditions': None,
+            'definitions': None,
+            'filter_conditions': None
+        }
+        
+        # Load table metadata
+        table_file = f"{self.merged_dir}/consolidated_table_metadata.csv"
+        if os.path.exists(table_file):
+            try:
+                metadata['table_metadata'] = pd.read_csv(table_file)
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['table_metadata'] = pd.DataFrame()
+        
+        # Load columns metadata
+        columns_file = f"{self.merged_dir}/consolidated_columns_metadata.csv"
+        if os.path.exists(columns_file):
+            try:
+                df = pd.read_csv(columns_file)
+                if len(df) > 0:
+                    metadata['columns_metadata'] = df
+                else:
+                    metadata['columns_metadata'] = pd.DataFrame(columns=['table_name', 'column_name', 'variable_type', 'column_description', 'required_flag'])
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['columns_metadata'] = pd.DataFrame(columns=['table_name', 'column_name', 'variable_type', 'column_description', 'required_flag'])
+        
+        # Load joining conditions
+        joins_file = f"{self.merged_dir}/consolidated_joining_conditions.csv"
+        if os.path.exists(joins_file):
+            try:
+                metadata['joining_conditions'] = pd.read_csv(joins_file)
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['joining_conditions'] = pd.DataFrame()
+        
+        # Load definitions
+        definitions_file = f"{self.merged_dir}/consolidated_definitions.csv"
+        if os.path.exists(definitions_file):
+            try:
+                metadata['definitions'] = pd.read_csv(definitions_file)
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['definitions'] = pd.DataFrame()
+        
+        # Load filter conditions (text file)
+        filter_file = f"{self.merged_dir}/consolidated_filter_conditions.txt"
+        if os.path.exists(filter_file):
+            try:
+                with open(filter_file, 'r', encoding='utf-8') as f:
+                    metadata['filter_conditions'] = f.read()
+            except Exception:
+                metadata['filter_conditions'] = None
+        
+        return metadata
+    
     def merge_table_metadata(self) -> pd.DataFrame:
         """Merge table metadata from all dashboards."""
         print("\n" + "="*80)
@@ -918,6 +982,11 @@ class MetadataMerger:
         # Temporarily update dashboard_ids for processing
         original_dashboard_ids = self.dashboard_ids
         self.dashboard_ids = dashboard_ids_to_process
+        
+        # Update status to show we're ready to start merging (not stuck in initializing)
+        self.progress_tracker.update_merge_status('preparing', [])
+        print("\n✅ Merge initialization complete. Starting merge steps...", flush=True)
+        sys.stdout.flush()
         
         # Merge each metadata type with progress updates
         import sys

@@ -603,7 +603,8 @@ def process_charts_for_table_metadata(
     """Process charts in parallel to extract table metadata only."""
     results = []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         future_to_chart = {
             executor.submit(
                 _extract_table_metadata_wrapper,
@@ -612,6 +613,7 @@ def process_charts_for_table_metadata(
             for chart in charts
         }
         
+        # Process completed futures
         for future in as_completed(future_to_chart):
             chart = future_to_chart[future]
             try:
@@ -629,6 +631,17 @@ def process_charts_for_table_metadata(
                     filter_conditions="",
                     definitions=[]
                 ))
+        
+        # Ensure all futures complete before shutdown
+        for future in future_to_chart:
+            if not future.done():
+                try:
+                    future.result(timeout=300)
+                except Exception as e:
+                    chart = future_to_chart[future]
+                    print(f"    ⚠️  Timeout/Error waiting for chart {chart.get('chart_id')}: {str(e)}", flush=True)
+    finally:
+        executor.shutdown(wait=True)
     
     return results
 
@@ -658,7 +671,8 @@ def process_charts_for_column_metadata(
     """Process charts in parallel to extract column metadata only."""
     results = []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         future_to_chart = {
             executor.submit(
                 _extract_column_metadata_wrapper,
@@ -667,6 +681,7 @@ def process_charts_for_column_metadata(
             for chart in charts
         }
         
+        # Wait for all futures to complete before shutting down
         for future in as_completed(future_to_chart):
             chart = future_to_chart[future]
             try:
@@ -684,6 +699,19 @@ def process_charts_for_column_metadata(
                     filter_conditions="",
                     definitions=[]
                 ))
+        
+        # Explicitly wait for all pending futures to complete
+        # This ensures no tasks are still running when we shutdown
+        for future in future_to_chart:
+            if not future.done():
+                try:
+                    future.result(timeout=300)  # Wait up to 5 minutes per task
+                except Exception as e:
+                    chart = future_to_chart[future]
+                    print(f"    ⚠️  Timeout/Error waiting for chart {chart.get('chart_id')}: {str(e)}", flush=True)
+    finally:
+        # Shutdown executor gracefully - wait for all tasks to complete
+        executor.shutdown(wait=True)  # Wait up to 10 minutes for all tasks
     
     return results
 
@@ -713,7 +741,8 @@ def process_charts_for_joining_conditions(
     """Process charts in parallel to extract joining conditions only."""
     results = []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         future_to_chart = {
             executor.submit(
                 _extract_joining_conditions_wrapper,
@@ -739,6 +768,17 @@ def process_charts_for_joining_conditions(
                     filter_conditions="",
                     definitions=[]
                 ))
+        
+        # Ensure all futures complete before shutdown
+        for future in future_to_chart:
+            if not future.done():
+                try:
+                    future.result(timeout=300)
+                except Exception as e:
+                    chart = future_to_chart[future]
+                    print(f"    ⚠️  Timeout/Error waiting for chart {chart.get('chart_id')}: {str(e)}", flush=True)
+    finally:
+        executor.shutdown(wait=True)
     
     return results
 
@@ -768,7 +808,8 @@ def process_charts_for_filter_conditions(
     """Process charts in parallel to extract filter conditions only."""
     results = []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         future_to_chart = {
             executor.submit(
                 _extract_filter_conditions_wrapper,
@@ -794,6 +835,17 @@ def process_charts_for_filter_conditions(
                     filter_conditions="",
                     definitions=[]
                 ))
+        
+        # Ensure all futures complete before shutdown
+        for future in future_to_chart:
+            if not future.done():
+                try:
+                    future.result(timeout=300)
+                except Exception as e:
+                    chart = future_to_chart[future]
+                    print(f"    ⚠️  Timeout/Error waiting for chart {chart.get('chart_id')}: {str(e)}", flush=True)
+    finally:
+        executor.shutdown(wait=True)
     
     return results
 
@@ -822,7 +874,8 @@ def process_charts_for_definitions(
     """Process charts in parallel to extract term definitions only."""
     results = []
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
         future_to_chart = {
             executor.submit(
                 _extract_definitions_wrapper,
@@ -848,6 +901,17 @@ def process_charts_for_definitions(
                     filter_conditions="",
                     definitions=[]
                 ))
+        
+        # Ensure all futures complete before shutdown
+        for future in future_to_chart:
+            if not future.done():
+                try:
+                    future.result(timeout=300)
+                except Exception as e:
+                    chart = future_to_chart[future]
+                    print(f"    ⚠️  Timeout/Error waiting for chart {chart.get('chart_id')}: {str(e)}", flush=True)
+    finally:
+        executor.shutdown(wait=True)
     
     return results
 

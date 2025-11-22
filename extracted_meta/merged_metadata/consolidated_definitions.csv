@@ -1,81 +1,20 @@
 term,type,definition,business_alias
-3P Online,Category,"Third-party online merchants and their associated transactions, representing external online service providers","Third-party Online, 3P, Third Party Online"
-MTD,Synonym,"Month-to-Date, referring to the time period from the beginning of the current month until the current date",Month-to-Date
-LMTD,Synonym,Last Month-to-Date time period representing equivalent timeframe in the previous month for comparison purposes,Last Month-to-Date
-MTD Users,Metric,Total count of unique users who performed transactions in the current month-to-date period,
-MTD Txns,Metric,Total count of transactions completed in the current month-to-date period,MTD Transactions
-MTD Gmv,Metric,Total Gross Merchandise Value of all transactions in the current month-to-date period,MTD Gross Merchandise Value
-TPU,Metric / Calculated Field,Transactions Per User calculated as total MTD transactions divided by total MTD users,Transactions Per User
-LMTD Users,Metric,Total count of unique users who performed transactions in the last month-to-date period,
-LMTD Txns,Metric,Total count of transactions completed in the last month-to-date period,LMTD Transactions
-LMTD Gmv,Metric,Total Gross Merchandise Value of all transactions in the last month-to-date period,LMTD Gross Merchandise Value
-LMTD TPU,Metric / Calculated Field,Transactions Per User for the last month-to-date period calculated as total LMTD transactions divided by total LMTD users,Last Month-to-Date Transactions Per User
-MTD User Growth,Metric / Calculated Field,"Growth rate of users calculated as (MTD Users / LMTD Users) - 1, representing the percentage change in user count",
-MTD Txn Growth,Metric / Calculated Field,"Growth rate of transactions calculated as (MTD Transactions / LMTD Transactions) - 1, representing the percentage change in transaction count","MTD Transaction Growth, Month-to-Date Transaction Growth"
-MTD Gmv Growth,Metric / Calculated Field,"Growth rate of Gross Merchandise Value calculated as (MTD GMV / LMTD GMV) - 1, representing the percentage change in GMV","Month-to-Date GMV Growth, MTD Gross Merchandise Value Growth"
-GMV,Synonym,"Gross Merchandise Value, the total value of all transactions processed through the platform",Gross Merchandise Value
-Txns,Synonym,"Transactions, referring to completed payment or purchase activities on the platform",Transactions
-Txns(>100),Metric / Calculated Field,"Count of transactions grouped by payee VPA and merchant name, filtered to only include merchants with more than 100 transactions in the current month",Transaction Count (filtered)
-payee_vpa,Metric,Virtual Payment Address of the payee or merchant receiving the payment in UPI transactions,"VPA, Virtual Payment Address"
-online_merchant_name,Metric,The business name of the online merchant or service provider in the transaction,Merchant Name
-VPA mapping,Category,The process of associating Virtual Payment Addresses with corresponding merchant information and business details,VPA Association
-UPI,Category,"Unified Payments Interface - India's instant real-time payment system that facilitates inter-bank peer-to-peer and person-to-merchant transactions, enabling instant money transfers and digital payments",Unified Payments Interface
-MTD New users,Metric,Total count of new users acquired in the current Month-to-Date period,Month-to-Date New Users
-MTD React Users,Metric,Total count of reactivated users (React2Mplus_Users) within the current month-to-date period,"Month-to-Date Reactivated Users, React2Mplus Users"
-LMTD New Users,Metric,Total count of new users acquired in the Last Month-to-Date period for comparison,Last Month-to-Date New Users
-LMTD React Users,Metric,Total count of reactivated users (React2Mplus) in the Last Month-to-Date period for comparison,Last Month-to-Date Reactivated Users
-MTD New + React Users,Metric / Calculated Field,"Combined total of new users and reactivated users for the current month-to-date period, calculated as SUM(MTD_New_Users) + SUM(MTD_React2Mplus_Users)",
-LMTD New + React Users,Metric / Calculated Field,"Combined total of new users and reactivated users for the last month-to-date period, calculated as SUM(LMTD_New_Users) + SUM(LMTD_React2Mplus_Users)",
-New user Growth,Metric / Calculated Field,"Growth rate of new users calculated as (MTD New Users / LMTD New Users) - 1, showing percentage change in new user acquisition",New User Growth Rate
-React User Growth,Metric / Calculated Field,"Growth rate of reactivated users calculated as (MTD React Users / LMTD React Users) - 1, showing percentage change in user reactivation",Reactivated User Growth Rate
-New+React User Growth,Metric / Calculated Field,"Growth rate of combined new and reactivated users comparing current MTD to last MTD, calculated as ((MTD New + React Users) / (LMTD New + React Users)) - 1",Total User Growth Rate
-React Users,Synonym,Reactivated users who returned after being inactive for 2 months or more,"Reactivated Users, React2Mplus Users, React2Mplus Users, Reactivated Users"
-FT/RT,Category,First Time/Repeat Time user classification system used for analyzing user behavior patterns,First Time/Repeat Time
-3P,Synonym,Third Party - refers to external merchants or partners operating on the platform,Third Party
-DAU,Metric,Daily Active Users - count of unique users who were active on a specific day,Daily Active Users
-7d avg DAU,Metric / Calculated Field,"7-day average of Daily Active Users, calculated as the mean DAU over the past 7 days",7-day average DAU
-Yday DAU,Metric,Yesterday's Daily Active Users count,Yesterday DAU
-Yday DAU Growth,Metric / Calculated Field,"Growth rate of yesterday's DAU compared to 7-day average DAU, calculated as (Yday DAU / 7d avg DAU) - 1",Yesterday DAU Growth
-MAU,Metric,Monthly Active Users - count of unique users who were active within a month,Monthly Active Users
-LMTD MAU,Metric,Last Month-to-Date Monthly Active Users for the equivalent period in the previous month,Last Month-to-Date MAU
-MTD MAU,Metric,Month-to-Date Monthly Active Users for the current month period,Month-to-Date MAU
-MTD MAU Growth,Metric / Calculated Field,"Growth rate of current month-to-date MAU compared to last month-to-date MAU, calculated as (MTD MAU / LMTD MAU) - 1",Month-to-Date MAU Growth
-7d avg Txns,Metric / Calculated Field,"7-day average of transaction count, calculated as the mean transactions over the past 7 days",7-day average Transactions
-Yday Txn Growth,Metric / Calculated Field,"Growth rate of yesterday's transactions compared to 7-day average transactions, calculated as (Yday txns / 7d avg txns) - 1",Yesterday Transaction Growth
-7d avg Gmv,Metric / Calculated Field,"7-day average of Gross Merchandise Value, calculated as the mean GMV over the past 7 days",7-day average GMV
-Yday Gmv Growth,Metric / Calculated Field,"Growth rate of yesterday's GMV compared to 7-day average GMV, calculated as (Yday gmv / 7d avg gmv) - 1",Yesterday GMV Growth
-NR,Metric,Net Revenue - total revenue after deducting costs and fees,Net Revenue
-7d avg NR,Metric / Calculated Field,"7-day average of Net Revenue, calculated as the mean NR over the past 7 days",7-day average Net Revenue
-Yday NR Growth,Metric / Calculated Field,"Growth rate of yesterday's Net Revenue compared to 7-day average NR, calculated as (Yday nr / 7d avg nr) - 1",Yesterday Net Revenue Growth
-MTD NR Growth,Metric / Calculated Field,"Growth rate of current month-to-date Net Revenue compared to last month-to-date NR, calculated as (MTD nr / LMTD nr) - 1",Month-to-Date Net Revenue Growth
-Top 1k,Category,Top 1000 merchants ranked by performance metrics such as transaction volume or revenue,Top 1000
-Yday,Synonym,Yesterday - metrics from the previous day,Yesterday
-Overall_MTU,Metric,"Total Monthly Transacting Users across all merchants, representing the sum of all users who made transactions in a given month.",MTU
-Live_Merchants,Metric,"Monthly Transacting Users for merchants classified as 'Live' based on a predefined list of active online merchants including major platforms like Flipkart, Zomato, Swiggy, etc.",
-Non_Live(Excl. Live),Metric,"Monthly Transacting Users for merchants that are not classified as 'Live' merchants, excluding all Live merchant transactions.",Non_Live
-Top_15_Merch,Metric,"Monthly Transacting Users for the top 15 merchants, which is a subset of Live merchants including major platforms like Meesho, Flipkart, Zomato, Reliance, Myntra, etc.",Top_15_Merchants
-MTU,Synonym,Monthly Transacting Users - refers to Overall_MTU,Monthly Transacting Users
-3P Online Merchants,Category,"Third-party online merchants categorized into Live, Non-Live, and Top 15 segments for transaction user analysis.",Third Party Online Merchants
-DoD,Category,Day over Day comparison methodology for measuring short-term performance changes,Day over Day
-Cashback,Metric / Calculated Field,"Total sum of standardized cashburn amounts aggregated over time, representing the monetary value of cashback given to users",
-Cashburn,Metric / Calculated Field,"Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount. This metric provides the cash equivalent value for different types of cashback redemptions.","Cash Burn Amount, Burn Value"
-SuperCash,Category,"Reward system offering cash benefits through various redemption types including coins, goldcoins, and UPI transactions",
-Redemption Type,Category,"Classification of how cashback is redeemed including coins, goldcoins, and UPI methods, each with different conversion rates","Reward Type, Redemption Method"
-Fulfillment Status,Category,"Status tracking for cashback processing including Given (3), Processing (2), and Pending (1) states",
-#Users,Metric,Count of distinct users who have SuperCash transactions in the selected time period,"Users, Unique Users, Number of Users, User Count"
-SUM(cashburn),Metric / Calculated Field,"Total sum of cashburn amounts across all transactions, aggregated from individual cashburn calculations","Total Cash Burn, Cash Burn Sum, Total Cashburn, Cashburn Sum"
-Campaign,Category,UPI SuperCash campaign identifier that groups transactions by specific promotional campaigns and serves as a marketing campaign identifier associated with SuperCash offers and promotions,"Campaign Name, Promo Campaign, Campaign ID"
-Status,Category,"Current state of SuperCash transaction indicating completion state. Status values include: Given (completed), Processing (in progress), Pending (awaiting fulfillment), and Unscratched (not activated).","Transaction Status, Fulfillment Status"
-Wallet,Category,"Digital wallet platform, service, or payment method associated with SuperCash campaigns and transactions. Encompasses both the wallet provider/service and the specific digital wallet type used for payments.","Wallet Provider, Payment Wallet"
-Cash Burn,Metric / Calculated Field,"Calculated cashback amount based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types",Cashburn
-Given,Category,"Status category for cashback that has been successfully delivered to users (status=1, fulfillment_status=3)",
-Processing,Category,"Status category for cashback that is currently being processed (status=1, fulfillment_status=2)",
-Pending,Category,"Cashback status when status=1 and fulfillment_status=1, indicating cashback is awaiting processing",
-Unscratched,Category,"Status category for scratch cards that have not been scratched by users (status=2, fulfillment_status=1)",
-Coins,Category,Redemption type for cashback where amount is divided by 166.67 to calculate cash burn,
-Goldcoins,Category,Redemption type for cashback where amount is divided by 100 to calculate cash burn,
-MTD Daily Users,Metric / Calculated Field,Month-to-date count of unique users who performed transactions on a daily basis,Month-to-Date Daily Users
-COUNT_DISTINCT(user_id),Metric,"Unique count of user identifiers, representing the number of distinct users","Unique Users, Daily Active Users"
-MTD Gratified Users,Metric,Month-to-date count of unique users who have been gratified (received benefits) through the UPI SuperCash program,Gratified Users
-UPI SuperCash,Category,"Cashback program related to UPI transactions offering rewards through various redemption types including coins, goldcoins, and direct UPI transfers",SuperCash
-redemption_type,Category,"Type of SuperCash redemption method including coins, goldcoins, UPI, and other payment methods",Redemption Method
+UPI,Category,Unified Payments Interface - a real-time payment system that facilitates inter-bank transactions through mobile platforms.,Unified Payments Interface
+P2P,Category,Person-to-Person transactions including VPA2ACCOUNT and VPA2VPA transaction categories,"Person to Person, Person-to-Person, Peer-to-Peer"
+P2M,Category,"Person-to-Merchant transactions, specifically VPA2MERCHANT transaction types.","Person-to-Merchant, Person to Merchant"
+SR,Metric / Calculated Field,"Success Rate calculated as the count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, representing the percentage of successful UPI transactions.",Success Rate
+P2P_P2M,Category,Transaction categorization field that classifies UPI transactions as either P2P or P2M based on transaction category,
+Day,Metric,"The day of the month extracted from the transaction date, used for daily trend analysis.",
+Month,Metric,Month truncated date from transaction date for monthly analysis,
+SnP,Category,"Scan and Pay transactions, including 3P QR and Paytm QR flow categories.",Scan and Pay
+Transaction Status,Category,"Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
+PSP,Category,"Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",Payment Service Provider
+Flow Category,Category,"Classification of UPI transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus.",
+Online,Category,"Online transaction category including Intent, P2M Collect, and Mandate_Online flow categories.",
+Onus,Category,On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system.,On-us
+DEEMED,Metric,A transaction status category considered as successful for success rate calculations along with SUCCESS status,
+SUCCESS,Metric,A transaction status indicating the transaction was completed successfully,
+Category,Category,Classification of UPI transactions into different payment flows and types,final_category
+Handle,Metric,"UPI identifier handles for payer and payee, used to classify transactions by PSP (e.g., paytm, ptyes, ptaxis).","Payer Handle, UPI Handle, UPI Handle"
+Payer Handle,Metric,The UPI handle of the entity making the payment in a UPI transaction,Handle
+Paytm,Category,"Payment service provider handles including paytm, ptyes, ptaxis, pthdfc, ptsbi for payer classification",Payer as Paytm

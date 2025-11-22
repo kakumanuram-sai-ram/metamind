@@ -1,0 +1,84 @@
+chart_id,chart_name,sql_query,dashboard_id,dashboard_title,chart_type,dataset_id,dataset_name,database_name,time_range
+1457,TG vs CG - MTD Retention Comparison,"SELECT sum(users*1.00) 
+filter(
+where life_time_asofnow = 1 
+and UPI_Active_LM = 1
+and UPI_Active_MTD =1)
+/
+sum(users*1.00) 
+filter(where life_time_asofnow = 1 
+and UPI_Active_LM = 1) AS ""TG MTD Retention%"" 
+FROM (SELECT * from repeat_retention_dashboard_v1
+) AS virtual_table
+LIMIT 50000;
+
+",249,Repeat Retention Dashboard,big_number_total,244,Repeat Retention Dashboard,Trino,
+1458,CG MTD Retention Rate,"SELECT sum(users*1.00) 
+filter(
+where life_time_asofnow = 0 
+and UPI_Active_LM = 1
+and UPI_Active_MTD =1)
+/
+sum(users*1.00) 
+filter(where life_time_asofnow = 0 
+and UPI_Active_LM = 1) AS ""CG MTD Retention%"" 
+FROM (SELECT * from repeat_retention_dashboard_v1
+) AS virtual_table
+LIMIT 50000;
+
+",249,Repeat Retention Dashboard,big_number_total,244,Repeat Retention Dashboard,Trino,
+1460,Monthly Active Users - TG vs CG by Feature,"SELECT feature AS feature, sum(users) filter(
+where life_time_asofnow = 1 
+and upi_active_mtd = 1) AS ""TG_MTD_MAU"", sum(users) 
+filter(
+where life_time_asofnow =0 
+and upi_active_mtd = 1) AS ""CG_MTD_MAU"" 
+FROM (SELECT * from repeat_retention_dashboard_v1
+) AS virtual_table GROUP BY feature
+LIMIT 10;
+
+",249,Repeat Retention Dashboard,dist_bar,244,Repeat Retention Dashboard,Trino,
+1461,Transaction Per User (TPU) - TG vs CG,"SELECT feature AS feature, sum(upi_txns_mtd * 1.00)
+filter(where life_time_asofnow = 1 
+and upi_active_mtd = 1)
+/
+sum(users * 1.00) 
+filter(where life_time_asofnow = 1
+and upi_active_mtd = 1) AS ""TG_MTD_TPU"", sum(upi_txns_mtd * 1.00)
+filter(
+where life_time_asofnow = 0 
+and upi_active_mtd = 1)
+/
+sum(users * 1.00) 
+filter(
+where life_time_asofnow =0 
+and upi_active_mtd = 1) AS ""CG_MTD_TPU"" 
+FROM (SELECT * from repeat_retention_dashboard_v1
+) AS virtual_table GROUP BY feature
+LIMIT 10;
+
+",249,Repeat Retention Dashboard,dist_bar,244,Repeat Retention Dashboard,Trino,
+1462,User Distribution by Feature,SELECT * from repeat_retention_dashboard_v1 ,249,Repeat Retention Dashboard,pie,244,Repeat Retention Dashboard,Trino,
+1463,L3M Active Users - Pre/Post Analysis,"SELECT feature AS feature, sum(users) 
+filter(
+where
+--life_time_asofnow =0 and 
+lm = 1
+and upi_active_llm = 1
+and upi_active_lm = 1
+and upi_active_mtd =1
+) AS ""Pre/Post-TG_L3M_Active"", sum(users*1.00) 
+filter(
+where
+life_time_asofnow =0
+-- and 
+-- lm = 1
+and upi_active_llm = 1
+and upi_active_lm = 1
+and upi_active_mtd =1
+) AS ""Pre/Post-CG_L3M_Active"" 
+FROM (SELECT * from repeat_retention_dashboard_v1
+) AS virtual_table GROUP BY feature
+LIMIT 10;
+
+",249,Repeat Retention Dashboard,dist_bar,244,Repeat Retention Dashboard,Trino,

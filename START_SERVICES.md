@@ -78,3 +78,5 @@ netstat -tlnp 2>/dev/null | grep -E ":(8000|3000)" || ss -tlnp 2>/dev/null | gre
 - **API Docs**: http://localhost:8000/docs
 - **Frontend UI**: http://localhost:3000
 
+
+

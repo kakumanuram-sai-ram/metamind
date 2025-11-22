@@ -21,8 +21,14 @@ from pathlib import Path
 from query_extract import SupersetExtractor
 from config import BASE_URL, HEADERS, LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
 from sql_parser import extract_table_column_mapping
-from llm_extractor import extract_table_column_mapping_llm
 from trino_client import get_column_datatypes_from_trino
+# Lazy import for llm_extractor to avoid dspy dependency at startup
+def get_llm_extractor():
+    try:
+        from llm_extractor import extract_table_column_mapping_llm
+        return extract_table_column_mapping_llm
+    except ImportError:
+        return None
 from dataclasses import asdict
 from progress_tracker import get_progress_tracker
 import zipfile
@@ -30,7 +36,7 @@ import shutil
 
 app = FastAPI(title="Superset Dashboard Extractor API")
 
-# Add request logging middleware
+# Add request logging middleware - filter out repetitive polling requests
 @app.middleware("http")
 async def log_requests(request, call_next):
     import sys
@@ -38,19 +44,34 @@ async def log_requests(request, call_next):
     
     start_time = time.time()
     
-    # Log incoming request
-    print(f"[API] → {request.method} {request.url.path}", flush=True)
-    if request.url.query:
-        print(f"[API]    Query params: {request.url.query}", flush=True)
-    sys.stdout.flush()
+    # Skip logging for frequent polling requests to reduce noise
+    skip_logging_paths = [
+        '/api/progress',
+        '/api/dashboard/',
+    ]
+    
+    # Only log if it's not a polling request or if it's an error
+    should_log = True
+    for skip_path in skip_logging_paths:
+        if skip_path in request.url.path:
+            should_log = False
+            break
+    
+    # Always log POST requests and errors
+    if request.method == 'POST' or request.url.path.startswith('/api/dashboards/process-multiple'):
+        should_log = True
     
     # Process request
     response = await call_next(request)
     
-    # Log response
-    process_time = time.time() - start_time
-    print(f"[API] ← {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
-    sys.stdout.flush()
+    # Only log errors or important requests
+    if should_log or response.status_code >= 400:
+        process_time = time.time() - start_time
+        if response.status_code >= 400:
+            print(f"[API] ❌ {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
+        elif request.method == 'POST':
+            print(f"[API] → {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
+        sys.stdout.flush()
     
     return response
 
@@ -456,14 +477,18 @@ async def get_progress():
         tracker = get_progress_tracker()
         progress = tracker.get_progress()
         
-        # Log progress status for debugging (only when not idle to reduce noise)
-        if progress.get('status') != 'idle':
-            status = progress.get('status', 'unknown')
-            operation = progress.get('current_operation', 'N/A')
-            total = progress.get('total_dashboards', 0)
-            completed = progress.get('completed_dashboards', 0)
-            print(f"[API] GET /api/progress - Status: {status}, Operation: {operation}, Progress: {completed}/{total}", flush=True)
-            sys.stdout.flush()
+        # Check if KB build is complete but all files aren't ready yet
+        # If KB build status is 'completed', mark it as completed (don't re-check old dashboard IDs)
+        kb_status = progress.get('kb_build_status', {}).get('status')
+        if kb_status == 'completed':
+            # KB build is completed - ensure status reflects this
+            # Don't re-check files for old dashboard IDs that may be in progress from previous runs
+            if progress.get('status') != 'completed':
+                progress['status'] = 'completed'
+                progress['current_operation'] = None
+        
+        # Only log progress when status changes significantly (not on every poll)
+        # This reduces log noise from frequent frontend polling
         
         return progress
     except Exception as e:
@@ -478,25 +503,48 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
     import sys
     try:
         print(f"\n{'='*80}", flush=True)
-        print(f"[API] POST /api/dashboards/process-multiple", flush=True)
+        print(f"[API] 📋 Processing request for dashboards: {request.dashboard_ids}", flush=True)
         print(f"   📋 Request received from UI", flush=True)
         print(f"   📊 Dashboard IDs: {request.dashboard_ids}", flush=True)
         print(f"   ⚙️  Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
         print(f"{'='*80}", flush=True)
         sys.stdout.flush()
         
-        from process_multiple_dashboards import process_multiple_dashboards
-        
         # Run in background thread
         def run_processing():
             import sys
+            import os
             sys.stdout.flush()
             sys.stderr.flush()
             try:
+                # Try to activate virtual environment if available
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                metamind_dir = os.path.dirname(script_dir)
+                venv_python = os.path.join(metamind_dir, "meta_env", "bin", "python")
+                
+                # If virtual env exists, use it; otherwise use current Python
+                if os.path.exists(venv_python):
+                    # Add venv site-packages to path
+                    venv_site_packages = os.path.join(metamind_dir, "meta_env", "lib", "python3.11", "site-packages")
+                    if os.path.exists(venv_site_packages):
+                        sys.path.insert(0, venv_site_packages)
+                    # Also add scripts directory
+                    sys.path.insert(0, script_dir)
+                
+                # Initialize progress tracker for new extraction
+                try:
+                    from progress_tracker import get_progress_tracker
+                    tracker = get_progress_tracker()
+                    if request.extract:
+                        tracker.start_extraction(request.dashboard_ids)
+                except Exception as tracker_error:
+                    print(f"⚠️  Failed to initialize progress tracker: {tracker_error}", flush=True)
+                
                 print(f"\n{'='*80}", flush=True)
                 print(f"🚀 Starting multi-dashboard processing", flush=True)
                 print(f"   Dashboard IDs: {request.dashboard_ids}", flush=True)
                 print(f"   Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
+                print(f"   Python: {sys.executable}", flush=True)
                 print(f"{'='*80}\n", flush=True)
                 
                 # Process metadata choices
@@ -507,24 +555,49 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
                 if request.metadata_choices:
                     choices_dict = {int(k): bool(v) for k, v in request.metadata_choices.items()}
                 
-                process_multiple_dashboards(
-                    dashboard_ids=request.dashboard_ids,
-                    extract=request.extract,
-                    merge=request.merge,
-                    build_kb=request.build_kb,
-                    continue_on_error=True,
-                    metadata_choices=choices_dict
-                )
+                # Change to metamind directory for proper file paths
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(metamind_dir)
+                    
+                    # Import here after path is set
+                    from process_multiple_dashboards import process_multiple_dashboards
+                    
+                    process_multiple_dashboards(
+                        dashboard_ids=request.dashboard_ids,
+                        extract=request.extract,
+                        merge=request.merge,
+                        build_kb=request.build_kb,
+                        continue_on_error=True,
+                        metadata_choices=choices_dict
+                    )
+                finally:
+                    os.chdir(original_cwd)
                 
                 print(f"\n{'='*80}", flush=True)
                 print(f"✅ Multi-dashboard processing completed", flush=True)
                 print(f"{'='*80}\n", flush=True)
             except Exception as e:
                 import traceback
+                error_msg = str(e)
+                error_trace = traceback.format_exc()
                 print(f"\n{'='*80}", flush=True)
-                print(f"❌ Error in multi-dashboard processing: {str(e)}", flush=True)
+                print(f"❌ Error in multi-dashboard processing: {error_msg}", flush=True)
                 print(f"{'='*80}", flush=True)
-                print(traceback.format_exc(), flush=True)
+                print(error_trace, flush=True)
+                
+                # Update progress tracker with error
+                try:
+                    from progress_tracker import get_progress_tracker
+                    tracker = get_progress_tracker()
+                    for dashboard_id in request.dashboard_ids:
+                        tracker.update_dashboard_status(
+                            dashboard_id,
+                            'error',
+                            error=error_msg
+                        )
+                except Exception as tracker_error:
+                    print(f"⚠️  Failed to update progress tracker: {tracker_error}", flush=True)
         
         thread = threading.Thread(target=run_processing, daemon=True)
         thread.start()
@@ -549,7 +622,7 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
 async def get_dashboard_files(dashboard_id: int):
     """Get list of all metadata files for a dashboard"""
     import sys
-    print(f"[API] GET /api/dashboard/{dashboard_id}/files - Checking available files", flush=True)
+    # Removed verbose logging - only log on errors
     sys.stdout.flush()
     try:
         dashboard_dir = f"extracted_meta/{dashboard_id}"
@@ -594,11 +667,67 @@ async def get_dashboard_files(dashboard_id: int):
         raise HTTPException(status_code=500, detail=f"Error getting files: {str(e)}")
 
 
+@app.get("/api/dashboard/{dashboard_id}/file/{file_type}")
+async def get_dashboard_file_content(dashboard_id: int, file_type: str):
+    """Get metadata file content as JSON (for display in UI)"""
+    import pandas as pd
+    import numpy as np
+    
+    file_mapping = {
+        "table_metadata": f"{dashboard_id}_table_metadata.csv",
+        "columns_metadata": f"{dashboard_id}_columns_metadata.csv",
+        "joining_conditions": f"{dashboard_id}_joining_conditions.csv",
+        "filter_conditions": f"{dashboard_id}_filter_conditions.txt",
+        "definitions": f"{dashboard_id}_definitions.csv"
+    }
+    
+    if file_type not in file_mapping:
+        raise HTTPException(status_code=400, detail=f"Invalid file type: {file_type}")
+    
+    filename = file_mapping[file_type]
+    # Get the script directory and construct path relative to metamind directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    metamind_dir = os.path.dirname(script_dir)
+    filepath = os.path.join(metamind_dir, "extracted_meta", str(dashboard_id), filename)
+    
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail=f"File not found: {filename}")
+    
+    try:
+        # Handle TXT files (filter_conditions)
+        if file_type == "filter_conditions":
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return {
+                "type": "text",
+                "content": content,
+                "filename": filename
+            }
+        
+        # Handle CSV files
+        df = pd.read_csv(filepath)
+        
+        # Replace NaN, Infinity, and -Infinity with None (JSON compliant)
+        df = df.replace([np.inf, -np.inf], None)
+        df = df.where(pd.notnull(df), None)
+        
+        # Convert DataFrame to JSON
+        return {
+            "type": "csv",
+            "columns": df.columns.tolist(),
+            "data": df.to_dict('records'),
+            "total_rows": len(df),
+            "filename": filename
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
+
 @app.get("/api/dashboard/{dashboard_id}/download/{file_type}")
 async def download_dashboard_file(dashboard_id: int, file_type: str):
     """Download a specific metadata file for a dashboard"""
     import sys
-    print(f"[API] GET /api/dashboard/{dashboard_id}/download/{file_type} - Downloading file", flush=True)
+    # Removed verbose logging - only log on errors
     sys.stdout.flush()
     try:
         file_mapping = {
@@ -680,9 +809,7 @@ async def download_all_dashboard_files(dashboard_id: int):
 @app.head("/api/knowledge-base/download")
 async def download_knowledge_base_zip():
     """Download the knowledge base ZIP file (supports GET and HEAD for file existence checks)"""
-    import sys
-    print(f"[API] GET/HEAD /api/knowledge-base/download - Checking/downloading knowledge base ZIP", flush=True)
-    sys.stdout.flush()
+    # Removed verbose logging - only log on errors
     try:
         kb_zip_path = "extracted_meta/knowledge_base/knowledge_base.zip"
         
@@ -698,6 +825,100 @@ async def download_knowledge_base_zip():
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error downloading knowledge base ZIP: {str(e)}")
+
+
+@app.post("/api/knowledge-base/connect-n8n")
+async def connect_to_n8n():
+    """Connect to N8N workflow and upload knowledge base"""
+    import sys
+    import subprocess
+    # Removed verbose logging - only log on errors
+    sys.stdout.flush()
+    try:
+        # Get the script directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        n8n_script = os.path.join(script_dir, "n8n_kb_upload.py")
+        
+        if not os.path.exists(n8n_script):
+            raise HTTPException(status_code=500, detail="N8N upload script not found")
+        
+        # Run the n8n upload script
+        result = subprocess.run(
+            ["python", n8n_script],
+            capture_output=True,
+            text=True,
+            cwd=script_dir,
+            timeout=600  # 10 minute timeout
+        )
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": "Successfully connected to N8N and uploaded knowledge base",
+                "output": result.stdout
+            }
+        else:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            return {
+                "success": False,
+                "message": f"Failed to connect to N8N: {error_msg}",
+                "error": error_msg
+            }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="N8N connection timed out")
+    except Exception as e:
+        import traceback
+        error_detail = f"Error connecting to N8N: {str(e)}\n{traceback.format_exc()}"
+        print(f"[API] ERROR: {error_detail}", flush=True)
+        sys.stdout.flush()
+        raise HTTPException(status_code=500, detail=error_detail)
+
+
+@app.post("/api/knowledge-base/enable-prism")
+async def enable_on_prism():
+    """Enable knowledge base on Prism"""
+    import sys
+    import subprocess
+    # Removed verbose logging - only log on errors
+    sys.stdout.flush()
+    try:
+        # Get the script directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        prism_script = os.path.join(script_dir, "prism_api_client.py")
+        
+        if not os.path.exists(prism_script):
+            raise HTTPException(status_code=500, detail="Prism API client script not found")
+        
+        # Run the prism script
+        result = subprocess.run(
+            ["python", prism_script],
+            capture_output=True,
+            text=True,
+            cwd=script_dir,
+            timeout=600  # 10 minute timeout
+        )
+        
+        if result.returncode == 0:
+            return {
+                "success": True,
+                "message": "Successfully enabled knowledge base on Prism",
+                "output": result.stdout
+            }
+        else:
+            error_msg = result.stderr or result.stdout or "Unknown error"
+            return {
+                "success": False,
+                "message": f"Failed to enable on Prism: {error_msg}",
+                "error": error_msg
+            }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Prism connection timed out")
+    except Exception as e:
+        import traceback
+        error_detail = f"Error enabling on Prism: {str(e)}\n{traceback.format_exc()}"
+        print(f"[API] ERROR: {error_detail}", flush=True)
+        sys.stdout.flush()
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 if __name__ == "__main__":

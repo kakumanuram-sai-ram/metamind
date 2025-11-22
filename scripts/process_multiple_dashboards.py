@@ -153,13 +153,45 @@ def process_multiple_dashboards(
         print("STEP 3: BUILDING KNOWLEDGE BASE")
         print("="*80)
         
+        # Wait for all metadata files to be ready before building KB
+        from progress_tracker import get_progress_tracker
+        progress_tracker = get_progress_tracker()
+        
+        print("\n⏳ Checking if all dashboard metadata files are ready...")
+        max_wait_time = 3600  # Maximum wait time: 1 hour
+        check_interval = 5  # Check every 5 seconds
+        waited_time = 0
+        
+        while not progress_tracker.are_all_metadata_files_ready(dashboard_ids):
+            if waited_time >= max_wait_time:
+                print(f"\n⚠️  Timeout: Waited {max_wait_time} seconds for metadata files. Proceeding with KB build anyway.")
+                break
+            
+            print(f"  Waiting for all metadata files... ({waited_time}s elapsed)")
+            import time
+            time.sleep(check_interval)
+            waited_time += check_interval
+        
+        if progress_tracker.are_all_metadata_files_ready(dashboard_ids):
+            print("  ✅ All metadata files are ready!")
+        else:
+            print("  ⚠️  Some metadata files are still missing, but proceeding with KB build...")
+        
         try:
             kb_builder = KnowledgeBaseBuilder()
             unified_kb = kb_builder.build_from_merged_metadata()
             
-            print(f"\n✅ Knowledge base built successfully")
-            print(f"   Knowledge base files saved to: extracted_meta/knowledge_base/")
-            
+            # Verify all files are ready before marking KB as complete
+            if progress_tracker.are_all_metadata_files_ready(dashboard_ids):
+                print(f"\n✅ Knowledge base built successfully")
+                print(f"   Knowledge base files saved to: extracted_meta/knowledge_base/")
+                # Mark KB build as completed only when all files are ready
+                progress_tracker.complete_kb_build()
+            else:
+                print(f"\n⚠️  Knowledge base built, but waiting for all metadata files to be ready...")
+                # Don't mark as complete yet - will be checked periodically
+                # Keep status as 'processing' until all files are ready
+                
         except Exception as e:
             print(f"\n❌ Knowledge base build failed: {str(e)}")
             import traceback

@@ -1,0 +1,1106 @@
+{
+  "dashboard_id": 964,
+  "dashboard_title": "UPI Traffic Dashboard",
+  "dashboard_url": "https://cdp-dataview.platform.mypaytm.com/superset/dashboard/964/",
+  "owner": "Unknown",
+  "created_on": "",
+  "changed_on": "2025-10-27T15:30:02.646011",
+  "charts": [
+    {
+      "chart_id": 4616,
+      "chart_name": "Home Page Traffic Dashboard - UPI Traffic Dashboard",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT month_ AS month_, category_name AS category_name, sum(impressions) AS \"Impressions__\", sum(clicks) AS \"Clicks\", format('%.2f%%', sum(clicks*1.0000)/SUM(impressions*1.0000)*100)\n AS \"CTR\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IS NOT NULL AND category_name IN ('UPI P2M') GROUP BY month_, category_name ORDER BY sum(impressions) DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "impressions",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 49172,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Impressions",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": "SUM",
+          "column": {
+            "advanced_data_type": null,
+            "certification_details": null,
+            "certified_by": null,
+            "column_name": "clicks",
+            "description": null,
+            "expression": null,
+            "filterable": true,
+            "groupby": true,
+            "id": 49173,
+            "is_certified": false,
+            "is_dttm": false,
+            "python_date_format": null,
+            "type": "BIGINT",
+            "type_generic": 0,
+            "verbose_name": null,
+            "warning_markdown": null
+          },
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "hasCustomLabel": true,
+          "label": "Clicks",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c",
+          "sqlExpression": null
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "format('%.2f%%', sum(clicks*1.0000)/SUM(impressions*1.0000)*100)\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "UPI P2M"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_qewk8lcxa9_vlt6x2ekt2d"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4617,
+      "chart_name": "Home Page Traffic Dashboard - DOD Impressions",
+      "chart_type": "echarts_timeseries_smooth",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, sum(clicks*1.0000)/SUM(impressions*1.0000)*100\n AS \"CTR\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IN ('MTD') AND category_name IN ('UPI P2M') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)) ORDER BY \"CTR\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "sum(clicks*1.0000)/SUM(impressions*1.0000)*100\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "MTD"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "UPI P2M"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_41la6amjpg7_uh325a2t0w"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4618,
+      "chart_name": "Home Page Traffic Dashboard - DOD Impressions CTR",
+      "chart_type": "echarts_timeseries_smooth",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, SUM(impressions)\n AS \"Impressions__\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IN ('MTD') AND category_name IN ('UPI P2M') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)) ORDER BY SUM(impressions)\n DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impressions",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "SUM(impressions)\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "MTD"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "UPI P2M"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_p1xk0g204o_inyrg37ps2j"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4619,
+      "chart_name": "Home Page Traffic Dashboard - DOD Clicks",
+      "chart_type": "echarts_timeseries_smooth",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, SUM(clicks)\n AS \"Clicks__\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IN ('MTD') AND category_name IN ('UPI P2M') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)) ORDER BY SUM(clicks)\n DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "SUM(clicks)\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "dt"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": [
+            "MTD"
+          ],
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IN",
+          "operatorId": "IN",
+          "sqlExpression": null,
+          "subject": "month_"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": [
+            "UPI P2M"
+          ],
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_tyd8hqadn3i_6hl6z1gywr",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IN",
+          "operatorId": "IN",
+          "sqlExpression": null,
+          "subject": "category_name"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4620,
+      "chart_name": "Home Page Traffic Dashboard - Banner 3.0",
+      "chart_type": "table",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT category_name AS category_name, SUM(impressions)filter(where month_ = 'LMTD') AS \"Impressions LMTD\", SUM(clicks) filter(where month_ = 'LMTD') AS \"Clicks LMTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n AS \"CTR LMTD\", sum(impressions)filter(where month_ = 'MTD') AS \"Impression MTD\", sum(clicks) filter(where month_ = 'MTD') AS \"Clicks MTD\", sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n AS \"CTR MTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD') AS \"Impression LMTD\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IS NOT NULL AND view_type IN ('Banner-3.0', 'banner-3.0') GROUP BY category_name ORDER BY \"Impressions LMTD\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(impressions)filter(where month_ = 'LMTD')",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Impressions LMTD",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(clicks) filter(where month_ = 'LMTD')",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Clicks LMTD",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n\n",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "CTR LMTD",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(impressions)filter(where month_ = 'MTD')",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Impression MTD",
+          "optionName": "metric_yszke6irq5l_3cm8fmzxlcc"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(clicks) filter(where month_ = 'MTD')",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Clicks MTD",
+          "optionName": "metric_605p61riy1x_2alpxyg3zrh"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n\n",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "CTR MTD",
+          "optionName": "metric_n30sgacbyr_swtbvt7wsbn"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [
+        "category_name"
+      ],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "dt"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "sqlExpression": null,
+          "subject": "month_"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": [
+            "Banner-3.0",
+            "banner-3.0"
+          ],
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_sdjdb83l9s_j3u9ze2zvql",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "IN",
+          "operatorId": "IN",
+          "sqlExpression": null,
+          "subject": "view_type"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4621,
+      "chart_name": "Home Page Traffic Dashboard - My Paytm Icon",
+      "chart_type": "table",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT case when category_name in ('PAYTM-UPI P2P','UPI P2M') then 'UPI' else category_name end  AS category_name, SUM(impressions)filter(where month_ = 'LMTD') AS \"Impressions LMTD\", SUM(clicks) filter(where month_ = 'LMTD') AS \"Clicks LMTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n AS \"CTR LMTD\", sum(impressions)filter(where month_ = 'MTD') AS \"Impression MTD\", sum(clicks) filter(where month_ = 'MTD') AS \"Clicks MTD\", sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n AS \"CTR MTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD') AS \"Impression LMTD\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IS NOT NULL AND \"View_id\" IN (338008, 339885, 341290, 341793, 336232, 347883, 343271, 345809, 341478, 346252, 346319) AND category_name IS NOT NULL GROUP BY case when category_name in ('PAYTM-UPI P2P','UPI P2M') then 'UPI' else category_name end  ORDER BY \"Impressions LMTD\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impressions LMTD",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk",
+          "sqlExpression": "SUM(impressions)filter(where month_ = 'LMTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks LMTD",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c",
+          "sqlExpression": "SUM(clicks) filter(where month_ = 'LMTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR LMTD",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impression MTD",
+          "optionName": "metric_yszke6irq5l_3cm8fmzxlcc",
+          "sqlExpression": "sum(impressions)filter(where month_ = 'MTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks MTD",
+          "optionName": "metric_605p61riy1x_2alpxyg3zrh",
+          "sqlExpression": "sum(clicks) filter(where month_ = 'MTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR MTD",
+          "optionName": "metric_n30sgacbyr_swtbvt7wsbn",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [
+        {
+          "label": "category_name",
+          "sqlExpression": "case when category_name in ('PAYTM-UPI P2P','UPI P2M') then 'UPI' else category_name end ",
+          "expressionType": "SQL"
+        }
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "View_id",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "338008",
+            "339885",
+            "341290",
+            "341793",
+            "336232",
+            "347883",
+            "343271",
+            "345809",
+            "341478",
+            "346252",
+            "346319"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sdjdb83l9s_j3u9ze2zvql"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_mtepuiq9de_kti9zp5esf"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4630,
+      "chart_name": "Home Page Traffic Dashboard - UPI P2M LAST MONTH",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT case when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n AS \"Weeks\", view_type AS view_type, SUM(impressions) AS \"Impression\", SUM(clicks) AS \"Clicks\", sum(clicks*1.0000) \n/SUM(impressions*1.0000) AS \"CTR\", format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \ncase when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n))\n*100)) AS \"Category Share\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE category_name = 'UPI P2M' AND ((date_Trunc('month',date(dt)) = date_trunc('month',\n(current_Date - interval '01' day - interval '01' month)\n))) GROUP BY case when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n, view_type ORDER BY \"Impression\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(impressions)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Impression",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(clicks)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Clicks",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "sum(clicks*1.0000) \n/SUM(impressions*1.0000)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "CTR",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \ncase when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n))\n*100))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Category Share",
+          "optionName": "metric_6x87m7c798_jljsofu2zmp"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "comparator": "UPI P2M",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_mtepuiq9de_kti9zp5esf"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "date_Trunc('month',date(dt)) = date_trunc('month',\n(current_Date - interval '01' day - interval '01' month)\n)",
+          "clause": "WHERE",
+          "subject": null,
+          "operator": null,
+          "comparator": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_xi0tqs3ni2_og1rjs3ha8l"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4631,
+      "chart_name": "Home Page Traffic Dashboard - UPI P2M Current Month",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT case when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n AS \"Weeks\", view_type AS view_type, SUM(impressions) AS \"Impression\", SUM(clicks) AS \"Clicks\", format('%.2f%%',\nsum(clicks*1.0000) \n/SUM(impressions*1.0000)\n) AS \"CTR\", format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \ncase when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n))\n*100)) AS \"Category Share\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE category_name = 'UPI P2M' AND ((date_Trunc('month',date(dt)) = date_trunc('month',\n(current_Date - interval '01' day)\n))) GROUP BY case when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n, view_type ORDER BY \"Impression\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impression",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk",
+          "sqlExpression": "SUM(impressions)"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c",
+          "sqlExpression": "SUM(clicks)"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "format('%.2f%%',\nsum(clicks*1.0000) \n/SUM(impressions*1.0000)\n)"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Category Share",
+          "optionName": "metric_6x87m7c798_jljsofu2zmp",
+          "sqlExpression": "format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \ncase when day(dt) between 1 and 7 then 'Week 1'\n when day(dt) between 8 and 14 then 'Week 2'\n when day(dt) between 15 and 21 then 'Week 3'\n when day(dt) between 22 and 28 then 'Week 4'\n when day(dt)> 28 then 'Week 5'\nEnd\n))\n*100))"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "clause": "WHERE",
+          "comparator": "No filter",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "TEMPORAL_RANGE",
+          "sqlExpression": null,
+          "subject": "dt"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": "UPI P2M",
+          "datasourceWarning": false,
+          "expressionType": "SIMPLE",
+          "filterOptionName": "filter_mtepuiq9de_kti9zp5esf",
+          "isExtra": false,
+          "isNew": false,
+          "operator": "==",
+          "operatorId": "EQUALS",
+          "sqlExpression": null,
+          "subject": "category_name"
+        },
+        {
+          "clause": "WHERE",
+          "comparator": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "filterOptionName": "filter_xi0tqs3ni2_og1rjs3ha8l",
+          "isExtra": false,
+          "isNew": false,
+          "operator": null,
+          "sqlExpression": "date_Trunc('month',date(dt)) = date_trunc('month',\n(current_Date - interval '01' day)\n)",
+          "subject": null
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4833,
+      "chart_name": "Home Page Traffic Dashboard - Banner 2.0",
+      "chart_type": "table",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT category_name AS category_name, SUM(impressions)filter(where month_ = 'LMTD') AS \"Impressions LMTD\", SUM(clicks) filter(where month_ = 'LMTD') AS \"Clicks LMTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n AS \"CTR LMTD\", sum(impressions)filter(where month_ = 'MTD') AS \"Impression MTD\", sum(clicks) filter(where month_ = 'MTD') AS \"Clicks MTD\", sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n AS \"CTR MTD\", sum(clicks*1.0000) filter(where month_ = 'LMTD') AS \"Impression LMTD\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE month_ IS NOT NULL AND view_type IN ('banner-2_0') GROUP BY category_name ORDER BY \"Impressions LMTD\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impressions LMTD",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk",
+          "sqlExpression": "SUM(impressions)filter(where month_ = 'LMTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks LMTD",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c",
+          "sqlExpression": "SUM(clicks) filter(where month_ = 'LMTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR LMTD",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'LMTD')\n/SUM(impressions*1.0000) filter(where month_ = 'LMTD')\n\n"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Impression MTD",
+          "optionName": "metric_yszke6irq5l_3cm8fmzxlcc",
+          "sqlExpression": "sum(impressions)filter(where month_ = 'MTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "Clicks MTD",
+          "optionName": "metric_605p61riy1x_2alpxyg3zrh",
+          "sqlExpression": "sum(clicks) filter(where month_ = 'MTD')"
+        },
+        {
+          "aggregate": null,
+          "column": null,
+          "datasourceWarning": false,
+          "expressionType": "SQL",
+          "hasCustomLabel": true,
+          "label": "CTR MTD",
+          "optionName": "metric_n30sgacbyr_swtbvt7wsbn",
+          "sqlExpression": "sum(clicks*1.0000) filter(where month_ = 'MTD')\n/SUM(impressions*1.0000) filter(where month_ = 'MTD')\n\n"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [
+        "category_name"
+      ],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_eg59c52o3w9_hypeh5b3el"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "view_type",
+          "operator": "IN",
+          "operatorId": "IN",
+          "comparator": [
+            "banner-2_0"
+          ],
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_sdjdb83l9s_j3u9ze2zvql"
+        }
+      ],
+      "time_range": null
+    },
+    {
+      "chart_id": 4834,
+      "chart_name": "Home Page Traffic Dashboard - Category wise trend",
+      "chart_type": "pivot_table_v2",
+      "dataset_id": 2019,
+      "dataset_name": "Home Page Traffic Dashboard",
+      "database_name": "Trino",
+      "sql_query": "SELECT month_ AS month_, case WHEN category_name in ('PAYTM-UPI P2P','UPI P2M') then 'UPI'\nelse category_name end AS category_name, SUM(impressions) AS \"Impression\", SUM(clicks) AS \"Clicks\", format('%.2f%%',\ntry(sum(clicks*1.0000) \n/SUM(impressions*1.0000)\n)\n) AS \"CTR\", format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \nmonth_\n))\n*100)) AS \"Category Share\" \nFROM (with sub_category_data as\n      (\n        select a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name, sum(a.impressions) as impressions, sum(a.clicks) as clicks\n        from\n        (\n          select dt,\n          case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_,\n          \n           case\n                  when view_type='banner-3_0' then 'Banner-3.0'\n                  when view_type='banner-2_0' then 'banner-2_0'\n                  when view_type='smart-icon-button' or view_id in (334426 ,339886)  then 'Smart-icon-button'\n                  when view_type in ('smart-doodle-widget','smart-doodle-widget-v2') then 'Doodle'\n                  when view_type='smart-icon-input-4xn' or view_id in (341290) then 'smart-icon-input-4xn'\n                  when view_type in ('smart-reminder-icon','combo-reminder','smart-reminder') then 'Reminder'\n                  when  view_id in (339769) then 'Featured'\n                  when view_id in (338008) then 'My Paytm Icon'\n                  when view_type='interstitial-floating' then 'Interstitial'\n                  else view_type\n              end as view_type\n          \n          ,\n          sub_category_name,\n          campaign_type_name,\n          impressions,clicks,\n          slot,View_id,\n          category_name\n          from  hive.team_measurement.banner_campaigns_mv_v1\n          where (dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH)\n                        and (CURRENT_DATE - INTERVAL '1' DAY))\n           and storefront_id = 55486\n        ) as a\n        --where a.view_type is not NULL\n        group by a.dt,a.month_, a.view_type, a.sub_category_name,campaign_type_name,slot,View_id,category_name\n      )\n\n  select sd.dt,sd.month_, sd.view_type, sd.sub_category_name,campaign_type_name,slot,View_id,category_name, sd.impressions, sd.clicks\n      from sub_category_data as sd\n      union all\n      select dt,  \n      case\n            when dt between DATE_TRUNC('MONTH', (CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) and\n              ((CURRENT_DATE - INTERVAL '1' DAY) - interval '1' MONTH) then 'LMTD'\n            when dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY) and (CURRENT_DATE - INTERVAL '1' DAY) then 'MTD'\n          end as month_\n      , 'Push' as view_type,null sub_category_name,null campaign_type_name,null slot, 0 View_id, 'UPI P2M' category_name, sum(total_delivered) as impressions, sum(total_opened) as clicks\n      from  hive.team_measurement.push_campaigns_mv_v1\n      where dt between DATE_TRUNC('MONTH', CURRENT_DATE - INTERVAL '1' DAY - interval '01' month) and (CURRENT_DATE - INTERVAL '1' DAY)\n        and category_names in ('UPI P2M')\n        group by 1,2,3,4,5,6,7,8\n) AS virtual_table \nWHERE category_name IS NOT NULL AND month_ IS NOT NULL GROUP BY month_, case WHEN category_name in ('PAYTM-UPI P2P','UPI P2M') then 'UPI'\nelse category_name end ORDER BY \"Impression\" DESC\nLIMIT 1000;\n\n",
+      "metrics": [
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(impressions)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Impression",
+          "optionName": "metric_ee5oqbahxaa_f5s693h2hxk"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(clicks)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Clicks",
+          "optionName": "metric_oejmgi2u11k_mv5xgbsl75c"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "format('%.2f%%',\ntry(sum(clicks*1.0000) \n/SUM(impressions*1.0000)\n)\n)",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "CTR",
+          "optionName": "metric_90wi3447g5p_3k8v624u9nm"
+        },
+        {
+          "expressionType": "SQL",
+          "sqlExpression": "format('%.2f%%',(\nsum(impressions*1.0000)/\n(sum(sum(impressions)) over(\npartition by \nmonth_\n))\n*100))",
+          "column": null,
+          "aggregate": null,
+          "datasourceWarning": false,
+          "hasCustomLabel": true,
+          "label": "Category Share",
+          "optionName": "metric_6x87m7c798_jljsofu2zmp"
+        }
+      ],
+      "columns": [
+        "clicks",
+        "category_name",
+        "campaign_type_name",
+        "slot",
+        "View_id",
+        "impressions",
+        "dt",
+        "month_",
+        "view_type",
+        "sub_category_name"
+      ],
+      "groupby_columns": [],
+      "filters": [
+        {
+          "expressionType": "SIMPLE",
+          "subject": "dt",
+          "operator": "TEMPORAL_RANGE",
+          "comparator": "No filter",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_g3zhld18mhv_hs6qbhr9ej8"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "category_name",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_ory5nlhzoc_h7eiexkv0ul"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "month_",
+          "operator": "IS NOT NULL",
+          "operatorId": "IS_NOT_NULL",
+          "comparator": null,
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_5jw0tp1w1ae_8iay7lbir1m"
+        }
+      ],
+      "time_range": null
+    }
+  ]
+}

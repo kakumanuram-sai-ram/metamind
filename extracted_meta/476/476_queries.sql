@@ -689,7 +689,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-21' GROUP BY "Date" ORDER BY "Success" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-22' GROUP BY "Date" ORDER BY "Success" DESC
 LIMIT 100;
 
 
@@ -720,7 +720,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-21' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-22' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
 LIMIT 10000;
 
 

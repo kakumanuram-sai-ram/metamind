@@ -1,0 +1,2489 @@
+-- SQL Queries for Dashboard: UPI SR Monitoring (T & T-1)
+-- Dashboard ID: 588
+-- Total Charts: 23
+================================================================================
+
+-- Chart 1: Hourly SR Trend (T vs T-1)- 588 (ID: 2823)
+-- Chart Type: echarts_timeseries_line
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT hour(created_on) AS "Hour", dt AS dt, (COUNT(txn_id) filter(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) AS "SR" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table GROUP BY hour(created_on), dt ORDER BY "SR" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 2: Top Error Codes (T vs T-1)- 588 (ID: 2824)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Error_code" AS "Error_code", COUNT(txn_id)filter(where date(created_on) = (date(current_time_)- interval '01' day)
+and hour(created_on) <= hour(
+(current_time_ - interval '01' hour))
+) AS "Yday Failure", COUNT(txn_id)
+filter(
+where date(created_on) = date(current_time_)
+and hour(created_on) <= hour(
+(current_time_ - interval '01' hour))
+) AS "Today Failure", case when COUNT(txn_id)filter(where date(created_on) = (date(current_time_) - interval '01' day)
+and hour(created_on) <= hour(
+(current_time_ - interval '01' hour))
+) = 0 then 0 else
+
+(
+COUNT(txn_id)
+filter(
+where date(created_on) = date(current_time_)
+and hour(created_on) <= hour(
+(current_time_ - interval '01' hour))
+)
+*1.0000
+)/
+(
+COUNT(txn_id)filter(where date(created_on) = (date(current_time_)- interval '01' day)
+and hour(created_on) <= hour(
+(current_time_ - interval '01' hour))
+)*1.0000
+)-1
+end AS "Failure Growth" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table 
+WHERE status IN ('FAILURE') GROUP BY "Error_code" ORDER BY "Yday Failure" DESC
+LIMIT 20;
+
+
+
+================================================================================
+
+-- Chart 3: Top Bank Codes (T vs T-1)- 588 (ID: 2825)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payee_handle AS payee_handle, COUNT(txn_id)filter(where date(created_on) = (date(current_time_)- interval '01' day)
+and hour(created_on) <= hour(
+(cast(current_time_ as TIMESTAMP) - interval '01' hour))
+) AS "Yday Failure", COUNT(txn_id)
+filter(
+where date(created_on) = (date(current_time_))
+and hour(created_on) <= hour(
+(cast(current_time_ as TIMESTAMP) - interval '01' hour))
+) AS "Today Failure", case when COUNT(txn_id)filter(where date(created_on) = (current_date- interval '01' day)
+and hour(created_on) <= hour(
+(cast(current_time as TIMESTAMP) - interval '01' hour))
+) = 0 then 0 else
+
+(
+COUNT(txn_id)
+filter(
+where date(created_on) = (current_date)
+and hour(created_on) <= hour(
+(cast(current_time as TIMESTAMP) - interval '01' hour))
+)
+*1.0000
+)/
+(
+COUNT(txn_id)filter(where date(created_on) = (current_date- interval '01' day)
+and hour(created_on) <= hour(
+(cast(current_time as TIMESTAMP) - interval '01' hour))
+)*1.0000
+)-1
+end AS "Failure Growth" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table 
+WHERE status IN ('FAILURE') GROUP BY payee_handle ORDER BY "Yday Failure" DESC
+LIMIT 20;
+
+
+
+================================================================================
+
+-- Chart 4: PSP wise (T vs T-1)- 588 (ID: 3174)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT Lower(payer_handle) AS payer_handle, COUNT(txn_id)filter(where date(created_on) = (current_date- interval '01' day)
+and hour(created_on) <= hour(
+(cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '01' hour))
+) AS "Yday Failure", COUNT(txn_id)
+filter(
+where date(created_on) = (current_date)
+and hour(created_on) <= hour(
+(cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '01' hour))
+ )
+  AS "Today Failure", case when COUNT(txn_id)filter(where date(created_on) = (current_date- interval '01' day)
+and hour(created_on) <= hour(
+(cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '01' hour))
+) = 0 then 0 else
+
+(
+COUNT(txn_id)
+filter(
+where date(created_on) = (current_date)
+and hour(created_on) <= hour(
+(cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '01' hour))
+)
+*1.0000
+)/
+(
+COUNT(txn_id)filter(where date(created_on) = (current_date- interval '01' day)
+and hour(created_on) <= hour(
+(cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '01' hour))
+)*1.0000
+)-1
+end AS "Failure Growth" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table 
+WHERE status IN ('FAILURE') GROUP BY Lower(payer_handle) ORDER BY "Yday Failure" DESC
+LIMIT 100;
+
+
+
+================================================================================
+
+-- Chart 5: Top Error Codes X Bank (T vs T-1)- 588 (ID: 3229)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring(T & T-1) error x bank
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT error_code AS error_code, payer_bank AS payer_bank, sum(total_today_failures) AS "Today Failure", sum(total_yest_failures) AS "Yday Failure", sum(total_today_failures*1.000)
+/
+sum(total_yest_failures*1.000)
+-1 AS "Failure Growth" 
+FROM (WITH BankFailures AS (
+SELECT 
+error_code error_code,
+payer_bank payer_bank,
+count(txn_id) filter(where date(created_on)  = (current_date - interval '01' day)) n_yest_failures,
+count(txn_id) filter(where date(created_on)  = (current_date )) n_today_failures
+FROM
+ (
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+ where payer_handle in('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and error_code is Not null
+group by 1,2
+),
+      TopBanks AS (
+          SELECT payer_bank
+          FROM (
+              SELECT payer_bank,
+                  ROW_NUMBER() OVER (ORDER BY SUM(n_today_failures) DESC, SUM(n_yest_failures) DESC) AS rn
+              FROM BankFailures
+              GROUP BY payer_bank
+          ) ranked
+          WHERE rn <= 5
+      ),
+      TopBankCodes AS (
+          SELECT payer_bank, error_code
+          FROM (
+              SELECT payer_bank, error_code,
+                  ROW_NUMBER() OVER (PARTITION BY payer_bank ORDER BY n_today_failures DESC, n_yest_failures DESC) AS rn
+              FROM BankFailures
+          ) ranked
+          WHERE rn <= 5
+      )
+      SELECT
+          tbc.payer_bank,
+          tbc.error_code,
+          SUM(bf.n_yest_failures) AS total_yest_failures,
+          SUM(bf.n_today_failures) AS total_today_failures
+      FROM BankFailures bf
+      JOIN TopBanks tb ON bf.payer_bank = tb.payer_bank
+      JOIN TopBankCodes tbc ON bf.payer_bank = tbc.payer_bank
+          AND (bf.error_code = tbc.error_code OR (bf.error_code IS NULL AND tbc.error_code IS NULL))
+      GROUP BY tbc.payer_bank, tbc.error_code
+      ORDER BY total_today_failures DESC, total_yest_failures DESC
+) AS virtual_table 
+WHERE error_code IS NOT NULL GROUP BY error_code, payer_bank ORDER BY "Today Failure" DESC
+LIMIT 50;
+
+
+
+================================================================================
+
+-- Chart 6: Top Error Codes X Payer Handle (T vs T-1) : Exc (U30-Z9 & U30-ZM)- 588 (ID: 3751)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring(T & T-1) error x payer_handle
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT error_code AS error_code, payer_handle AS payer_handle, sum(total_today_failures) AS "Today's Failure", sum(total_yest_failures) AS "Yesterday's Failure", case when sum(total_yest_failures)  = 0 then 0 else
+
+(
+sum(total_today_failures) *1.0000
+)/
+(
+sum(total_yest_failures) *1.0000
+)-1
+end AS "Growth" 
+FROM (WITH Payer_handle_Failures AS (
+SELECT 
+error_code error_code,
+payer_handle payer_handle,
+count(txn_id) filter(where date(created_on)  = (current_date - interval '01' day)) n_yest_failures,
+count(txn_id) filter(where date(created_on)  = (current_date )) n_today_failures
+FROM
+ (
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+ where payer_handle in('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+ and error_code is Not null
+group by 1,2
+),
+      Top_Payer_handle AS (
+          SELECT payer_handle
+          FROM (
+              SELECT payer_handle,
+                  ROW_NUMBER() OVER (ORDER BY SUM(n_today_failures) DESC, SUM(n_yest_failures) DESC) AS rn
+              FROM Payer_handle_Failures
+              GROUP BY payer_handle
+          ) ranked
+          WHERE rn <= 5
+      ),
+      Top_Payer_handle_codes AS (
+          SELECT payer_handle, error_code
+          FROM (
+              SELECT payer_handle, error_code,
+                  ROW_NUMBER() OVER (PARTITION BY payer_handle ORDER BY n_today_failures DESC, n_yest_failures DESC) AS rn
+              FROM Payer_handle_Failures
+          ) ranked
+          WHERE rn <= 5
+      )
+      SELECT
+          tbc.payer_handle,
+          tbc.error_code,
+          SUM(bf.n_yest_failures) AS total_yest_failures,
+          SUM(bf.n_today_failures) AS total_today_failures
+      FROM Payer_handle_Failures bf
+      JOIN Top_Payer_handle tb ON bf.payer_handle = tb.payer_handle
+      JOIN Top_Payer_handle_codes tbc ON bf.payer_handle = tbc.payer_handle
+          AND (bf.error_code = tbc.error_code OR (bf.error_code IS NULL AND tbc.error_code IS NULL))
+      GROUP BY tbc.payer_handle, tbc.error_code
+      ORDER BY total_today_failures DESC, total_yest_failures DESC
+) AS virtual_table 
+WHERE error_code IS NOT NULL GROUP BY error_code, payer_handle ORDER BY "Today's Failure" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 7: Top Error Codes X Payee Handle (T vs T-1): Exc (U30-Z9 & U30-ZM)- 588 (ID: 3783)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring(T & T-1) error x payee Handle
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT error_code AS error_code, payee_handle AS payee_handle, sum(total_today_failures) AS "Today Failure", sum(total_yest_failures) AS "Yday Failure", sum(total_today_failures*1.0000)/
+sum(total_yest_failures*1.0000)-1 AS "Failure Growth" 
+FROM (WITH Payee_handle_Failures AS (
+SELECT 
+error_code error_code,
+payee_handle payee_handle,
+count(txn_id) filter(where date(created_on)  = (current_date - interval '01' day)) n_yest_failures,
+count(txn_id) filter(where date(created_on)  = (current_date )) n_today_failures
+FROM
+ (
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+ where payer_handle in('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+ and error_code not in('U30-Z9','U30-ZM')
+group by 1,2
+),
+      Top_payee_handle AS (
+          SELECT payee_handle
+          FROM (
+              SELECT payee_handle,
+                  ROW_NUMBER() OVER (ORDER BY SUM(n_today_failures) DESC, SUM(n_yest_failures) DESC) AS rn
+              FROM Payee_handle_Failures
+              GROUP BY payee_handle
+          ) ranked
+          WHERE rn <= 5
+      ),
+      Top_payee_handle_code AS (
+          SELECT payee_handle, error_code
+          FROM (
+              SELECT payee_handle, error_code,
+                  ROW_NUMBER() OVER (PARTITION BY payee_handle ORDER BY n_today_failures DESC, n_yest_failures DESC) AS rn
+              FROM Payee_handle_Failures
+          ) ranked
+          WHERE rn <= 5
+      )
+      SELECT
+          tbc.payee_handle,
+          tbc.error_code,
+          SUM(bf.n_yest_failures) AS total_yest_failures,
+          SUM(bf.n_today_failures) AS total_today_failures
+      FROM Payee_handle_Failures bf
+      JOIN Top_payee_handle tb ON bf.payee_handle = tb.payee_handle
+      JOIN Top_payee_handle_Code tbc ON bf.payee_handle = tbc.payee_handle
+          AND (bf.error_code = tbc.error_code OR (bf.error_code IS NULL AND tbc.error_code IS NULL))
+      GROUP BY tbc.payee_handle, tbc.error_code
+      ORDER BY total_today_failures DESC, total_yest_failures DESC
+) AS virtual_table 
+WHERE error_code IS NOT NULL GROUP BY error_code, payee_handle ORDER BY "Today Failure" DESC
+LIMIT 100;
+
+
+
+================================================================================
+
+-- Chart 8: UPI SR Monitoring(T & T-1) Top 10 Remiter Bank (ID: 3852)
+-- Chart Type: echarts_timeseries_bar
+-- Dataset: UPI SR Monitoring(T & T-1) Top Bank total and failed txns
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payer_bank AS payer_bank, dt AS dt, (sum(Success_txns)*1.0000)/
+(SUM(total_Txn)*1.00000) AS "SR" 
+FROM (with A as(
+SELECT  created_on created_on, status status,payer_bank payer_bank, count(txn_id) txns
+FROM
+(
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+group by status,payer_bank, created_on 
+) 
+
+SELECT date(created_on) dt,
+payer_bank,
+sum(txns) total_Txn,
+sum(txns) filter(where status in('SUCCESS','DEEMED')) Success_txns,
+sum(txns) filter(where status in('FAILURE')) Failed_txns,
+sum(txns) filter(where status in('PENDING')) Pending_txns
+from A
+where payer_bank in (
+SELECT payer_bank payer_bank
+FROM
+(
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+group by payer_bank
+order by count(txn_id) desc
+LIMIT 10
+)
+GROUP by 1,2
+) AS virtual_table GROUP BY payer_bank, dt ORDER BY sum("total_Txn") DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 9: Top Error Codes (T-1 vs L7D Avg) (ID: 3935)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T- & T-7)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT npci_resp_code AS npci_resp_code, COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday') AS "Yesterday's Failure", COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')/7 AS "Last7day Failure", (
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday')*1.0000
+)
+/(
+
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')*1.0000/7
+)-1 AS "Change Yday vs last 7 day avg" 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table 
+WHERE status = 'FAILURE' GROUP BY npci_resp_code ORDER BY "Yesterday's Failure" DESC
+LIMIT 20;
+
+
+
+================================================================================
+
+-- Chart 10: Top 5 Error Code & Bank (T-1 vs L7D) (ID: 3940)
+-- Chart Type: table
+-- Dataset: Top 5 Error Code & Bank (T-1 vs L7D)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payer_bank_name AS payer_bank_name, npci_resp_code AS npci_resp_code, sum(total_yest_failures) AS "Yesterday's Failure", sum("total_L7D_failures") AS "Last 7 Day avg", (sum(total_yest_failures*1.0000)/sum(total_L7D_failures*1.000) -1)  AS "% Change(Yest vs L7D Avg)" 
+FROM (WITH BankFailures AS (
+       SELECT
+              payer_bank_name payer_bank_name,
+              npci_resp_code as npci_resp_code,
+            
+              count(distinct case when date(created_on) = DATE_ADD('day', -1, CURRENT_DATE) then txn_id end) as yest_failures,
+              count(distinct case when date(created_on) between DATE_ADD('day', -8, CURRENT_DATE) and DATE_ADD('day', -2, CURRENT_DATE) then txn_id end)/7 as Last_7D_AVG_failures
+              from (
+SELECT "final_Category" AS "final_Category", payer_handle AS payer_handle, period AS period, "success_Txns" AS "success_Txns", payer_cust_id AS payer_cust_id, created_on AS created_on, dt AS dt, txn_id AS txn_id, amount AS amount, npci_resp_code AS npci_resp_code, status AS status, flow_category AS flow_category, payer_account_type AS payer_account_type, payer_bank_name AS payer_bank_name, payee_bank_name AS payee_bank_name, payee_handle AS payee_handle 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table
+) AS dataset_1700 
+             where  lower(status) in('failure')
+             and npci_resp_code is not null
+          GROUP BY 1, 2
+      ),
+      TopBanks AS (
+          SELECT payer_bank_name
+          FROM (
+              SELECT payer_bank_name,
+                  ROW_NUMBER() OVER (ORDER BY SUM(yest_failures) DESC, SUM(Last_7D_AVG_failures) DESC) AS rn
+              FROM BankFailures
+              GROUP BY payer_bank_name
+          ) ranked
+          WHERE rn <= 5
+      ),
+      TopBankCodes AS (
+          SELECT payer_bank_name, npci_resp_code
+          FROM (
+              SELECT payer_bank_name, npci_resp_code,
+                  ROW_NUMBER() OVER (PARTITION BY payer_bank_name ORDER BY yest_failures DESC, Last_7D_AVG_failures DESC) AS rn
+              FROM BankFailures
+          ) ranked
+          WHERE rn <= 5
+      )
+      SELECT
+          tbc.payer_bank_name,
+          tbc.npci_resp_code,
+          SUM(bf.Last_7D_AVG_failures) AS total_L7D_failures,
+          SUM(bf.yest_failures) AS total_yest_failures
+      FROM BankFailures bf
+      JOIN TopBanks tb ON bf.payer_bank_name = tb.payer_bank_name
+      JOIN TopBankCodes tbc ON bf.payer_bank_name = tbc.payer_bank_name
+          AND (bf.npci_resp_code = tbc.npci_resp_code OR (bf.npci_resp_code IS NULL AND tbc.npci_resp_code IS NULL))
+      GROUP BY tbc.payer_bank_name, tbc.npci_resp_code
+      ORDER BY total_yest_failures DESC, total_L7D_failures DESC
+) AS virtual_table GROUP BY payer_bank_name, npci_resp_code ORDER BY "Yesterday's Failure" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 11: Top 5 Error Code & Payer Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM) (ID: 3980)
+-- Chart Type: table
+-- Dataset: Top 5 Error Code & Payer Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payer_handle AS payer_handle, npci_resp_code AS npci_resp_code, sum(total_yest_failures) AS "Yesterday's Failure", sum("total_L7D_failures") AS "Last 7 Day avg", (sum(total_yest_failures*1.0000)/sum(total_L7D_failures*1.000) -1)  AS "% Change(Yest vs L7D Avg)" 
+FROM (WITH BankFailures AS (
+          SELECT
+              payer_handle payer_handle,
+              npci_resp_code as npci_resp_code,
+              count(distinct case when date(created_on) = DATE_ADD('day', -1, CURRENT_DATE) then txn_id end) as yest_failures,
+              count(distinct case when date(created_on) between DATE_ADD('day', -8, CURRENT_DATE) and DATE_ADD('day', -2, CURRENT_DATE) then txn_id end)/7 as Last_7D_AVG_failures
+              from (
+SELECT "final_Category" AS "final_Category", payer_handle AS payer_handle, period AS period, "success_Txns" AS "success_Txns", payer_cust_id AS payer_cust_id, created_on AS created_on, dt AS dt, txn_id AS txn_id, amount AS amount, npci_resp_code AS npci_resp_code, status AS status, flow_category AS flow_category, payer_account_type AS payer_account_type, payer_bank_name AS payer_bank_name, payee_bank_name AS payee_bank_name, payee_handle AS payee_handle 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table
+) AS dataset_1700 
+             where  lower(status) in('failure')
+             and npci_resp_code is not null
+             and upper(npci_resp_code) not in('U30-Z9','U30-ZM')
+          GROUP BY 1, 2
+          
+      ),
+      TopBanks AS (
+          SELECT payer_handle
+          FROM (
+              SELECT payer_handle,
+                  ROW_NUMBER() OVER (ORDER BY SUM(yest_failures) DESC, SUM(Last_7D_AVG_failures) DESC) AS rn
+              FROM BankFailures
+              GROUP BY payer_handle
+          ) ranked
+          WHERE rn <= 5
+      ),
+      TopBankCodes AS (
+          SELECT payer_handle, npci_resp_code
+          FROM (
+              SELECT payer_handle, npci_resp_code,
+                  ROW_NUMBER() OVER (PARTITION BY payer_handle ORDER BY yest_failures DESC, Last_7D_AVG_failures DESC) AS rn
+              FROM BankFailures
+          ) ranked
+          WHERE rn <= 5
+      )
+      SELECT
+          tbc.payer_handle,
+          tbc.npci_resp_code,
+          SUM(bf.Last_7D_AVG_failures) AS total_L7D_failures,
+          SUM(bf.yest_failures) AS total_yest_failures
+      FROM BankFailures bf
+      JOIN TopBanks tb ON bf.payer_handle = tb.payer_handle
+      JOIN TopBankCodes tbc ON bf.payer_handle = tbc.payer_handle
+          AND (bf.npci_resp_code = tbc.npci_resp_code OR (bf.npci_resp_code IS NULL AND tbc.npci_resp_code IS NULL))
+      GROUP BY tbc.payer_handle, tbc.npci_resp_code
+      ORDER BY total_yest_failures DESC, total_L7D_failures DESC
+) AS virtual_table GROUP BY payer_handle, npci_resp_code ORDER BY "Yesterday's Failure" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 12: Top 5 Error Code & Payee Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM) (ID: 3987)
+-- Chart Type: pivot_table_v2
+-- Dataset: Top 5 Error Code & Payee Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payee_handle AS payee_handle, npci_resp_code AS npci_resp_code, sum(total_yest_failures) AS "Yesterday's Failure", sum("total_L7D_failures") AS "Last 7 Day avg", (sum(total_yest_failures*1.0000)/sum(total_L7D_failures*1.000) -1) *100 AS "% Change(Yest vs L7D Avg)" 
+FROM (WITH payee_handle_Failures AS (
+          SELECT
+              payee_handle payee_handle,
+              npci_resp_code as npci_resp_code,
+              count(distinct case when date(created_on) = DATE_ADD('day', -1, CURRENT_DATE) then txn_id end) as yest_failures,
+              count(distinct case when date(created_on) between DATE_ADD('day', -8, CURRENT_DATE) and DATE_ADD('day', -2, CURRENT_DATE) then txn_id end)/7 as Last_7D_AVG_failures
+              from (
+SELECT "final_Category" AS "final_Category", payer_handle AS payer_handle, period AS period, "success_Txns" AS "success_Txns", payer_cust_id AS payer_cust_id, created_on AS created_on, dt AS dt, txn_id AS txn_id, amount AS amount, npci_resp_code AS npci_resp_code, status AS status, flow_category AS flow_category, payer_account_type AS payer_account_type, payer_bank_name AS payer_bank_name, payee_bank_name AS payee_bank_name, payee_handle AS payee_handle 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table
+) AS dataset_1700 
+             where  lower(status) in('failure')
+             and npci_resp_code is not null
+             and upper(npci_resp_code) not in('U30-Z9','U30-ZM')
+          GROUP BY 1, 2
+          
+      ),
+      TopBanks AS (
+          SELECT payee_handle
+          FROM (
+              SELECT payee_handle,
+                  ROW_NUMBER() OVER (ORDER BY SUM(yest_failures) DESC, SUM(Last_7D_AVG_failures) DESC) AS rn
+              FROM payee_handle_Failures where payee_handle is not null
+              GROUP BY payee_handle
+          ) ranked
+          WHERE rn <= 5
+      )
+      
+      ,
+      TopBankCodes AS (
+          SELECT payee_handle, npci_resp_code
+          FROM (
+              SELECT payee_handle, npci_resp_code,
+                  ROW_NUMBER() OVER (PARTITION BY payee_handle ORDER BY yest_failures DESC, Last_7D_AVG_failures DESC) AS rn
+              FROM payee_handle_Failures where payee_handle is not null
+              and payee_handle in( SELECT payee_handle from TopBanks)
+          ) ranked
+          WHERE rn <= 5
+      )
+      
+      SELECT
+          tbc.payee_handle,
+          tbc.npci_resp_code,
+          SUM(bf.Last_7D_AVG_failures) AS total_L7D_failures,
+          SUM(bf.yest_failures) AS total_yest_failures
+      FROM payee_handle_Failures bf
+      JOIN TopBanks tb ON bf.payee_handle = tb.payee_handle
+      JOIN TopBankCodes tbc ON bf.payee_handle = tbc.payee_handle
+          AND (bf.npci_resp_code = tbc.npci_resp_code OR (bf.npci_resp_code IS NULL AND tbc.npci_resp_code IS NULL))
+      GROUP BY tbc.payee_handle, tbc.npci_resp_code
+      ORDER BY total_yest_failures DESC, total_L7D_failures DESC
+) AS virtual_table GROUP BY payee_handle, npci_resp_code ORDER BY "Yesterday's Failure" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 13: All Bank (T-1 vs L7D) (ID: 3988)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T- & T-7)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT payer_bank_name AS payer_bank_name, COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday') AS "Yesterday's Failure", COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')/7 AS "Last7day Failure", (
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday')*1.0000
+)
+/(
+
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')*1.0000/7
+)-1 AS "Change Yday vs last 7 day avg" 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table 
+WHERE status = 'FAILURE' GROUP BY payer_bank_name ORDER BY "Yesterday's Failure" DESC
+LIMIT 20;
+
+
+
+================================================================================
+
+-- Chart 14: Error Code & Bank All Data (T-1 vs L7D Avg) (ID: 3989)
+-- Chart Type: table
+-- Dataset: UPI SR Monitoring (T- & T-7)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT npci_resp_code AS npci_resp_code, payer_bank_name AS payer_bank_name, COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday') AS "Yesterday's Failure", COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')/7 AS "Last7day Failure", (
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday')*1.0000
+)
+/(
+
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')*1.0000/7
+)-1 AS "Change Yday vs last 7 day avg" 
+FROM (select 
+txn_timestamp created_on
+,date(txn_timestamp) dt
+,txn_id
+,amount
+,coalesce(npci_resp_code,app_resp_code) npci_resp_code
+,status
+,flow_category
+,payer_handle
+,customer_id_payer payer_cust_id
+,payer_account_type payer_account_type
+,payer_bank_name
+,payee_bank_name
+,payee_handle
+,CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_Category
+,case
+when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday'
+when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day'
+end as period
+,case when status ='SUCCESS' then txn_id end as success_Txns
+
+FROM   hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >= (current_date - interval '08' day)
+  AND transaction_date_key   >= (current_date - interval '08' day)
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+  and purpose_code !='14'
+) AS virtual_table 
+WHERE status = 'FAILURE' GROUP BY npci_resp_code, payer_bank_name ORDER BY "Yesterday's Failure" DESC
+LIMIT 100;
+
+
+
+================================================================================
+
+-- Chart 15: Hourly SR Trend By Category (T vs T-1)- 588 (ID: 3990)
+-- Chart Type: echarts_timeseries_line
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('hour',created_on) AS "Time_", "final_Category" AS "final_Category", (COUNT(txn_id) filter(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) AS "SR" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table 
+WHERE dt >= DATE '2025-11-22' AND dt < DATE '2025-11-23' AND flow_cat != 'Other P2M' GROUP BY date_trunc('hour',created_on), "final_Category" ORDER BY "SR" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 16: Paytm to Competition Overall SR (T & T-1) (ID: 3992)
+-- Chart Type: pivot_table_v2
+-- Dataset: T_vs_T1_Paytm_N_Competition_SR
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, hr AS hr, payee_ AS payee_, sum(txns) AS "Total Txn", sum(txns)filter(where status in('SUCCESS','DEEMED')) AS "Success Txns", ((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100 AS "SR", (((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100)
+-
+(
+lag(
+((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100
+) over(
+partition by hr, payee_ order by date_trunc('day', CAST(dt AS TIMESTAMP))
+)
+) AS "% Change SR" 
+FROM (select
+      dt,
+      hr,
+      mandate_flag,
+      category,
+      status,
+      resp_code,
+      QR_FLAG,
+      payee_,
+      payer_,
+      response_constant,
+      coalesce(txns,0) as txns
+      from user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR
+) AS virtual_table 
+WHERE payer_ = 'Paytm' GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), hr, payee_ ORDER BY "Total Txn" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 17: Paytm to Competition P2P SR (T & T-1) (ID: 3995)
+-- Chart Type: pivot_table_v2
+-- Dataset: T_vs_T1_Paytm_N_Competition_SR
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, hr AS hr, payee_ AS payee_, sum(txns) AS "Total Txn", sum(txns)filter(where status in('SUCCESS','DEEMED')) AS "Success Txns", ((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100 AS "SR", (((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100)
+-
+(
+lag(
+((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100
+) over(
+partition by hr, payee_ order by date_trunc('day', CAST(dt AS TIMESTAMP))
+)
+) AS "% Change SR" 
+FROM (select
+      dt,
+      hr,
+      mandate_flag,
+      category,
+      status,
+      resp_code,
+      QR_FLAG,
+      payee_,
+      payer_,
+      response_constant,
+      coalesce(txns,0) as txns
+      from user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR
+) AS virtual_table 
+WHERE payer_ = 'Paytm' AND category IN ('VPA2VPA', 'VPA2ACCOUNT') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), hr, payee_ ORDER BY "Total Txn" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 18: Competition to Paytm P2P SR (T & T-1) (ID: 3996)
+-- Chart Type: pivot_table_v2
+-- Dataset: T_vs_T1_Paytm_N_Competition_SR
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, hr AS hr, payer_ AS payer_, sum(txns) AS "Total Txn", sum(txns)filter(where status in('SUCCESS','DEEMED')) AS "Success Txns", ((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100 AS "SR", (((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100)
+-
+(
+lag(
+((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100
+) over(
+partition by hr, payer_ order by date_trunc('day', CAST(dt AS TIMESTAMP))
+)
+) AS "% Change SR" 
+FROM (select
+      dt,
+      hr,
+      mandate_flag,
+      category,
+      status,
+      resp_code,
+      QR_FLAG,
+      payee_,
+      payer_,
+      response_constant,
+      coalesce(txns,0) as txns
+      from user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR
+) AS virtual_table 
+WHERE payer_ != 'Paytm' AND category IN ('VPA2VPA', 'VPA2ACCOUNT') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), hr, payer_ ORDER BY "Total Txn" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 19: Paytm to Competition QR SR (T & T-1) (ID: 3997)
+-- Chart Type: pivot_table_v2
+-- Dataset: T_vs_T1_Paytm_N_Competition_SR
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, hr AS hr, payee_ AS payee_, sum(txns) AS "Total Txn", sum(txns)filter(where status in('SUCCESS','DEEMED')) AS "Success Txns", ((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100 AS "SR", (((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100)
+-
+(
+lag(
+((
+sum(txns)filter(where status in('SUCCESS','DEEMED'))*1.0000
+)/(
+sum(txns)*1.0000)
+)*100
+) over(
+partition by hr, payee_ order by date_trunc('day', CAST(dt AS TIMESTAMP))
+)
+) AS "% Change SR" 
+FROM (select
+      dt,
+      hr,
+      mandate_flag,
+      category,
+      status,
+      resp_code,
+      QR_FLAG,
+      payee_,
+      payer_,
+      response_constant,
+      coalesce(txns,0) as txns
+      from user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR
+) AS virtual_table 
+WHERE payer_ = 'Paytm' AND "QR_FLAG" IN ('3P QR', 'Paytm QR') GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), hr, payee_ ORDER BY "Total Txn" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 20: Competition to Paytm QR SR (T & T-1) (ID: 3998)
+-- Chart Type: pivot_table_v2
+-- Dataset: t1_vs_t2_competition_to_paytm_sr
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_trunc('day', CAST(dt AS TIMESTAMP)) AS dt, hr AS hr, payer_ AS payer_, sum("Overall_txn") AS "Total Txn", sum(success) AS "Success Txns", (
+sum(success) *1.0000
+)/(
+sum(Overall_txn)*1.0000)
+*100 AS "SR", ((
+sum(success) *1.0000
+)/(
+sum(Overall_txn)*1.0000)
+*100)
+-
+(
+lag(
+(
+sum(success) *1.0000
+)/(
+sum(Overall_txn)*1.0000)
+*100
+) over(
+partition by hr, payer_ order by date_trunc('day', CAST(dt AS TIMESTAMP))
+)
+) AS "% Change SR" 
+FROM (select
+      dt,
+      hr,
+      payer_,
+      Overall_txn,
+      success
+      from 
+ user_paytm_payments.t1_vs_t2_competition_to_paytm_sr
+) AS virtual_table 
+WHERE payer_ = 'Paytm' GROUP BY date_trunc('day', CAST(dt AS TIMESTAMP)), hr, payer_ ORDER BY "Total Txn" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 21: Last Hour SR Overall Alert (ID: 4001)
+-- Chart Type: table
+-- Dataset: Last Hour SR Overall
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT hour AS hour, sr_current AS sr_current, sr_avg AS sr_avg, sr_difference AS sr_difference 
+FROM (WITH current_sr AS (
+        SELECT
+          HOUR(CAST(txn_timestamp AS TIMESTAMP)) AS hour,
+          CAST(COUNT(DISTINCT CASE WHEN LOWER(status) IN ('success','deemed') THEN txn_id END) AS DOUBLE) /
+          CAST(COUNT(DISTINCT txn_id) AS DOUBLE) AS sr_current
+        FROM hive.upi_txn.upi_activities_data_snapshot_v3
+        WHERE type IN ('COLLECT','PAY')
+          AND TRY(LOWER(SPLIT(payer_vpa, '@')[2])) IN ('paytm','ptsbi','ptaxis','pthdfc','ptyes')
+          AND category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+          AND dl_last_updated >= DATE_ADD('day', -1, CURRENT_DATE)
+          AND (
+          -- 🔹 Normal case: Only include today's transactions
+          (HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') > 0
+           AND DATE(cast(txn_timestamp as timestamp)) = CURRENT_DATE)
+
+          -- 🔹 Special case for 12 AM: Include 11 PM transactions from yesterday
+          OR (HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') = 0
+              AND DATE(cast(txn_timestamp as timestamp)) = DATE_ADD('day', -1, CURRENT_DATE))
+      )
+          AND HOUR(CAST(txn_timestamp AS TIMESTAMP)) =
+              CASE
+                  WHEN HOUR(CAST(DATE_FORMAT(current_timestamp AT TIME ZONE 'Asia/Kolkata',
+                  '%Y-%m-%d %H:%i:%s.%f Asia/Calcutta') AS TIMESTAMP)) = 0
+                  THEN 23
+                  ELSE HOUR(CAST(DATE_FORMAT(current_timestamp AT TIME ZONE 'Asia/Kolkata',
+                  '%Y-%m-%d %H:%i:%s.%f Asia/Calcutta') AS TIMESTAMP)) - 1
+              END
+          AND participant_type = 'PAYER'
+          AND (LOWER(businesstype) <> 'mandate' OR businesstype IS NULL)
+        GROUP BY 1
+      )
+
+
+      SELECT
+        cs.hour,
+        cs.sr_current,
+        sb.sr_avg,
+        cast(cs.sr_current as double)- cast(sb.sr_avg as double) AS sr_difference
+      FROM current_sr cs
+      LEFT JOIN user_paytm_payments.feb_hourly_sr_benchamrk sb
+      ON cs.hour = sb.hour
+) AS virtual_table
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 22: T vs T-1 Error Codes Alert (ID: 4002)
+-- Chart Type: table
+-- Dataset: T vs T-1 Error Codes Alert
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT error_code AS error_code, todays_txns AS todays_txns, yesterdays_txns AS yesterdays_txns, "Failure_Growth" AS "Failure_Growth" 
+FROM (with A as(
+SELECT   error_code error_code, 
+date(created_on) day_id,
+count(txn_id) txns
+FROM (
+SELECT "final_Category" AS "final_Category", payee_handle AS payee_handle, payer_cust_id AS payer_cust_id, flow_cat AS flow_cat, payer_account_type AS payer_account_type, payer_bank AS payer_bank, created_on AS created_on, dt AS dt, date_time_hourly AS date_time_hourly, txn_id AS txn_id, amount AS amount, "Error_code" AS "Error_code", status AS status, payer_vpa AS payer_vpa, payer_handle AS payer_handle, payee_bank AS payee_bank 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table
+) AS dataset_1133
+group by error_code, created_on 
+) 
+
+
+select error_code,todays_txns,yesterdays_txns, ((todays_txns*1.0000)/(yesterdays_txns*1.0000)-1) Failure_Growth
+from (
+select 
+error_code
+,sum(txns) filter(WHERE day_id  = current_Date) todays_txns
+,sum(txns) filter(WHERE day_id  = current_Date - interval '01' day) yesterdays_txns
+from A
+WHERE error_code is not null
+group by 1 
+having sum(txns) filter(WHERE day_id  = current_Date)>5000
+)
+) AS virtual_table ORDER BY todays_txns DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 23: CC 0n UPI Hourly SR Trend (T vs T-1)- 588 (ID: 4382)
+-- Chart Type: echarts_timeseries_line
+-- Dataset: UPI SR Monitoring (T & T-1)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT hour(created_on) AS "Hour", dt AS dt, (COUNT(txn_id) filter(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) AS "SR" 
+FROM (with ti as (
+select 
+-- date_Trunc('minute',cast(created_on as timestamp)) time_,
+created_on,
+txn_id,
+amount,
+app_resp_code,
+npci_resp_code,
+case when  status in('SUCCESS','DEEMED') then 'SUCCESS' else status end as status,
+case when
+        (category= 'VPA2MERCHANT') and business_type = 'MANDATE'
+                then 'MANDATE'                
+    when category in ('VPA2VPA','VPA2ACCOUNT') and (business_type is null or business_type <> 'MANDATE')
+        then 'P2P'        
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM_QR_MERCHANTS'
+        then 'Paytm QR'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('00','01','15','22','23')
+        then '3P QR'
+    when type = 'COLLECT' and category = 'VPA2MERCHANT' and (business_type is null or business_type <> 'MANDATE')
+        then 'P2M Collect'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) = 'PAYTM'
+        and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') in ('04','03')
+        then 'Intent'
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_3P_NATIVE')
+        then 'Intent'                
+    when type = 'PAY' and category = 'VPA2MERCHANT' and upper(channel_code) in ('ONLINE_ONUS_NATIVE')
+        then 'Onus_ExcMandates'
+    when type = 'PAY' and category = 'VPA2MERCHANT'
+        then 'Other P2M'
+    else 'Others'
+    end flow_cat
+            FROM hive.switch.txn_info_snapshot_v3
+            WHERE dl_last_updated >= current_date - interval '01' day
+            and date(created_on) >= current_date - interval '01' day
+            and type in ('PAY','COLLECT')
+            AND category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT')
+            --AND status in('SUCCESS','DEEMED')
+            and lower(psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+            and JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') !='14'
+            ---<= (cast((current_timestamp AT TIME ZONE 'Asia/Kolkata')as TIMESTAMP) - interval '60' minute)
+),
+tp1 as (
+select txn_id, vpa payer_vpa,handle payer_handle, scope_cust_id payer_cust_id, account_type,bank_code payer_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day 
+and lower(handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') 
+and participant_type = 'PAYER'
+),
+tp2 as (
+select txn_id, vpa payee_vpa,handle payee_handle,bank_code payee_bank from 
+hive.switch.txn_participants_snapshot_v3 p
+where dl_last_updated >=  current_date - interval '01' day
+and participant_type = 'PAYEE'
+),
+on_us_vpa as
+(
+select lower(merchant_vpa) as onus_vpa
+from user_paytm_payments.onus_vpa_base
+group by 1
+) 
+
+select 
+ti.created_on
+,date(ti.created_on) dt
+,date_Trunc('hour',ti.created_on) date_time_hourly
+,ti.txn_id
+,ti.amount
+,coalesce(ti.npci_resp_code,ti.app_resp_code) Error_code
+,ti.status
+--,flow_cat
+,tp1.payer_vpa
+,tp1.payer_handle
+,tp1.payer_cust_id
+,tp1.account_type payer_account_type
+,tp1.payer_bank
+,tp2.payee_bank
+,tp2.payee_handle
+,case when flow_cat = 'MANDATE' and c.onus_vpa is not null then 'Mandate_onus'
+when  flow_cat = 'MANDATE' and c.onus_vpa is null then 'Mandate_online'
+when flow_cat = '3P QR' and payee_handle in ('pty', 'ptybl', 'ptys','ptsbi','ptyes','pthdfc','ptaxis') then 'Paytm QR'
+else flow_cat end as flow_cat
+,case when flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') or (flow_cat = 'MANDATE' and c.onus_vpa is null) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') or(flow_cat = 'MANDATE' and c.onus_vpa is not null) THEN 'Onus'
+  else flow_cat end as final_Category,
+  
+  (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date) current_time_
+  
+ from  ti  
+ join tp1 on ti.txn_id = tp1.txn_id
+ join tp2 on ti.txn_id = tp2.txn_id
+ left join on_us_vpa c  ON lower(tp2.payee_vpa) = lower(c.onus_vpa)
+ WHERE 
+(
+(
+date(created_on)  =  current_Date 
+and 
+created_on <= (select (max(created_on) - interval '10' minute) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+Or
+(date(created_on)  =  (current_Date - interval '01' day)
+and 
+created_on <= (select (max(created_on) - interval '10' minute - interval '01' day ) last_time from hive.switch.txn_info_snapshot_v3
+where  dl_last_updated = current_date)
+)
+)
+) AS virtual_table 
+WHERE payer_account_type = 'CREDIT' GROUP BY hour(created_on), dt ORDER BY "SR" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+

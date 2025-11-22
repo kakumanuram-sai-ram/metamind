@@ -1,422 +1,288 @@
 
 ================================================================================
-## Dashboard 585
+## Dashboard 511
 ================================================================================
 
-## FT/RT DoD Merchant Level (Apply Merchant filter on top for any specific merchant)
+## Overall SR_511
 
-This metric tracks first-time and reactivated user acquisition performance at the merchant level for 3P online payments, comparing current month-to-date against last month same period. It measures new user onboarding and user reactivation (users returning after 2+ months of inactivity) while excluding specific channel types like FMCG, MASU, and FSE-related transactions to focus on organic merchant-driven growth. The analysis provides both absolute user counts and growth percentages for new users, reactivated users, and combined totals. This enables merchant performance evaluation and identification of top-performing merchants in user acquisition and retention strategies.
-
--- tables_involved
-user_paytm_payments.rolling_nrr_v1 nrr
-user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm exc_mtd
-user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online exc_lmtd
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- exclude FT/RT channel-driven transactions to focus on organic merchant growth
-nrr.customer_id NOT IN (
-    SELECT cust_id FROM exc_mtd 
-    WHERE lower(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
-) AND
---- focus on new and reactivated users only
-nrr.user_type IN ('New', 'React_2M+')
-
---- specific filters  
---- temporal comparison: current month vs last month same period
---- MTD period: from month start to yesterday
-nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE)
---- LMTD period: from last month start to last month same day
-nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AND DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))
-
---- calculation_logic
-pattern: temporal_mtd_comparison
-base_metrics: [MTD_New_Users, MTD_React2Mplus_Users, LMTD_New_Users, LMTD_React2Mplus_Users]
-growth_formulas: (current_value * 1.0000) / (previous_value * 1.0000) - 1
-
-
-
-
-## MTU_Live_Non_Live_Top_15_
-
-MTU Live Non-Live Top 15 tracks monthly transacting users segmented across merchant categories to analyze online payment ecosystem performance. The metric measures unique customer engagement with different merchant tiers: overall MTU captures all online transactions, Live Merchants focuses on major established brands (60+ merchants including Flipkart, Zomato, Swiggy, Myntra), Non-Live excludes established merchants to show emerging/smaller merchant adoption, and Top 15 Merchants represents the highest-volume subset within Live merchants. Each segment counts distinct payer customer IDs with month-to-date transactions, providing insights into user distribution across merchant categories and helping identify growth opportunities in different market segments for strategic business decisions.
+This metric measures the overall success rate of UPI transactions, calculated as the percentage of transactions with DEEMED or SUCCESS status relative to total transaction attempts. It tracks payment reliability across the UPI ecosystem for the current month, filtered to include only transactions where the payer is one of the major PSPs (Paytm, Yes Bank, Axis, HDFC, SBI). The metric focuses on core UPI flows including P2P (VPA to VPA/Account) and P2M (VPA to Merchant) transactions through PAY and COLLECT transaction types. This success rate indicator helps monitor transaction processing efficiency and identify potential issues in payment success across different PSP partnerships and transaction categories.
 
 -- tables_involved
-user_paytm_payments.upi_abhay upi
-user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1 mapping
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- month-to-date temporal filtering for current performance tracking
-upi.day_id >= date_trunc('month', (current_date - interval '1' day - interval '1' month)) AND
-upi.day(day_id) <= day(current_date - interval '1' day) AND
---- online transaction category filtering
-upi.final_category = 'Online'
+--- current month data window for performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- data freshness constraint
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- core UPI payment operations
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- VPA-based transaction flows (P2P and P2M)
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
 
 --- specific filters
---- merchant categorization based on predefined lists
---- live merchants: major established brands (flipkart, zomato, swiggy, myntra, etc.)
-lower(mapping.online_merchant_name) IN ('flipkart','reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone', [58 more merchants]) AND
---- top 15 merchants: highest volume subset of live merchants
-lower(mapping.online_merchant_name) IN ('meesho','flipkart','zomato','reliance','myntra','bharti','gokwik','swiggy','rapido','blinkit','zepto','bookmyshow','mpokket','jar','vodafone') AND
---- non-live merchants: exclusion of live merchant list
-lower(mapping.online_merchant_name) NOT IN ([live merchant list])
+--- major PSP ecosystem focus for payer side analysis
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
 
 --- calculation_logic
-count(distinct payer_cust_id) as overall_mtu,
-count(distinct payer_cust_id) filter(where live_mtu >= 1) as live_merchants,
-count(distinct payer_cust_id) filter(where live_mtu = 0 and non_live_mtu >= 1) as non_live_excl_live,
-count(distinct payer_cust_id) filter(where top_15_mtu >= 1) as top_15_merch
+(count(txn.txn_id) filter(where txn.status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) as success_rate
 
 
 
 
-## online_category_missingvpa_mapping
+## P2P P2M SR_511
 
-This metric identifies online merchant VPAs that are missing from the merchant mapping table, focusing on high-volume unmapped transactions to prioritize data completeness efforts. It tracks VPAs receiving online payments that lack proper merchant categorization, filtering for current month transactions with more than 100 occurrences to highlight significant mapping gaps. The analysis helps data teams identify which merchant VPAs need to be added to the mapping table to improve transaction categorization accuracy and ensure comprehensive merchant analytics coverage.
+This metric tracks the success rate (SR) for UPI transactions within the Paytm ecosystem, segmented by transaction type (P2P vs P2M). It measures the percentage of transactions that achieve successful completion (status of either 'DEEMED' or 'SUCCESS') out of all attempted transactions. The analysis focuses specifically on transactions where the payer operates through Paytm ecosystem handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and covers both peer-to-peer transfers (P2P) and peer-to-merchant payments (P2M). Data is filtered to the current month and grouped by day to enable daily trend analysis of transaction success rates across different payment flows.
 
 -- tables_involved
-user_paytm_payments.upi_flow_wise_base_cm a
-user_paytm_payments.upi_3p_online_merchant_vpa_mapping b
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- current month data for recent mapping gap analysis
-a.dl_last_updated >= date_trunc('month', current_date - interval '1' day) AND
---- online transaction category focus
-a.final_category = 'Online' AND
---- unmapped VPAs identification
-b.online_merchant_name IS NULL
+--- ensure data recency for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transaction types only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- limit to relevant UPI transaction categories
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- restrict to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
 
 --- specific filters
---- high-volume threshold for prioritization
-HAVING count(*) > 100
+--- current month data only for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day)
 
 --- calculation_logic
-count(a.txn_id) as n_txns
-GROUP BY lower(a.payee_vpa), a.online_merchant_name
-ORDER BY n_txns DESC
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as SR,
+CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P' WHEN category IN ('VPA2MERCHANT') THEN 'P2M' ELSE NULL END as P2P_P2M,
+day(day_id) as Day,
+date_trunc('month', day_id) as Month
 
 
 
 
-## 3P online top 1k Daily Summary
+## Overall SR_511
 
-This metric provides a comprehensive daily performance summary for 3P online top 1000 merchants, tracking key business indicators including Daily Active Users (DAU), Monthly Active Users (MAU), transaction volumes, Gross Merchandise Value (GMV), and New/React user counts. The dashboard compares yesterday's performance against 7-day averages and month-to-date performance against last month-to-date across all metrics, calculating growth rates for trend analysis. Data is filtered to top 1000 merchants by performance and limited to specific payment service provider handles including Paytm ecosystem partners. The metrics enable merchant performance monitoring, identifying growth trends, and comparing current performance against historical benchmarks for strategic decision-making in the 3P online merchant segment.
+This metric measures the overall success rate of UPI transactions, calculated as the percentage of transactions with DEEMED or SUCCESS status relative to total transaction attempts. It tracks payment reliability across the UPI ecosystem for the current month, filtered to include only transactions where the payer is one of the major PSPs (Paytm, Yes Bank, Axis, HDFC, SBI). The metric focuses on core UPI flows including P2P (VPA to VPA/Account) and P2M (VPA to Merchant) transactions through PAY and COLLECT transaction types. This success rate indicator helps monitor transaction processing efficiency and identify potential issues in payment success across different PSP partnerships and transaction categories.
 
 -- tables_involved
-cdo.fact_upi_transactions_snapshot_v3 txn
-user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_mapping
-user_paytm_payments.rolling_nrr_v1 nrr
-user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss top1k
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- transaction scope and success criteria
+--- current month data window for performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- data freshness constraint
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- core UPI payment operations
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- VPA-based transaction flows (P2P and P2M)
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
+
+--- specific filters
+--- major PSP ecosystem focus for payer side analysis
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- calculation_logic
+(count(txn.txn_id) filter(where txn.status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) as success_rate
+
+
+
+
+## Category SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different flow categories
+--- restrict to current month data for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- include recent transaction data for up-to-date analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- exclude P2P transactions to focus on merchant payments
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- limit to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- focus on non-P2P flow categories for merchant payment analysis
+txn.final_category IN ('Online', 'Onus', 'SnP')
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
+
+
+
+
+## Handle SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions segmented by payer PSP handles including ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), and ptsbi (SBI). The success rate is calculated as the ratio of successful transactions (those with DEEMED or SUCCESS status) to total transactions, providing insight into payment service provider performance. The metric filters for current month data and focuses on P2P, P2M transaction categories (VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT) with PAY and COLLECT transaction types. This enables monitoring of partner PSP reliability and identifying performance variations across different banking partners for operational and business relationship management.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- limit to payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- focus on core UPI transaction flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
+
+--- specific filters
+--- current month data for timely performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '1' day) AND
+--- segment by payer PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), ptsbi (SBI)
+txn.payer_handle IN ({payer_psp}: ptyes, ptaxis, pthdfc, ptsbi)
+
+--- calculation_logic
+(count(txn.txn_id) FILTER(WHERE txn.status IN ('DEEMED', 'SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) AS success_rate
+
+
+
+
+## Category SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different flow categories
+--- restrict to current month data for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- include recent transaction data for up-to-date analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- exclude P2P transactions to focus on merchant payments
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- limit to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- focus on non-P2P flow categories for merchant payment analysis
+txn.final_category IN ('Online', 'Onus', 'SnP')
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
+
+
+
+
+## Handle SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions segmented by payer PSP handles including ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), and ptsbi (SBI). The success rate is calculated as the ratio of successful transactions (those with DEEMED or SUCCESS status) to total transactions, providing insight into payment service provider performance. The metric filters for current month data and focuses on P2P, P2M transaction categories (VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT) with PAY and COLLECT transaction types. This enables monitoring of partner PSP reliability and identifying performance variations across different banking partners for operational and business relationship management.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- limit to payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- focus on core UPI transaction flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
+
+--- specific filters
+--- current month data for timely performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '1' day) AND
+--- segment by payer PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), ptsbi (SBI)
+txn.payer_handle IN ({payer_psp}: ptyes, ptaxis, pthdfc, ptsbi)
+
+--- calculation_logic
+(count(txn.txn_id) FILTER(WHERE txn.status IN ('DEEMED', 'SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) AS success_rate
+
+
+
+
+## P2P P2M SR_511
+
+This metric tracks the success rate (SR) for UPI transactions within the Paytm ecosystem, segmented by transaction type (P2P vs P2M). It measures the percentage of transactions that achieve successful completion (status of either 'DEEMED' or 'SUCCESS') out of all attempted transactions. The analysis focuses specifically on transactions where the payer operates through Paytm ecosystem handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and covers both peer-to-peer transfers (P2P) and peer-to-merchant payments (P2M). Data is filtered to the current month and grouped by day to enable daily trend analysis of transaction success rates across different payment flows.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data recency for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transaction types only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- limit to relevant UPI transaction categories
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- restrict to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- current month data only for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day)
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as SR,
+CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P' WHEN category IN ('VPA2MERCHANT') THEN 'P2M' ELSE NULL END as P2P_P2M,
+day(day_id) as Day,
+date_trunc('month', day_id) as Month
+
+
+
+
+## Flowwise SR_511
+
+This metric tracks the success rate of UPI transactions within the Paytm ecosystem, measuring the percentage of transactions that achieve 'SUCCESS' or 'DEEMED' status out of total transaction attempts. It segments performance by flow category (P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate types) and day of month to identify patterns in transaction success across different payment methods and time periods. The analysis focuses specifically on transactions where Paytm acts as the payer PSP, excluding refund transactions (purpose code 14), and provides daily granular insights into operational performance for the current month to support real-time monitoring and troubleshooting efforts.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different categorical values
+--- restrict to current month transactions for real-time monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- focus on Paytm ecosystem as payer PSP
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude refund transactions
+txn.purpose_code != '14' AND
+--- include only relevant transaction types
 txn.transaction_type IN ('PAY','COLLECT') AND
+--- focus on core UPI transaction categories
 txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
-txn.status = 'SUCCESS' AND
---- PSP ecosystem limitation to major players
-LOWER(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
---- data freshness boundary for monthly comparisons
-txn.dl_last_updated >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1' day - INTERVAL '1' month)
-
---- specific filters
---- 3P online merchant categorization based on flow type
-CASE                        
-    WHEN txn.flow_category IN ('P2P') THEN 'P2P'
-    WHEN txn.flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
-    WHEN txn.flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
-    WHEN txn.flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
-    ELSE 'Others' 
-END = 'Online' AND
---- top merchant performance tier
-merchant_mapping.online_merchant_name IN (SELECT merchant_name FROM top1k) AND
---- new/react user classification excluding repeat users
-nrr.user_type NOT IN ('Repeat')
+--- ensure data freshness for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
 
 --- calculation_logic
-pattern: temporal_comparative_analysis
-base_metrics: [dau, mau, n_txns, gmv, nr]
-time_periods: [yday vs 7d_avg, mtd vs lmtd]
-growth_formula: AVG(current_period)/AVG(comparison_period) - 1
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as success_rate,
+grouped by Day(day_id) and flow_category
 
 
 
 
-## 3P Online - Overall MTD LMTD FT RT Summary
+## Flowwise SR_511
 
-This metric provides a comprehensive month-to-date performance summary for 3P online transactions, comparing current MTD against last MTD across key business dimensions. It tracks active users, transaction volumes, GMV, and TPU (Transactions Per User) for both periods, along with growth rates. The analysis focuses specifically on New and React_2M+ user segments while excluding offline channels like FMCG, MASU, and merchant acquisition channels. The metric enables stakeholders to monitor online payment ecosystem performance trends, identify growth patterns in user engagement, and assess the effectiveness of digital transaction strategies by comparing current month progress against the same period in the previous month.
+This metric tracks the success rate of UPI transactions within the Paytm ecosystem, measuring the percentage of transactions that achieve 'SUCCESS' or 'DEEMED' status out of total transaction attempts. It segments performance by flow category (P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate types) and day of month to identify patterns in transaction success across different payment methods and time periods. The analysis focuses specifically on transactions where Paytm acts as the payer PSP, excluding refund transactions (purpose code 14), and provides daily granular insights into operational performance for the current month to support real-time monitoring and troubleshooting efforts.
 
 -- tables_involved
-hive.user_paytm_payments.rolling_nrr_v1 nrr
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm cm_exclusion
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online lmtd_exclusion
-hive.user_paytm_payments.upi_abhay upi
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
 
---- standard filters to be applied unless specifically requested for different user segments
---- focus on new and reactivated users only, excluding repeat users
-nrr.user_type IN ('New', 'React_2M+') AND
-
---- specific filters
---- exclude offline and merchant acquisition channels from MTD analysis
-cm_exclusion.dt BETWEEN mtd_start AND mtd_end AND
-LOWER(cm_exclusion.channel) NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- exclude offline and merchant acquisition channels from LMTD analysis  
-lmtd_exclusion.dt BETWEEN lmtd_start AND lmtd_end AND
-LOWER(lmtd_exclusion.channel) NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- filter for online transactions in first-time user analysis
-upi.final_category = 'Online'
+--- standard filters to be applied unless specifically requested for different categorical values
+--- restrict to current month transactions for real-time monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- focus on Paytm ecosystem as payer PSP
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude refund transactions
+txn.purpose_code != '14' AND
+--- include only relevant transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- focus on core UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- ensure data freshness for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
 
 --- calculation_logic
-pattern: mtd_lmtd_comparison
-base_metrics: [users, txns, gmv]
-derived_metrics: TPU = sum(txns)/sum(users), Growth = (current/previous) - 1
-
-
-
-
-## FT/RT DoD Merchant Level (Top 15)
-
-This metric tracks merchant-level user acquisition performance for top online merchants, comparing current month-to-date performance against the same period in the previous month. It measures new user acquisition, user reactivation (users returning after 2+ months of inactivity), and combined acquisition metrics. The analysis focuses on the top 15 merchants from major e-commerce and service platforms including Meesho, Flipkart, Zomato, Myntra, Swiggy, Blinkit, and others. Growth rates are calculated using safe division to handle zero denominators. The metrics exclude users involved in offline merchant channels to focus purely on online merchant performance. This enables comparison of merchant acquisition effectiveness and identifies top-performing partnerships.
-
--- tables_involved
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online ftb
-hive.user_paytm_payments.rolling_nrr_v1 rnrr
-hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_map
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- exclude offline merchant channels to focus on online merchant performance
-ftb.channel NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- focus on new and reactivated users only
-rnrr.user_type IN ('New', 'React_2M+')
-
---- specific filters
---- top 15 merchant analysis for major e-commerce and service platforms
-online_merchant_name IN ('meesho', 'flipkart', 'zomato', 'reliance', 'myntra', 'bharti', 'gokwik', 'swiggy', 'rapido', 'blinkit', 'zepto', 'bookmyshow', 'mpokket', 'jar', 'vodafone')
-
---- calculation_logic
-pattern: mtd_vs_lmtd_comparison
-base_metrics: SUM(MTD_New_Users), SUM(MTD_React2Mplus_Users), SUM(LMTD_New_Users), SUM(LMTD_React2Mplus_Users)
-growth_calculations: safe_division_growth_rate
-
-
-
-
-
-================================================================================
-## Dashboard 729
-================================================================================
-
-## UPI  - MTD Daily Cashback
-
-This metric tracks the daily count of unique users who received UPI cashback within the current month, providing insights into cashback distribution patterns and user engagement. The measurement focuses on users with processed cashback tasks (status 1 or 2, fulfillment_status 1-3) and applies month-to-date filtering to analyze current month performance against historical trends. The cashback amounts are normalized based on redemption type, with specific conversion rates for coins (÷166.67), goldcoins (÷100), and UPI (+0.2478). This metric helps monitor the effectiveness of UPI cashback campaigns and user adoption of the cashback program on a daily basis.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 scts
-hive.code.campaign_snapshot_v3 ccs
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- restrict to current month data for MTD analysis
-scts.updated_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND scts.updated_at < TIMESTAMP '2025-12-01 00:00:00.000000' AND
---- include only valid cashback tasks
-scts.status IN (1, 2) AND
---- include all fulfillment stages
-scts.fulfillment_status IN (1, 2, 3) AND
---- month-to-date flag for period comparison
-scts.is_mtd_u = true AND
---- recent campaign data for wallet mapping
-ccs.dl_last_updated >= current_date - interval '62' day
-
---- specific filters
---- historical data partition for supercash tasks
-scts.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
-
---- calculation_logic
-COUNT(DISTINCT scts.user_id) as unique_cashback_users,
-date_trunc('day', CAST(scts.updated_at AS TIMESTAMP)) as daily_grouping,
-CASE 
-  WHEN scts.redemption_type = 'coins' THEN (scts.amount/166.67)
-  WHEN scts.redemption_type = 'goldcoins' THEN (scts.amount/100)
-  WHEN scts.redemption_type = 'upi' THEN (scts.amount+0.2478)
-  ELSE scts.amount
-END as normalized_cashburn_amount
-
-
-
-
-## UPI  - MTD Cashback
-
-This metric tracks the total UPI SuperCash cashback amount burned (given to users) on a month-to-date basis, aggregated hourly. It measures the financial impact of cashback campaigns by converting different redemption types (coins, goldcoins, UPI) to standardized cashburn values using specific conversion rates. The metric filters for current month transactions with valid status conditions (status 1 or 2, fulfillment_status 1-3) to capture legitimate cashback burns. This helps monitor daily cashback expenditure patterns and campaign performance within the UPI ecosystem, providing insights into user engagement and promotional costs across different redemption mechanisms.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 st
-hive.code.campaign_snapshot_v3 cs
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- current month temporal filter for MTD analysis
-st.created_at >= date_trunc('month', current_date) AND
-st.created_at < date_trunc('month', current_date) + interval '1' month AND
---- valid transaction status filters
-st.status IN (1, 2) AND
-st.fulfillment_status IN (1, 2, 3) AND
---- recent campaign data for wallet mapping
-cs.dl_last_updated >= current_date - interval '62' day
-
---- specific filters
---- MTD flag for month-to-date calculations
-st.is_mtd_u = true
-
---- calculation_logic
-CASE 
-  WHEN st.redemption_type = 'coins' THEN (st.amount/166.67)
-  WHEN st.redemption_type = 'goldcoins' THEN (st.amount/100)
-  WHEN st.redemption_type = 'upi' THEN (st.amount + 0.2478)
-  ELSE st.amount
-END AS cashburn,
-SUM(cashburn) grouped by date_trunc('hour', updated_at)
-
-
-
-
-## UPI  - MTD Gratified Users
-
-This metric measures the count of distinct users who have been gratified (received cashback rewards) in the UPI SuperCash program during the current month. It tracks user engagement with the cashback reward system by identifying unique users who have participated in promotional campaigns and received benefits. The metric applies month-to-date filtering to show progressive user acquisition within the current reporting period. The underlying logic handles complex cashback calculations with different redemption types (coins at 1/166.67 rate, goldcoins at 1/100 rate, UPI with 0.2478 adjustment) and categorizes fulfillment status into business-meaningful states like 'Given', 'Processing', 'Pending', and 'Unscratched'. This enables monitoring of user satisfaction and campaign effectiveness in the SuperCash ecosystem.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 sct
-hive.code.campaign_snapshot_v3 cs
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- restrict to current month data for MTD reporting
-sct.created_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND sct.created_at < TIMESTAMP '2025-12-01 00:00:00.000000' AND
---- ensure valid status and fulfillment status combinations
-sct.status IN (1,2) AND sct.fulfillment_status IN (1,2,3) AND
---- MTD user qualification flag
-is_mtd_u = true
-
---- specific filters
---- data freshness requirement for campaign lookup
-cs.dl_last_updated >= current_date - interval '62' day
-
---- calculation_logic
-COUNT(DISTINCT sct.user_id) as gratified_users,
-CASE 
-  WHEN sct.redemption_type = 'coins' THEN sct.amount/166.67
-  WHEN sct.redemption_type = 'goldcoins' THEN sct.amount/100
-  WHEN sct.redemption_type = 'upi' THEN sct.amount + 0.2478
-  ELSE sct.amount
-END as cashburn_amount,
-CASE
-  WHEN sct.status = 1 AND sct.fulfillment_status = 3 THEN 'Given'
-  WHEN sct.status = 1 AND sct.fulfillment_status = 2 THEN 'Processing'
-  WHEN sct.status = 2 AND sct.fulfillment_status = 1 THEN 'Unscratched'
-  WHEN sct.status = 1 AND sct.fulfillment_status = 1 THEN 'Pending'
-END as status_category
-
-
-
-
-## UPI  - MTD Daily Users
-
-This metric tracks the count of distinct users engaging with UPI SuperCash campaigns on a daily basis within the current month. It measures daily user activity in the SuperCash burn program by counting unique user_ids from supercash task records, providing insights into user engagement patterns and campaign adoption rates. The metric filters for active tasks (status 1,2) with various fulfillment statuses (1,2,3) and applies month-to-date temporal filtering on the updated_at timestamp. This helps monitor daily user participation trends and identify peak engagement periods within the UPI SuperCash ecosystem for performance tracking and campaign optimization.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 sc
-hive.code.campaign_snapshot_v3 c
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- filter for active supercash tasks
-sc.status IN (1, 2) AND
---- filter for valid fulfillment statuses
-sc.fulfillment_status IN (1, 2, 3) AND
---- data freshness filter for campaign lookup
-c.dl_last_updated >= current_date - interval '62' day
-
---- specific filters
---- month-to-date filtering for current month analysis
-sc.updated_at >= TIMESTAMP '2025-11-01 00:00:00.000000' AND
-sc.updated_at < TIMESTAMP '2025-12-01 00:00:00.000000' AND
---- data partition filter for supercash tasks
-sc.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
-
---- calculation_logic
-count(distinct sc.user_id) as daily_unique_users,
-date_trunc('day', cast(sc.updated_at as timestamp)) as day_dimension
-
-
-
-
-## UPI  - Daily Updated Campaign Wise Burn summary
-
-This metric tracks UPI supercash campaign burn performance by measuring unique users and total cash burn amounts across different campaign statuses, wallet types, and redemption methods. The analysis includes complex cash burn calculations that vary by redemption type - coins divided by 166.67, goldcoins by 100, and UPI with 0.2478 added. Status classification distinguishes between Given, Processing, Pending, and Unscratched states based on status and fulfillment_status combinations. The metric enables campaign performance monitoring by providing daily granular visibility into user participation and actual cash expenditure across different promotional campaigns, helping optimize campaign effectiveness and budget allocation decisions.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 a
-hive.code.campaign_snapshot_v3 b
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- ensure data quality by including only active and processable records
-a.status IN (1, 2) AND
---- include only valid fulfillment states for burn calculation
-a.fulfillment_status IN (1, 2, 3) AND
---- ensure campaign metadata is recent for accurate wallet mapping
-b.dl_last_updated >= current_date - interval '62' day
-
---- specific filters
---- temporal range for supercash task data starting from previous month
-a.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month)
-
---- calculation_logic
-CASE 
-  WHEN a.status = 1 AND a.fulfillment_status = 3 THEN 'Given'
-  WHEN a.status = 1 AND a.fulfillment_status = 2 THEN 'Processing'
-  WHEN a.status = 2 AND a.fulfillment_status = 1 THEN 'Unscratched'
-  WHEN a.status = 1 AND a.fulfillment_status = 1 THEN 'Pending'
-END as status_classification,
-CASE 
-  WHEN a.redemption_type = 'coins' THEN (a.amount/166.67)
-  WHEN a.redemption_type = 'goldcoins' THEN (a.amount/100)
-  WHEN a.redemption_type = 'upi' THEN (a.amount + 0.2478)
-  ELSE a.amount
-END as cashburn_amount
-
-
-
-
-## UPI  - Daily by Created Date Campaign Wise Burn Summary
-
-This metric tracks daily UPI SuperCash campaign performance by measuring unique user engagement and total cash burn across different campaigns, statuses, wallets, and redemption types. It calculates normalized cash burn values using conversion rates for different redemption methods (coins at 1/166.67 rate, goldcoins at 1/100 rate, UPI with 0.2478 surcharge). The analysis focuses on current month data filtering for valid task statuses (1,2) and fulfillment statuses (1,2,3), providing insights into campaign effectiveness, user participation rates, and actual cash expenditure across different wallet providers and redemption channels for performance optimization and budget tracking.
-
--- tables_involved
-hive.promocard.supercash_task_snapshot_v3 scts
-hive.code.campaign_snapshot_v3 cs
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- current month data analysis scope
-scts.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
---- valid task statuses for active campaigns
-scts.status IN (1, 2) AND
---- valid fulfillment statuses for processing
-scts.fulfillment_status IN (1, 2, 3) AND
---- current month created tasks
-date(scts.created_at) >= date_trunc('month', current_date - interval '1' day) AND
---- recent campaign metadata for wallet mapping
-cs.dl_last_updated >= current_date - interval '62' day
-
---- specific filters
---- none specified for this chart
-
---- calculation_logic
-count(distinct scts.user_id) as unique_users,
-sum(case
-  when scts.redemption_type = 'coins' then (scts.amount/166.67)
-  when scts.redemption_type = 'goldcoins' then (scts.amount/100)
-  when scts.redemption_type = 'upi' then (scts.amount + 0.2478)
-  else scts.amount
-end) as total_cashburn,
-case
-  when scts.status = 1 and scts.fulfillment_status = 3 then 'Given'
-  when scts.status = 1 and scts.fulfillment_status = 2 then 'Processing'
-  when scts.status = 2 and scts.fulfillment_status = 1 then 'Unscratched'
-  when scts.status = 1 and scts.fulfillment_status = 1 then 'Pending'
-end as status_classification
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as success_rate,
+grouped by Day(day_id) and flow_category
 
 
 

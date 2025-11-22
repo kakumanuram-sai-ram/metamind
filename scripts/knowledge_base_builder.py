@@ -101,14 +101,16 @@ class KnowledgeBaseBuilder:
         print("\n[8/8] Creating compressed zip archive...")
         zip_file = self._create_zip_archive()
         
-        # Mark KB build as completed
-        self.progress_tracker.complete_kb_build()
+        # Don't mark KB build as completed yet - wait for all dashboard metadata files
+        # The completion will be handled by the process_multiple_dashboards script
+        # after verifying all files are ready
         
         print("\n" + "="*80)
         print("KNOWLEDGE BASE BUILD COMPLETE")
         print("="*80)
         print(f"✅ All files saved to: {self.kb_dir}/")
         print(f"✅ Compressed archive: {zip_file}")
+        print(f"ℹ️  KB build will be marked complete when all dashboard metadata files are ready")
         
         return {
             'kb_dir': self.kb_dir,

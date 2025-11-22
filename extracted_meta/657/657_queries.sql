@@ -1,0 +1,123 @@
+-- SQL Queries for Dashboard: Zomato Tracking
+-- Dashboard ID: 657
+-- Total Charts: 1
+================================================================================
+
+-- Chart 1: Zomato Tracking Sept25 (ID: 3083)
+-- Chart Type: pivot_table_v2
+-- Dataset: zomato Tracking(Zomato NRR)
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT day_id AS day_id, sum(dau) AS "Dau__", sum(mau) AS "Mau", sum(zomato_ft) AS "Zomato_FT", sum("zomato_ft_paytm_NR") AS "Zomato_ft_paytm_nr", sum(zomato_ft_paytm_new) AS zomato_ft_paytm_new, sum(zomato_ft_paytm_react) AS "Zomato_ft_paytm_react", sum(n_txns) AS n_txns, sum(gmv) AS gmv, sum(zomato_ft_199_mov) AS "Zomato_FT_199/149_mov" 
+FROM (with upi_reference_table as (
+select a.*, date_trunc('month',day_id) mnt
+from (
+select
+date(txn_timestamp) day_id, 
+customer_id_payer AS customer_id,
+txn_timestamp created_on,
+txn_id,
+amount,
+payee_vpa,
+CASE                        
+        WHEN flow_category IN ('P2P') THEN 'P2P'
+        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
+        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
+        ELSE 'Others' 
+END AS final_category,
+row_number() over (partition by customer_id_payer, date_trunc('month', date(txn_timestamp)) order by txn_timestamp) as rn_ft
+FROM  hive.cdo.fact_upi_transactions_snapshot_v3
+WHERE dl_last_updated >=DATE'2025-09-01'
+  AND transaction_date_key  >= DATE'2025-09-01'
+  AND status IN ('SUCCESS','DEEMED')
+  AND transaction_type IN ('PAY','COLLECT')
+  AND lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+  and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+    )a
+left JOIN  hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on LOWER(a.payee_vpa) = LOWER(b.payee_vpa)
+WHERE lower(b.online_merchant_name) = 'zomato' --## change later
+or lower(a.payee_vpa) in(
+'zomato3.payu@icici'
+,'zomatolimited@indus'
+,'zomatolimited311768.rzp@axisbank'
+,'rzpfbcduozomatolimited@yesbank'
+,'zomatolimited13.rzp@mairtel'
+,'zomatolimited725890.rzp@rxairtel'
+,'zomatoforenterp205994.rzp@rxairtel'
+,'zomatolimitedbdr.rzp@mairtel'
+,'rzpecisrpzomatoforenterprise@yesbank'
+,'zomatoforenterp392037.rzp@axisbank'
+,'zomatoforenterp548800.rzp@hdfcbank'
+,'zomatoforenterp266812.rzp@rxaxis'
+,'paytm-83855874@ptybl'
+,'zomatohyperpure224466.rzp@rxairtel'
+)
+),
+paytm_nrr AS (
+      SELECT customer_id customer_id, date_trunc('month',date(txn_date) ) mnt,
+      CASE
+      WHEN user_type = 'New' THEN 'New'
+      WHEN user_type = 'Repeat' THEN 'Repeat'
+      ELSE 'React_2M+'
+      END AS user_type
+      FROM  hive.user_paytm_payments.rolling_nrr_v1
+      WHERE txn_date >= date'2025-09-01'
+      and user_type Not IN ('Repeat')
+        and
+        customer_Id not in (
+        Select cust_id from hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online --set of user is already tagged
+        where dt >=  date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+                 ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+         )
+        union all
+        Select cust_id from hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        where dt >=  date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+        and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
+                ,'1.a. fse gets merchants as user'
+        ,'1.b. fse gets merchants as other'
+        )
+        )
+      ),
+
+zomato_nrr as (
+   select customer_id, ft_Date, date_trunc('month',ft_Date) mnt from user_paytm_payments.Online_merchant_Zomato_NRR
+   where ft_Date >= date'2025-09-01'
+   and lifecycle = 'a:new'
+)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+select
+day_id,
+    count(distinct a.customer_id) as dau,
+    count(distinct case when a.rn_mau = 1 then a.customer_id end) as mau,
+    count(distinct case when a.rn_mau = 1 and b.customer_id is not null then a.customer_id  end) as zomato_ft, --- paytm new/react
+    count(distinct case when a.rn_mau = 1 and b.customer_id is not null and rn_ft = 1 and c.customer_id is not null then a.customer_id  end) as zomato_ft_paytm_NR, 
+    count(distinct case when a.rn_mau = 1 and b.customer_id is not null and rn_ft = 1 and c.user_type = 'New' then a.customer_id  end) as zomato_ft_paytm_new, 
+    count(distinct case when a.rn_mau = 1 and b.customer_id is not null and rn_ft = 1 and c.user_type = 'React_2M+' then a.customer_id  end) as zomato_ft_paytm_react,
+    count(distinct case when a.rn_mau = 1 and b.customer_id is not null and a.amount >= case when day_id<= date'2025-11-06' then 199 else 149 end then a.customer_id  end) as zomato_ft_199_mov, --- paytm new/react
+    count(distinct a.txn_id) as n_txns,
+    sum(cast (amount as double)) as gmv
+from
+(
+select day_id,txn_id,customer_id,amount,rn_ft,mnt,
+--row_number() over (partition by customer_id, date_trunc('month', day_id) , day_id>= date'2025-09-18' order by day_id) as rn_mau
+row_number() over (partition by customer_id, date_trunc('month', day_id) order by day_id) as rn_mau
+from  upi_reference_table a
+        where   final_category = 'Online'
+            and day_id >= date'2025-09-01'--date_trunc('month',current_Date - interval  '01' day - interval '01' month)
+)a
+--left join paytm_nrr b on a.customer_id = b.customer_id  and a.mnt = b.mnt
+left join zomato_nrr b on a.customer_id = b.customer_id  and a.mnt = b.mnt
+left join paytm_nrr c on a.customer_id = c.customer_id  and a.mnt = c.mnt
+
+group by 1
+ORDER BY 1
+) AS virtual_table GROUP BY day_id ORDER BY sum(dau) ASC
+LIMIT 1000;
+
+
+
+================================================================================
+

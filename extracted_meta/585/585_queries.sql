@@ -47,7 +47,7 @@ left JOIN  user_paytm_payments.upi_3p_online_merchant_vpa_mapping b on LOWER(a.p
 ),
 
 paytm_nrr AS (
-      SELECT customer_id customer_id, date_trunc('month',date(txn_date) ) mnt,
+      SELECT customer_id customer_id, date_trunc('month',date(txn_date) ) mnt, txn_date day_id,
       CASE
       WHEN user_type = 'New' THEN 'New'
       WHEN user_type = 'Repeat' THEN 'Repeat'
@@ -58,7 +58,7 @@ paytm_nrr AS (
       and user_type not IN ('Repeat')
        and
         customer_Id not in (
-        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic
         where dt >=  date_trunc('month',current_Date - interval  '01' day - interval '01' month)
         and channel in (
         'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
@@ -67,7 +67,7 @@ paytm_nrr AS (
         ,'1.c.ong'
         ) 
         union all
-        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic
         where dt >=  date_trunc('month',current_Date - interval  '01' day - interval '01' month)
         and channel in (
         'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
@@ -88,7 +88,7 @@ paytm_nrr AS (
 -- and day_id >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)      
 
 select
-day_id,
+a.day_id,
 online_merchant_name,
         count(distinct a.customer_id) as dau,
         count(distinct case when a.rn_mau = 1 then a.customer_id end) as mau,
@@ -114,7 +114,7 @@ group by 1,2
 UNION ALL
 
 select 
-        day_id,
+        a.day_id,
         'overall' as online_merchant_name,
         count(distinct a.customer_id) as dau,
         count(distinct case when rn_mau = 1 then a.customer_id end) as mau,
@@ -132,7 +132,7 @@ from  upi_flow_wise_base
                 where final_category = 'Online'
 and day_id >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)
 )a
-left join paytm_nrr b on a.customer_id = b.customer_id and a.mnt = b.mnt
+left join paytm_nrr b on a.customer_id = b.customer_id and a.day_id = b.day_id
 group by 1,2
 ) AS virtual_table
 ) AS dataset_970
@@ -227,9 +227,9 @@ FROM (WITH date_ranges AS (
 
       paytm_nrr_mtd AS (
       WITH paytm_nrr AS (
-      SELECT payer_cust_id, user_type AS paytm_user_type
+      SELECT txn_date day_id,payer_cust_id, user_type AS paytm_user_type
       FROM (
-      SELECT customer_id AS payer_cust_id,
+      SELECT txn_date,customer_id AS payer_cust_id,
       CASE
       WHEN user_type = 'New' THEN 'New'
       WHEN user_type = 'Repeat' THEN 'Repeat'
@@ -240,7 +240,7 @@ FROM (WITH date_ranges AS (
        and
 
         customer_Id not in (
-            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic
         where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
         and lower(channel) in (
         'fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
@@ -252,14 +252,14 @@ FROM (WITH date_ranges AS (
       )
       WHERE user_type IN ('New', 'React_2M+')
       )
-      SELECT payer_cust_id, paytm_user_type, 'MTD' AS period FROM paytm_nrr
+      SELECT day_id,payer_cust_id, paytm_user_type, 'MTD' AS period FROM paytm_nrr
       ),
 
       paytm_nrr_lmtd AS (
       WITH paytm_nrr AS (
-      SELECT payer_cust_id, user_type AS paytm_user_type
+      SELECT txn_date day_id,payer_cust_id, user_type AS paytm_user_type
       FROM (
-      SELECT customer_id AS payer_cust_id,
+      SELECT txn_date,customer_id AS payer_cust_id,
       CASE
       WHEN user_type = 'New' THEN 'New'
       WHEN user_type = 'Repeat' THEN 'Repeat'
@@ -269,7 +269,7 @@ FROM (WITH date_ranges AS (
       WHERE txn_date BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
 
       and customer_Id not in (
-        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic
         where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
         ,'1.a. fse gets merchants as user'
@@ -279,13 +279,13 @@ FROM (WITH date_ranges AS (
       )
       WHERE user_type IN ('New', 'React_2M+')
       )
-      SELECT payer_cust_id, paytm_user_type, 'LMTD' AS period FROM paytm_nrr
+      SELECT day_id, payer_cust_id, paytm_user_type, 'LMTD' AS period FROM paytm_nrr
       ),
 
       upi_online_ft AS (
-      SELECT payer_cust_id, 'MTD' AS period
+      SELECT day_id,payer_cust_id, 'MTD' AS period
       FROM (
-      SELECT payer_cust_id, final_category,
+      SELECT payer_cust_id, final_category,day_id,
       ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
       FROM user_paytm_payments.upi_abhay
       WHERE day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges) -- MTD Source
@@ -296,9 +296,9 @@ FROM (WITH date_ranges AS (
 
       UNION ALL
 
-      SELECT payer_cust_id, 'LMTD' AS period
+      SELECT day_id,payer_cust_id, 'LMTD' AS period
       FROM (
-      SELECT payer_cust_id, final_category,
+      SELECT payer_cust_id, final_category,day_id,
       ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC) AS rnk
       FROM user_paytm_payments.upi_abhay
       where day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
@@ -309,19 +309,19 @@ FROM (WITH date_ranges AS (
       ),
 
       upi_online_txns AS (
-      SELECT payer_cust_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'MTD' AS period
+      SELECT payer_cust_id,day_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'MTD' AS period
       FROM user_paytm_payments.upi_abhay  -- MTD Source
       WHERE payer_cust_id IN (SELECT payer_cust_id FROM upi_online_ft WHERE period = 'MTD')
       AND day_id BETWEEN (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
-      GROUP BY 1
+      GROUP BY 1,2
 
       UNION ALL
 
-      SELECT payer_cust_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'LMTD' AS period
+      SELECT payer_cust_id,day_id, COUNT(txn_id) AS n_txns, SUM(amount) AS gmv, 'LMTD' AS period
       FROM user_paytm_payments.upi_abhay  -- LMTD Source
       WHERE payer_cust_id IN (SELECT payer_cust_id FROM upi_online_ft WHERE period = 'LMTD')
       AND day_id BETWEEN (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
-      GROUP BY 1
+      GROUP BY 1,2
       ),
 
       final_base as (
@@ -338,10 +338,12 @@ FROM (WITH date_ranges AS (
       ) AS a
       INNER JOIN upi_online_ft AS b
       ON a.payer_cust_id = b.payer_cust_id
-      AND a.period = b.period
+      -- AND a.period = b.period
+      and a.day_id = b.day_id
       LEFT JOIN upi_online_txns AS c
       ON b.payer_cust_id = c.payer_cust_id
-      AND b.period = c.period
+      -- AND b.period = c.period
+      and b.day_id = c.day_id
       GROUP BY 1, 2
       ORDER BY 3, 1
       )
@@ -400,7 +402,7 @@ FROM (WITH date_ranges AS (
        and
 
         customer_Id not in (
-        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic
         where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
            ,'1.a. fse gets merchants as user'
@@ -430,7 +432,7 @@ FROM (WITH date_ranges AS (
        and
 
         customer_Id not in (
-            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic
         where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
         ,'1.a. fse gets merchants as user'
@@ -489,7 +491,8 @@ FROM (WITH date_ranges AS (
       ) AS a
       INNER JOIN upi_online_ft AS b
       ON a.payer_cust_id = b.payer_cust_id
-      AND a.period = b.period
+      -- AND a.period = b.period
+      and a.dt = b.day_id
       GROUP BY 1, 2
       ORDER BY 3, 1
 ) AS virtual_table GROUP BY day_id ORDER BY max(day_id) ASC
@@ -528,11 +531,6 @@ LIMIT 1000;
 -- Dataset: Live_NonLive_MTU_3P_Online
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT date_trunc('day', CAST(mnt AS TIMESTAMP)) AS mnt, sum("Overall_MTU") AS "Overall_MTU__", sum("Live_Merchants") AS "Live_Merchants", sum("Non_live(Excl. Live)") AS "Non_Live(Excl. Live)", sum("Top_15_Merch") AS "Top_15_Merch" 
-FROM (SELECT date_trunc('day', CAST(mnt AS TIMESTAMP)) AS mnt, sum("total_Mtd") AS "Overall_MTU", sum(live_) AS "Live_Merchants", sum(non_live_exc_live) AS "Non_live(Excl. Live)", sum("Top_merc") AS "Top_15_Merch" 
-FROM (--------------------------------------------------------------------------------------------------------------------------
-
--- cumulative for LMTD and MTD:
 with base_ as (
 select
 mnt,
@@ -559,12 +557,14 @@ filter (where
         'ferns n petal','gullak','rentomojo','dish tv','chaupal tv','healthians','tata play binge','rail yatri','igp','aha media','bakingo','nearbuy','netmeds'
         ,'Intrcity','d2h','freeup','floweraura','bix42','walmart')
         )
-Non_Live_MTU
+Non_Live_MTU,
+SUM(1) filter (where  top_1k = 1) top_1K_MTU
 from 
 (
 select mnt,
 payer_cust_id,
-coalesce(b.online_merchant_name,'aaaaaaaaaa')online_merchant_name
+coalesce(b.online_merchant_name,'aaaaaaaaaa')online_merchant_name,
+case when TP.online_merchant_name is not null then 1 else 0 end as top_1k
 from
         (
            select distinct  date_Trunc('month',day_id)mnt, payer_cust_id,payee_vpa
@@ -581,7 +581,11 @@ from
         WHERE RN=1
         ) b
         ON LOWER(a.payee_vpa) = lower(b.payee_vpa)   
-) group by 1,2
+        
+        LEFT JOIN (SELECT DISTINCT online_merchant_name from  user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss) TP
+          ON lower(b.online_merchant_name) = lower(tp.online_merchant_name)
+)
+group by 1,2
 ) 
 
 select 
@@ -591,14 +595,9 @@ count(distinct payer_cust_id) total_Mtd
 ,count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0)>=1 and coalesce(Non_Live_MTU,0)>=1) live_n_non_live
 ,count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0) =0 and coalesce(Non_Live_MTU,0)>=1) non_live_exc_live
 ,count(distinct payer_cust_id) filter(where coalesce(Top_15_MTU,0)>=1) Top_merc
+,count(distinct payer_cust_id) filter(where coalesce(top_1K_MTU,0)>=1) top_1K_MTU
 from base_
 group by 1
-) AS virtual_table GROUP BY date_trunc('day', CAST(mnt AS TIMESTAMP)) ORDER BY "Overall_MTU" DESC
-LIMIT 1000
-) AS virtual_table GROUP BY date_trunc('day', CAST(mnt AS TIMESTAMP)) ORDER BY sum("Overall_MTU") DESC
-LIMIT 5000;
-
-
 
 ================================================================================
 
@@ -651,7 +650,7 @@ FROM (WITH date_ranges AS (
        and
 
         customer_Id not in (
-        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm
+        Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic
         where dt between (SELECT mtd_start FROM date_ranges) AND (SELECT mtd_end FROM date_ranges)
         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
            ,'1.a. fse gets merchants as user'
@@ -681,7 +680,7 @@ FROM (WITH date_ranges AS (
        and
 
         customer_Id not in (
-            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online
+            Select cust_id from user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic
         where dt between (SELECT lmtd_start FROM date_ranges) AND (SELECT lmtd_end FROM date_ranges)
         and lower(channel) in ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer'
         ,'1.a. fse gets merchants as user'
@@ -740,7 +739,8 @@ FROM (WITH date_ranges AS (
       ) AS a
       INNER JOIN upi_online_ft AS b
       ON a.payer_cust_id = b.payer_cust_id
-      AND a.period = b.period
+      -- AND a.period = b.period
+      and a.dt = b.day_id
       GROUP BY 1, 2
       ORDER BY 3, 1
 ) AS virtual_table 

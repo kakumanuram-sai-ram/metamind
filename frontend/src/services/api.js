@@ -171,6 +171,30 @@ export const dashboardAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Get metadata file content for display
+   */
+  getMetadataFileContent: async (dashboardId, fileType) => {
+    const response = await api.get(`/api/dashboard/${dashboardId}/file/${fileType}`);
+    return response.data;
+  },
+
+  /**
+   * Connect to N8N workflow
+   */
+  connectToN8N: async () => {
+    const response = await api.post('/api/knowledge-base/connect-n8n');
+    return response.data;
+  },
+
+  /**
+   * Enable on Prism
+   */
+  enableOnPrism: async () => {
+    const response = await api.post('/api/knowledge-base/enable-prism');
+    return response.data;
+  },
 };
 
 export default api;

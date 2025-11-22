@@ -6,7 +6,7 @@ const TabsContainer = styled.div`
   border-bottom: 2px solid ${props => props.theme.colors.gray[200]};
   margin-bottom: 0;
   position: sticky;
-  top: 120px; /* Header height + padding */
+  top: 320px; /* Header height + BusinessVertical height (approximate) */
   z-index: 99;
   flex-shrink: 0;
 `;

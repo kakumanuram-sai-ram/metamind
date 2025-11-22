@@ -229,6 +229,49 @@ class ProgressTracker:
             }
             self._write_progress(progress)
     
+    def are_all_metadata_files_ready(self, dashboard_ids: List[int]) -> bool:
+        """
+        Check if all required metadata files are ready for all dashboards.
+        
+        Required files for each dashboard:
+        - table_metadata.csv
+        - columns_metadata.csv
+        - joining_conditions.csv
+        - filter_conditions.txt
+        - definitions.csv
+        
+        Args:
+            dashboard_ids: List of dashboard IDs to check
+            
+        Returns:
+            True if all required files exist for all dashboards, False otherwise
+        """
+        import os
+        required_files = [
+            'table_metadata.csv',
+            'columns_metadata.csv',
+            'joining_conditions.csv',
+            'filter_conditions.txt',
+            'definitions.csv'
+        ]
+        
+        # Get the directory where this script is located to resolve relative paths
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        metamind_dir = os.path.dirname(script_dir)
+        base_dir = os.path.join(metamind_dir, "extracted_meta")
+        
+        for dashboard_id in dashboard_ids:
+            dashboard_dir = os.path.join(base_dir, str(dashboard_id))
+            for required_file in required_files:
+                file_path = os.path.join(dashboard_dir, f"{dashboard_id}_{required_file}")
+                if not os.path.exists(file_path):
+                    return False
+                # Also check file is not empty (at least has headers)
+                if os.path.getsize(file_path) < 10:
+                    return False
+        
+        return True
+    
     def get_progress(self) -> Dict:
         """Get current progress."""
         with self.lock:

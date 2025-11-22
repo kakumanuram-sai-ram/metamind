@@ -12,12 +12,6 @@ from dspy.evaluate import Evaluate
 import pandas as pd
 from config import LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
 
-# Add parent directory to path for dspy_examples.py
-_scripts_dir = os.path.dirname(os.path.abspath(__file__))
-_parent_dir = os.path.dirname(_scripts_dir)
-if _parent_dir not in sys.path:
-    sys.path.insert(0, _parent_dir)
-
 
 class TableColumnExtractor(dspy.Signature):
     """

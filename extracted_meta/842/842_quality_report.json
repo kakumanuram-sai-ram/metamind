@@ -1,17 +1,17 @@
 {
   "dashboard_id": 842,
-  "timestamp": "2025-11-21T11:31:04.380661",
+  "timestamp": "2025-11-22T19:58:16.065258",
   "summary": {
-    "overall_confidence": 89.2,
+    "overall_confidence": 82.2,
     "status": "GOOD",
     "average_scores": {
-      "completeness": 86.0,
-      "accuracy": 91.6
+      "completeness": 82.0,
+      "accuracy": 84.0
     },
     "total_issues": {
-      "missing_items": 10,
-      "quality_issues": 7,
-      "recommendations": 17
+      "missing_items": 17,
+      "quality_issues": 13,
+      "recommendations": 20
     }
   },
   "detailed_reports": {
@@ -20,17 +20,18 @@
       "scores": {
         "completeness": 100.0,
         "accuracy": 95.0,
-        "confidence": 96.0,
-        "clarity": 92.0
+        "confidence": 93.0,
+        "clarity": 90.0
       },
       "missing_items": [],
       "quality_issues": [
-        "Minor schema naming inconsistency - metadata shows 'hive.user_paytm_payments.p2p_inward_hourly_reporting_dataset' while queries reference 'user_paytm_payments.p2p_inward_hourly_reporting_dataset'"
+        "Minor schema prefix discrepancy (hive vs user_paytm_payments) but refers to same table",
+        "Relationship context could be more specific about exact join patterns used in these particular dashboards"
       ],
       "recommendations": [
-        "Standardize schema naming convention to match actual query patterns",
-        "Consider adding sample query patterns in the remarks section to help users understand common usage scenarios",
-        "Add information about data latency and SLA for hourly refreshes"
+        "Clarify schema naming convention consistency (hive prefix vs user_paytm_payments)",
+        "Consider adding specific examples of common join patterns with transaction IDs and temporal dimensions",
+        "Add information about data latency and SLA expectations for hourly refresh"
       ],
       "status": "EXCELLENT"
     },
@@ -38,25 +39,25 @@
       "metadata_type": "column_metadata",
       "scores": {
         "completeness": 60.0,
-        "accuracy": 95.0,
-        "confidence": 82.0,
-        "business_context": 95.0
+        "accuracy": 85.0,
+        "confidence": 77.0,
+        "business_context": 90.0
       },
       "missing_items": [
-        "p2p_inward_hourly_reporting_dataset.payee_customer_id",
         "p2p_inward_hourly_reporting_dataset.amount",
-        "p2p_inward_hourly_reporting_dataset.krn",
-        "p2p_inward_hourly_reporting_dataset.to_days_hour"
+        "p2p_inward_hourly_reporting_dataset.payee_customer_id",
+        "p2p_inward_hourly_reporting_dataset.to_days_hour",
+        "p2p_inward_hourly_reporting_dataset.krn"
       ],
       "quality_issues": [
-        "Missing 40% of columns used in SQL queries including key business fields like amount and customer ID"
+        "Missing critical columns that appear in SQL queries including transaction amount and customer identifiers",
+        "Some columns marked as 'no' for required_flag may actually be essential for the analysis"
       ],
       "recommendations": [
-        "Add metadata for payee_customer_id (likely customer identifier for payee)",
-        "Add metadata for amount (transaction value field)",
-        "Add metadata for krn (appears to be transaction reference number)",
-        "Add metadata for to_days_hour (hourly timestamp conversion field)",
-        "Ensure all SELECT and filter columns have corresponding metadata entries"
+        "Add metadata for missing columns especially 'amount' which is fundamental to payment transactions",
+        "Include payee_customer_id and other customer identifiers for complete transaction tracking",
+        "Review required_flag assignments as some columns may be more critical than indicated",
+        "Consider adding business context for the missing columns to maintain the high quality of existing descriptions"
       ],
       "status": "GOOD"
     },
@@ -65,64 +66,82 @@
       "scores": {
         "completeness": 100.0,
         "accuracy": 100.0,
-        "confidence": 100.0,
-        "context": 100.0
+        "confidence": 90.0,
+        "context": 0.0
       },
       "missing_items": [],
-      "quality_issues": [],
-      "recommendations": [],
+      "quality_issues": [
+        "No joining conditions exist in the SQL queries to evaluate",
+        "all queries use single table access only"
+      ],
+      "recommendations": [
+        "Verify if this dashboard truly only uses single-table queries or if there are missing multi-table relationships that should be documented",
+        "Consider adding metadata about the single table structure and its business context",
+        "If this is part of a larger system, document how this dataset relates to other tables in the broader data architecture"
+      ],
       "status": "EXCELLENT"
     },
     "filter_conditions": {
       "metadata_type": "filter_conditions",
       "scores": {
-        "completeness": 95.0,
-        "accuracy": 98.0,
-        "confidence": 94.0,
-        "clarity": 88.0
+        "completeness": 75.0,
+        "accuracy": 60.0,
+        "confidence": 71.0,
+        "clarity": 80.0
       },
-      "missing_items": [],
+      "missing_items": [
+        "created_on temporal range handling explanation",
+        "proper table alias usage in filter syntax"
+      ],
       "quality_issues": [
-        "Minor inconsistency in table alias naming across documentation (virtual_table vs p2p vs txn)",
-        "Could enhance explanation of why temporal filters are in metrics vs WHERE clause"
+        "incorrect table alias usage in filter syntax (using p2p, txn instead of actual virtual_table)",
+        "temporal filter 'No filter' comparator not properly explained",
+        "filter syntax doesn't match actual SQL structure in JSON"
       ],
       "recommendations": [
-        "Standardize table alias naming conventions across all chart documentation",
-        "Add brief explanation of embedded temporal filtering approach for better technical clarity",
-        "Consider adding filter impact quantification where business-relevant"
+        "Correct table aliases to match actual SQL (use virtual_table consistently)",
+        "explain that 'No filter' on created_on means temporal filtering happens in metric calculations not WHERE clause",
+        "standardize filter syntax to match actual JSON structure",
+        "add explanation for how temporal filtering works across different chart types"
       ],
-      "status": "EXCELLENT"
+      "status": "ACCEPTABLE"
     },
     "definitions": {
       "metadata_type": "definitions",
       "scores": {
         "completeness": 75.0,
-        "accuracy": 70.0,
-        "confidence": 74.0,
-        "usefulness": 80.0
+        "accuracy": 80.0,
+        "confidence": 80.0,
+        "usefulness": 85.0
       },
       "missing_items": [
+        "ptyes",
+        "pthdfc",
+        "ptaxis",
+        "ptsbi",
         "hour_",
         "created_on",
-        "payee_handle",
         "amount",
         "krn",
+        "payee_customer_id",
+        "payer_handle",
         "lastest_hour"
       ],
       "quality_issues": [
-        "Payee PSP definition incorrectly states filter is 'yes' when actual filters use bank codes",
-        "P2P Inward Transaction definition incorrectly specifies SBI as PSP when dashboard covers multiple PSPs",
-        "Missing definitions for key database columns used in grouping and filtering"
+        "P2P Inward Transaction definition incorrectly specifies SBI as PSP instead of being generic",
+        "Payee Handle term type should be 'Column' not 'Category'",
+        "Missing specific PSP code definitions (ptyes, pthdfc, ptaxis, ptsbi) that are used in filters",
+        "Some technical database fields lack definitions"
       ],
       "recommendations": [
-        "Add definition for hour_ as the hourly dimension used for transaction grouping",
-        "Add definition for created_on as the transaction timestamp field",
-        "Add definition for payee_handle explaining bank-specific codes (ptyes, pthdfc, ptaxis, ptsbi)",
-        "Correct Payee PSP definition to reflect actual bank code filtering logic",
-        "Add definitions for amount, krn, and lastest_hour fields",
-        "Update P2P Inward Transaction definition to be more generic and not SBI-specific"
+        "Add definitions for specific PSP codes (ptyes=Paytm YES Bank, pthdfc=Paytm HDFC, ptaxis=Paytm Axis, ptsbi=Paytm SBI)",
+        "Correct P2P Inward Transaction definition to be generic rather than SBI-specific",
+        "Add definitions for technical fields like hour_, created_on, amount, krn",
+        "Reclassify Payee Handle as 'Column' type",
+        "Add definition for payee_customer_id and payer_handle fields",
+        "Consider adding business context for hourly reporting aspect"
       ],
-      "status": "ACCEPTABLE"
+      "status": "GOOD"
     }
   }
 }
