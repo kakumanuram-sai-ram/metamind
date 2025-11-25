@@ -17,7 +17,7 @@ LOGS_DIR="/home/devuser/sai_dev/metamind/logs"
 mkdir -p "$LOGS_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
-# Start Backend
+# Start Backend (binds to 0.0.0.0:8000 for network accessibility)
 echo "Starting Backend API Server..."
 cd /home/devuser/sai_dev/metamind
 source meta_env/bin/activate 2>/dev/null || true
@@ -25,20 +25,22 @@ nohup python scripts/api_server.py > "$LOGS_DIR/api_server_${TIMESTAMP}.log" 2>&
 BACKEND_PID=$!
 echo "  Backend started (PID: $BACKEND_PID)"
 echo "  Logs: tail -f $LOGS_DIR/api_server_${TIMESTAMP}.log"
-echo "  URL: http://localhost:8000"
+echo "  Local:   http://localhost:8000"
+echo "  Network: http://10.17.12.56:8000"
 echo ""
 
 # Wait a moment for backend to start
 sleep 3
 
-# Start Frontend
+# Start Frontend (binds to 0.0.0.0:3000 for network accessibility)
 echo "Starting Frontend React App..."
 cd /home/devuser/sai_dev/metamind/frontend
-nohup npm start > "$LOGS_DIR/frontend_${TIMESTAMP}.log" 2>&1 &
+BROWSER=none HOST=0.0.0.0 nohup npm start > "$LOGS_DIR/frontend_${TIMESTAMP}.log" 2>&1 &
 FRONTEND_PID=$!
 echo "  Frontend started (PID: $FRONTEND_PID)"
 echo "  Logs: tail -f $LOGS_DIR/frontend_${TIMESTAMP}.log"
-echo "  URL: http://localhost:3000"
+echo "  Local:   http://localhost:3000"
+echo "  Network: http://10.17.12.56:3000"
 echo ""
 
 # Wait a moment for frontend to start

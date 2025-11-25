@@ -1018,8 +1018,10 @@ if __name__ == "__main__":
     print("\n" + "="*80, flush=True)
     print("🚀 Starting MetaMind API Server", flush=True)
     print("="*80, flush=True)
-    print(f"📍 Server will be available at: http://localhost:{port}", flush=True)
-    print(f"📚 API docs will be available at: http://localhost:{port}/docs", flush=True)
+    print(f"📍 Local:   http://localhost:{port}", flush=True)
+    print(f"📍 Network: http://10.17.12.56:{port}", flush=True)
+    print(f"📚 API Docs (Local):   http://localhost:{port}/docs", flush=True)
+    print(f"📚 API Docs (Network): http://10.17.12.56:{port}/docs", flush=True)
     print("📊 All API requests and backend activity will be logged here", flush=True)
     print("="*80 + "\n", flush=True)
     
