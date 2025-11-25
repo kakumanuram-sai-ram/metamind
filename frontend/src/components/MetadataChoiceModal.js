@@ -99,22 +99,25 @@ const ActionButtons = styled.div`
   margin-top: ${props => props.theme.spacing.xl};
 `;
 
-const Button = styled.button`
+const Button = styled.button.attrs(props => ({
+  // Remove primary from DOM attributes
+  primary: undefined
+}))`
   padding: ${props => props.theme.spacing.md} ${props => props.theme.spacing.xl};
   border-radius: ${props => props.theme.borderRadius.md};
   font-weight: ${props => props.theme.typography.fontWeight.semibold};
   cursor: pointer;
   transition: all 0.2s;
-  
+
   ${props => props.primary ? `
     background: ${props.theme.colors.primary};
     color: white;
     border: none;
-    
+
     &:hover:not(:disabled) {
       background: ${props.theme.colors.primaryDark};
     }
-    
+
     &:disabled {
       background: ${props.theme.colors.gray[400]};
       cursor: not-allowed;
@@ -123,7 +126,7 @@ const Button = styled.button`
     background: white;
     color: ${props.theme.colors.gray[700]};
     border: 1px solid ${props.theme.colors.gray[300]};
-    
+
     &:hover {
       background: ${props.theme.colors.gray[50]};
     }

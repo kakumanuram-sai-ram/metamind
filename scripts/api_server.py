@@ -7,12 +7,22 @@ This server provides REST API endpoints to:
 - Serve JSON and CSV data
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add scripts directory to Python path to allow imports
+# This handles both running from project root (python scripts/api_server.py) 
+# and from scripts directory (python api_server.py)
+script_dir = Path(__file__).parent.absolute()
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-import os
 import json
 import re
 import glob
@@ -33,55 +43,89 @@ from dataclasses import asdict
 from progress_tracker import get_progress_tracker
 import zipfile
 import shutil
+import logging
+from datetime import datetime
+
+# Configure logging for api_server and imported modules
+def setup_api_logging():
+    """Setup logging configuration for API server"""
+    logs_dir = "logs"
+    os.makedirs(logs_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = f"{logs_dir}/api_server_{timestamp}.log"
+    
+    # Configure root logger to capture all module logs
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler()
+        ],
+        force=True  # Override any existing configuration
+    )
+    
+    # Set specific log levels
+    logging.getLogger('query_extract').setLevel(logging.INFO)
+    logging.getLogger('uvicorn').setLevel(logging.INFO)
+    logging.getLogger('fastapi').setLevel(logging.INFO)
+    
+    return log_file
+
+# Setup logging when module is imported
+_log_file = setup_api_logging()
+logger = logging.getLogger(__name__)
+logger.info(f"API Server logging initialized. Log file: {_log_file}")
 
 app = FastAPI(title="Superset Dashboard Extractor API")
 
-# Add request logging middleware - filter out repetitive polling requests
+# Add favicon endpoint to avoid 404 errors
+@app.get("/favicon.ico")
+async def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)  # No Content - browser will use default
+
+# Add request logging middleware with selective logging to reduce noise
 @app.middleware("http")
 async def log_requests(request, call_next):
     import sys
     import time
-    
+
     start_time = time.time()
-    
-    # Skip logging for frequent polling requests to reduce noise
+
+    # Skip logging for these paths to reduce noise
     skip_logging_paths = [
         '/api/progress',
-        '/api/dashboard/',
+        '/api/knowledge-base/download',
     ]
-    
-    # Only log if it's not a polling request or if it's an error
-    should_log = True
-    for skip_path in skip_logging_paths:
-        if skip_path in request.url.path:
-            should_log = False
-            break
-    
-    # Always log POST requests and errors
-    if request.method == 'POST' or request.url.path.startswith('/api/dashboards/process-multiple'):
-        should_log = True
-    
-    # Process request
-    response = await call_next(request)
-    
-    # Only log errors or important requests
-    if should_log or response.status_code >= 400:
-        process_time = time.time() - start_time
-        if response.status_code >= 400:
-            print(f"[API] ❌ {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
-        elif request.method == 'POST':
-            print(f"[API] → {request.method} {request.url.path} - Status: {response.status_code} ({process_time:.3f}s)", flush=True)
-        sys.stdout.flush()
-    
-    return response
 
-# Enable CORS for React frontend
+    # Check if we should skip logging
+    should_skip = any(skip_path in request.url.path for skip_path in skip_logging_paths)
+
+    # Process request
+    try:
+        response = await call_next(request)
+        duration = (time.time() - start_time) * 1000  # Convert to milliseconds
+
+        # Log only if not skipped AND (error OR POST request)
+        if not should_skip and (response.status_code >= 400 or request.method == 'POST'):
+            logger.info(f"[{request.method}] {request.url.path} | Status: {response.status_code} | Duration: {duration:.2f}ms")
+
+        return response
+    except Exception as e:
+        duration = (time.time() - start_time) * 1000
+        logger.error(f"[REQUEST ERROR] {request.method} {request.url.path} | Error: {str(e)} | Duration: {duration:.2f}ms", exc_info=True)
+        raise
+
+# Enable CORS for React frontend - allow all origins for EC2 access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=["*"],  # Allow all origins for EC2 access (can restrict later)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 
@@ -362,8 +406,18 @@ async def extract_dashboard(request: DashboardExtractRequest):
         # Initialize extractor
         extractor = SupersetExtractor(BASE_URL, HEADERS)
         
-        # Extract dashboard information
-        dashboard_info = extractor.extract_dashboard_complete_info(dashboard_id)
+        # Extract dashboard information (with timeout handling)
+        try:
+            dashboard_info = extractor.extract_dashboard_complete_info(dashboard_id)
+        except Exception as e:
+            import traceback
+            error_msg = f"Error extracting dashboard {dashboard_id}: {str(e)}"
+            print(error_msg)
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to extract dashboard: {str(e)}. Check backend logs for details."
+            )
         
         # Create extracted_meta directory if it doesn't exist
         os.makedirs("extracted_meta", exist_ok=True)
@@ -672,7 +726,8 @@ async def get_dashboard_file_content(dashboard_id: int, file_type: str):
     """Get metadata file content as JSON (for display in UI)"""
     import pandas as pd
     import numpy as np
-    
+    import json
+
     file_mapping = {
         "table_metadata": f"{dashboard_id}_table_metadata.csv",
         "columns_metadata": f"{dashboard_id}_columns_metadata.csv",
@@ -680,46 +735,74 @@ async def get_dashboard_file_content(dashboard_id: int, file_type: str):
         "filter_conditions": f"{dashboard_id}_filter_conditions.txt",
         "definitions": f"{dashboard_id}_definitions.csv"
     }
-    
+
     if file_type not in file_mapping:
         raise HTTPException(status_code=400, detail=f"Invalid file type: {file_type}")
-    
+
     filename = file_mapping[file_type]
     # Get the script directory and construct path relative to metamind directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     metamind_dir = os.path.dirname(script_dir)
     filepath = os.path.join(metamind_dir, "extracted_meta", str(dashboard_id), filename)
-    
+
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail=f"File not found: {filename}")
-    
+
     try:
         # Handle TXT files (filter_conditions)
         if file_type == "filter_conditions":
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
-            return {
+            return JSONResponse({
                 "type": "text",
                 "content": content,
                 "filename": filename
-            }
-        
+            })
+
         # Handle CSV files
         df = pd.read_csv(filepath)
-        
+
         # Replace NaN, Infinity, and -Infinity with None (JSON compliant)
         df = df.replace([np.inf, -np.inf], None)
         df = df.where(pd.notnull(df), None)
-        
-        # Convert DataFrame to JSON
-        return {
+
+        # Convert DataFrame to records with proper type handling
+        data = []
+        for record in df.to_dict('records'):
+            converted_record = {}
+            for key, val in record.items():
+                # Handle all numpy types and missing values
+                if pd.isna(val) or val is None:
+                    converted_record[key] = None
+                elif isinstance(val, (np.integer, np.int64, np.int32)):
+                    converted_record[key] = int(val)
+                elif isinstance(val, (np.floating, np.float64, np.float32)):
+                    # Make sure it's a valid float
+                    float_val = float(val)
+                    if np.isfinite(float_val):
+                        converted_record[key] = float_val
+                    else:
+                        converted_record[key] = None
+                elif isinstance(val, (np.bool_, bool)):
+                    converted_record[key] = bool(val)
+                else:
+                    # Convert to string if it's not a standard type
+                    converted_record[key] = str(val)
+            data.append(converted_record)
+
+        # Use JSONResponse with default handler to ensure proper encoding
+        response_data = {
             "type": "csv",
             "columns": df.columns.tolist(),
-            "data": df.to_dict('records'),
+            "data": data,
             "total_rows": len(df),
             "filename": filename
         }
+
+        return JSONResponse(response_data)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
 
 
@@ -925,6 +1008,9 @@ if __name__ == "__main__":
     import uvicorn
     import sys
     
+    # Get port from environment variable or default to 8000
+    port = int(os.environ.get("PORT", 8000))
+    
     # Ensure all output is flushed immediately
     sys.stdout.reconfigure(line_buffering=True)
     sys.stderr.reconfigure(line_buffering=True)
@@ -932,10 +1018,10 @@ if __name__ == "__main__":
     print("\n" + "="*80, flush=True)
     print("🚀 Starting MetaMind API Server", flush=True)
     print("="*80, flush=True)
-    print("📍 Server will be available at: http://localhost:8000", flush=True)
-    print("📚 API docs will be available at: http://localhost:8000/docs", flush=True)
+    print(f"📍 Server will be available at: http://localhost:{port}", flush=True)
+    print(f"📚 API docs will be available at: http://localhost:{port}/docs", flush=True)
     print("📊 All API requests and backend activity will be logged here", flush=True)
     print("="*80 + "\n", flush=True)
     
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 
