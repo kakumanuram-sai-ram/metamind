@@ -1,27 +1,63 @@
 [
   {
+    "term": "SR",
+    "type": "Metric / Calculated Field",
+    "definition": "Success Rate calculated as the percentage of successful UPI transactions out of total transactions. Implementation varies: (1) Count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, or (2) Success transactions multiplied by 100 divided by overall transactions. Both approaches represent the percentage of successful UPI transactions.",
+    "business_alias": "Success Rate"
+  },
+  {
     "term": "UPI",
     "type": "Category",
-    "definition": "Unified Payments Interface - a real-time payment system that facilitates inter-bank transactions through mobile platforms.",
+    "definition": "Unified Payments Interface - India's instant real-time payment system that facilitates inter-bank transactions through mobile platforms, enabling instant money transfers and digital payments.",
     "business_alias": "Unified Payments Interface"
   },
   {
     "term": "P2P",
     "type": "Category",
-    "definition": "Person-to-Person transactions including VPA2ACCOUNT and VPA2VPA transaction categories",
-    "business_alias": "Person to Person, Person-to-Person, Peer-to-Peer"
+    "definition": "Person-to-Person transactions - UPI payments made between individual users, including VPA2ACCOUNT and VPA2VPA transaction categories",
+    "business_alias": "Person-to-Person, Person to Person, Peer-to-Peer"
   },
   {
     "term": "P2M",
     "type": "Category",
-    "definition": "Person-to-Merchant transactions, specifically VPA2MERCHANT transaction types.",
+    "definition": "Person-to-Merchant transactions - payments made from users to merchants/businesses. Specifically includes VPA2MERCHANT transaction types. This category encompasses all payment flows from individual users to business entities or merchants across different dashboard contexts.",
     "business_alias": "Person-to-Merchant, Person to Merchant"
   },
   {
-    "term": "SR",
-    "type": "Metric / Calculated Field",
-    "definition": "Success Rate calculated as the count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, representing the percentage of successful UPI transactions.",
-    "business_alias": "Success Rate"
+    "term": "SnP",
+    "type": "Category",
+    "definition": "Scan and Pay transactions, including 3P QR and Paytm QR payments and flow categories. This category encompasses all Scan and Pay transaction types across different payment flows, as consistently defined across multiple dashboards.",
+    "business_alias": "Scan and Pay"
+  },
+  {
+    "term": "Transaction Status",
+    "type": "Category",
+    "definition": "Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
+    "business_alias": NaN
+  },
+  {
+    "term": "PSP",
+    "type": "Category",
+    "definition": "Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",
+    "business_alias": "Payment Service Provider"
+  },
+  {
+    "term": "Flow Category",
+    "type": "Category",
+    "definition": "Classification system for UPI transactions that encompasses multiple categorization approaches: (1) Transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus (Dashboard 511), and (2) Transaction flows including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories (Dashboard 476). This term represents different but complementary ways to classify UPI transaction patterns and processing methods.",
+    "business_alias": "Transaction Flow Type"
+  },
+  {
+    "term": "Online",
+    "type": "Category",
+    "definition": "Online transaction category for UPI transactions including Intent, P2M Collect, and Mandate_Online flow categories/flows. Used across multiple dashboards to categorize online payment transactions and flows, encompassing various online UPI transaction types and payment flows.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Onus",
+    "type": "Category",
+    "definition": "On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system or bank. These transactions occur when both parties involved are served by the same financial institution. This encompasses flows within the same bank as well as broader payment system contexts.",
+    "business_alias": "On-us"
   },
   {
     "term": "P2P_P2M",
@@ -42,52 +78,16 @@
     "business_alias": NaN
   },
   {
-    "term": "SnP",
-    "type": "Category",
-    "definition": "Scan and Pay transactions, including 3P QR and Paytm QR flow categories.",
-    "business_alias": "Scan and Pay"
-  },
-  {
-    "term": "Transaction Status",
-    "type": "Category",
-    "definition": "Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
-    "business_alias": NaN
-  },
-  {
-    "term": "PSP",
-    "type": "Category",
-    "definition": "Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",
-    "business_alias": "Payment Service Provider"
-  },
-  {
-    "term": "Flow Category",
-    "type": "Category",
-    "definition": "Classification of UPI transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus.",
-    "business_alias": NaN
-  },
-  {
-    "term": "Online",
-    "type": "Category",
-    "definition": "Online transaction category including Intent, P2M Collect, and Mandate_Online flow categories.",
-    "business_alias": NaN
-  },
-  {
-    "term": "Onus",
-    "type": "Category",
-    "definition": "On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system.",
-    "business_alias": "On-us"
-  },
-  {
     "term": "DEEMED",
     "type": "Metric",
     "definition": "A transaction status category considered as successful for success rate calculations along with SUCCESS status",
     "business_alias": NaN
   },
   {
-    "term": "SUCCESS",
+    "term": "Success (synonyms: SUCCESS)",
     "type": "Metric",
-    "definition": "A transaction status indicating the transaction was completed successfully",
-    "business_alias": NaN
+    "definition": "A transaction status indicating the transaction was completed successfully. Specifically refers to count of UPI transactions with status 'success' or 'deemed'. Used across dashboards to track successful transaction completions.",
+    "business_alias": "Success_txn"
   },
   {
     "term": "Category",
@@ -99,7 +99,7 @@
     "term": "Handle",
     "type": "Metric",
     "definition": "UPI identifier handles for payer and payee, used to classify transactions by PSP (e.g., paytm, ptyes, ptaxis).",
-    "business_alias": "Payer Handle, UPI Handle, UPI Handle"
+    "business_alias": "UPI Handle, Payer Handle"
   },
   {
     "term": "Payer Handle",
@@ -112,5 +112,611 @@
     "type": "Category",
     "definition": "Payment service provider handles including paytm, ptyes, ptaxis, pthdfc, ptsbi for payer classification",
     "business_alias": "Payer as Paytm"
+  },
+  {
+    "term": "MAU",
+    "type": "Metric / Calculated Field",
+    "definition": "Monthly Active Users calculated as sum of users who have use_case_mtd greater than 0, indicating users who performed at least one UPI transaction use case in the current month",
+    "business_alias": "Monthly Active Users"
+  },
+  {
+    "term": "#Users",
+    "type": "Metric",
+    "definition": "Count of users in the system. General definition: Total count of users representing the sum of all users across different lifecycle stages and account profiles. In SuperCash context: Count of distinct users who have SuperCash transactions in the selected time period. The specific scope may vary depending on dashboard context and filters applied.",
+    "business_alias": "Total Users, Users, Unique Users, Number of Users, User Count"
+  },
+  {
+    "term": "%",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage distribution calculated as (MAU for each handle group / Total MAU within lifecycle partition) * 100, showing the proportion of monthly active users across different handle counts",
+    "business_alias": "MAU Distribution Percentage, Retention Rate, Percentage Distribution"
+  },
+  {
+    "term": "Handles",
+    "type": "Metric",
+    "definition": "Count of distinct UPI accounts/handles per user, representing the number of active UPI accounts a user maintains",
+    "business_alias": "UPI Handles, UPI Accounts"
+  },
+  {
+    "term": "Lifecycle CM",
+    "type": "Category",
+    "definition": "User lifecycle categorization in the current month, including stages like Active, Dormant, and other user states based on transaction activity.",
+    "business_alias": "User Lifecycle, Customer Lifecycle, Lifecycle Current Month"
+  },
+  {
+    "term": "use_case_mtd",
+    "type": "Metric",
+    "definition": "Month-to-date use case activity indicator showing whether a user has performed UPI transactions in distinct use cases during the current month",
+    "business_alias": "Monthly Use Case Activity, Use Cases Month-to-Date"
+  },
+  {
+    "term": "accounts",
+    "type": "Metric",
+    "definition": "Count of distinct bank accounts associated with users, representing the number of linked payment accounts.",
+    "business_alias": "Bank Accounts"
+  },
+  {
+    "term": "Dormant",
+    "type": "Category",
+    "definition": "User lifecycle status indicating inactive users who have not performed transactions within the specified period.",
+    "business_alias": "Inactive Users"
+  },
+  {
+    "term": "LMTD - MAU",
+    "type": "Metric / Calculated Field",
+    "definition": "Last Month To Date Monthly Active Users - sum of users filtered for the LMTD period, representing active users from the same day range in the previous month",
+    "business_alias": "Last Month To Date MAU"
+  },
+  {
+    "term": "MTD - MAU",
+    "type": "Metric / Calculated Field",
+    "definition": "Month To Date Monthly Active Users - sum of users filtered for the MTD period, representing active users from the beginning of current month to current date",
+    "business_alias": "Month To Date MAU"
+  },
+  {
+    "term": "LMTD",
+    "type": "Category",
+    "definition": "Last Month To Date - time period representing the same day range in the previous month as the current MTD period",
+    "business_alias": "Last Month Till Date, Last Month To Date"
+  },
+  {
+    "term": "MTD",
+    "type": "Category",
+    "definition": "Month To Date (MTD) - refers to the time period from the beginning of the current month up to the current date, representing data accumulated from the start of the current month through today. This term is used across dashboards to indicate metrics calculated from the first day of the current month up to the present date.",
+    "business_alias": "Month To Date, Month to Date, Month-to-Date"
+  },
+  {
+    "term": "Usecase",
+    "type": "Category",
+    "definition": "Different categories or types of UPI transactions and payment flows that users engage with",
+    "business_alias": "Use Case"
+  },
+  {
+    "term": "Lifecycle",
+    "type": "Category",
+    "definition": "User classification system that categorizes users based on their engagement patterns and behavioral stages. Includes specific categories such as new users ('a:new') and reactivated users ('c:react') based on their UPI usage patterns.",
+    "business_alias": "Lifecycle CM, Customer Lifecycle, User Lifecycle Stage, User Type, User Profile, User_type, user_type"
+  },
+  {
+    "term": "DAU",
+    "type": "Metric",
+    "definition": "Daily Active Users - the number of unique users who perform at least one UPI transaction on a given day",
+    "business_alias": "Dau, Daily Active Users, Daily Active Users"
+  },
+  {
+    "term": "TXNs (synonyms: txns, Txns)",
+    "type": "Metric",
+    "definition": "Total number of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status. Also used as a general count of all transactions processed.",
+    "business_alias": "Transactions"
+  },
+  {
+    "term": "TPU",
+    "type": "Metric / Calculated Field",
+    "definition": "Transactions Per User - calculated as total transactions divided by Daily Active Users (sum(txns)/sum(DAU))",
+    "business_alias": "Transactions Per User"
+  },
+  {
+    "term": "T20 Cities",
+    "type": "Category",
+    "definition": "Top 20 cities in India including New Delhi, Bangalore, Hyderabad, Jaipur, Mumbai, Chennai, Noida, Gurgaon, and others where UPI transactions are analyzed",
+    "business_alias": "Top 20 Cities"
+  },
+  {
+    "term": "Retention",
+    "type": "Metric / Calculated Field",
+    "definition": "The percentage of users who continue to use UPI services in subsequent months, calculated as users divided by the maximum users in the same lifecycle and base month partition",
+    "business_alias": "Retention Rate, NRR_retention, User Retention Analysis, User Retention Rate"
+  },
+  {
+    "term": "Base Month",
+    "type": "Metric",
+    "definition": "The initial month when a user first becomes active, used as reference point for retention calculations",
+    "business_alias": "base_month, Reference Month, Base_month"
+  },
+  {
+    "term": "New Users",
+    "type": "Metric",
+    "definition": "Users classified as 'a:new' in their lifecycle stage, representing first-time UPI users in a given period",
+    "business_alias": "a:new"
+  },
+  {
+    "term": "Diff",
+    "type": "Metric / Calculated Field",
+    "definition": "The difference in months between the base month and retention month, used to measure retention periods. Calculated using date_diff function.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Users",
+    "type": "Metric",
+    "definition": "Count of distinct customers (scope_cust_id) within a specific lifecycle and time period",
+    "business_alias": "scope_cust_id"
+  },
+  {
+    "term": "base_month",
+    "type": "Metric",
+    "definition": "The starting month used as a reference point for calculating retention cohorts, user lifecycle analysis, and measuring user activity progression",
+    "business_alias": NaN
+  },
+  {
+    "term": "b:repeat",
+    "type": "Category",
+    "definition": "User lifecycle category representing repeat users who have made multiple UPI transactions",
+    "business_alias": "repeat users"
+  },
+  {
+    "term": "c:react",
+    "type": "Category",
+    "definition": "Customer reactive segment that includes users with reaction patterns categorized as 'c:react 1-3' and 'c:react 3+' user types",
+    "business_alias": "Reactivated Customers, reactive users, Customer Reactive"
+  },
+  {
+    "term": "scope_cust_id",
+    "type": "Metric",
+    "definition": "Unique customer identifier used to track individual users across different time periods for retention analysis",
+    "business_alias": "customer ID"
+  },
+  {
+    "term": "Overall",
+    "type": "Metric",
+    "definition": "Total count of all UPI transactions including success, deemed, failure, and pending statuses",
+    "business_alias": "Overall_txn"
+  },
+  {
+    "term": "Flow_category",
+    "type": "Category",
+    "definition": "Classification of UPI transaction types including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT",
+    "business_alias": NaN
+  },
+  {
+    "term": "VPA2MERCHANT",
+    "type": "Category",
+    "definition": "UPI transaction category representing Virtual Payment Address to Merchant transactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "VPA2VPA",
+    "type": "Category",
+    "definition": "UPI transaction category representing Virtual Payment Address to Virtual Payment Address transactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "VPA2ACCOUNT",
+    "type": "Category",
+    "definition": "UPI transaction category representing Virtual Payment Address to Account transactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "DoD",
+    "type": "Category",
+    "definition": "Day over Day comparison showing trends and changes between consecutive days",
+    "business_alias": "Day over Day"
+  },
+  {
+    "term": "% Growth",
+    "type": "Metric / Calculated Field",
+    "definition": "Month-over-month growth percentage calculated as sum of month-over-month growth divided by sum of users (SUM(mom_growth)/SUM(users))",
+    "business_alias": "MoM Growth"
+  },
+  {
+    "term": "M0",
+    "type": "Category",
+    "definition": "Current month or month zero in retention analysis, indicating users in their base month of activity",
+    "business_alias": "Month 0, Base Month"
+  },
+  {
+    "term": "NRR",
+    "type": "Metric / Calculated Field",
+    "definition": "Net Retention Rate - calculated as current month users divided by the maximum users in the same lifecycle and base month cohort",
+    "business_alias": "Net Retention Rate"
+  },
+  {
+    "term": "LM Users",
+    "type": "Metric",
+    "definition": "Total count of distinct users who were active in the last month period",
+    "business_alias": "Last Month Users, Base Users"
+  },
+  {
+    "term": "Retained Users",
+    "type": "Metric",
+    "definition": "Count of users who were active in both the base period and the subsequent retention period. These are users from the base period who continued to be active in the current period, used to measure user retention.",
+    "business_alias": "Retained Users"
+  },
+  {
+    "term": "Base Users",
+    "type": "Metric",
+    "definition": "Count of distinct users from the previous month across different lifecycle stages who form the baseline for retention calculation. This represents the total count of users in the base period used for retention analysis, typically representing users active in the previous month.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Retention Users",
+    "type": "Metric",
+    "definition": "Count of distinct users who were active in the previous month and also performed transactions in the current month-to-date period",
+    "business_alias": "Retained Users"
+  },
+  {
+    "term": "Retention Month",
+    "type": "Metric",
+    "definition": "The subsequent month being compared to the base month to measure user retention",
+    "business_alias": "retention_month"
+  },
+  {
+    "term": "User Profile",
+    "type": "Category",
+    "definition": "Classification or segmentation of users based on their UPI usage patterns and characteristics",
+    "business_alias": "Profile"
+  },
+  {
+    "term": "Distribution",
+    "type": "Category",
+    "definition": "Breakdown or allocation of MAU across different user profiles or segments",
+    "business_alias": NaN
+  },
+  {
+    "term": "Reactivated",
+    "type": "Category",
+    "definition": "Users who have returned to using UPI services after a period of inactivity (c:react lifecycle)",
+    "business_alias": "c:react"
+  },
+  {
+    "term": "User Lifecycle",
+    "type": "Category",
+    "definition": "Classification of users based on their engagement patterns (c:react, c:react 1-3, c:react 3+)",
+    "business_alias": "lifecycle"
+  },
+  {
+    "term": "Profile wise Distribution",
+    "type": "Category",
+    "definition": "Analysis of user metrics segmented by different user profile characteristics or lifecycle stages",
+    "business_alias": NaN
+  },
+  {
+    "term": "Amount",
+    "type": "Metric",
+    "definition": "Total monetary value of transactions processed. Specifically refers to the total monetary value of all UPI transactions in the specified period.",
+    "business_alias": "Transaction Amount"
+  },
+  {
+    "term": "GMV",
+    "type": "Synonym",
+    "definition": "Gross Merchandise Value - total monetary value of transactions processed",
+    "business_alias": "Gross Merchandise Value"
+  },
+  {
+    "term": "Ratio DAU P2p/p2m",
+    "type": "Metric / Calculated Field",
+    "definition": "Ratio of P2P Daily Active Users divided by P2M Daily Active Users, calculated as sum of P2P DAU divided by sum of P2M DAU",
+    "business_alias": NaN
+  },
+  {
+    "term": "Ratio txns P2p/p2m",
+    "type": "Metric / Calculated Field",
+    "definition": "Ratio of P2P transactions divided by P2M transactions, calculated as sum of P2P transaction count divided by sum of P2M transaction count",
+    "business_alias": NaN
+  },
+  {
+    "term": "Ratio gmv P2p/p2m",
+    "type": "Metric / Calculated Field",
+    "definition": "Ratio of P2P gross merchandise value divided by P2M gross merchandise value, calculated as sum of P2P amount divided by sum of P2M amount",
+    "business_alias": NaN
+  },
+  {
+    "term": "Gaming_flag",
+    "type": "Category",
+    "definition": "Binary classification indicating whether a user is involved in gaming transactions ('Gaming') or not ('Non_gaming')",
+    "business_alias": NaN
+  },
+  {
+    "term": "use_case",
+    "type": "Metric / Calculated Field",
+    "definition": "Count of distinct transaction categories (P2P, SnP, Online, Onus) that a user has engaged in during the month",
+    "business_alias": NaN
+  },
+  {
+    "term": "RMG",
+    "type": "Category",
+    "definition": "Real Money Gaming - category referring to gaming merchants and related user engagement metrics",
+    "business_alias": "Real Money Gaming"
+  },
+  {
+    "term": "Profile wise",
+    "type": "Category",
+    "definition": "Segmentation approach that groups users based on their behavioral patterns, lifecycle stages, or user types",
+    "business_alias": NaN
+  },
+  {
+    "term": "State",
+    "type": "Category",
+    "definition": "Geographical state dimension for analyzing UPI transaction distribution across different Indian states",
+    "business_alias": "Popular State"
+  },
+  {
+    "term": "UPI Handles",
+    "type": "Category",
+    "definition": "Payment service provider identifiers including paytm, ptyes, ptaxis, pthdfc, ptsbi for transaction routing",
+    "business_alias": "Payer Handle"
+  },
+  {
+    "term": "GPU",
+    "type": "Category",
+    "definition": "Grouping dimension used for segmenting UPI retention analysis, likely referring to GMV Per User or similar user profiling metric.",
+    "business_alias": "GMV Per User"
+  },
+  {
+    "term": "MAU Users",
+    "type": "Metric",
+    "definition": "Monthly Active Users - the count of unique users who were active within a specific month period",
+    "business_alias": "MAU, Monthly Active Users, Monthly Active Users"
+  },
+  {
+    "term": "Retention In %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of users retained from previous period, calculated as (Retained users × 100) / Total users",
+    "business_alias": "Retention Rate, Retention Percentage"
+  },
+  {
+    "term": "users_viewed_banner",
+    "type": "Metric",
+    "definition": "Count of unique users who viewed the PTS Banner 2.0 across different UPI features",
+    "business_alias": NaN
+  },
+  {
+    "term": "converted_post_viewing",
+    "type": "Metric",
+    "definition": "Count of users who completed a conversion action after viewing the banner",
+    "business_alias": NaN
+  },
+  {
+    "term": "users_clicked_banner",
+    "type": "Metric",
+    "definition": "Count of users who clicked on the banner for UPI features",
+    "business_alias": NaN
+  },
+  {
+    "term": "converted_post_clicking",
+    "type": "Metric",
+    "definition": "Count of users who completed a conversion action after clicking the banner",
+    "business_alias": NaN
+  },
+  {
+    "term": "TG",
+    "type": "Category",
+    "definition": "Target Group - users who are exposed to the experimental feature or banner",
+    "business_alias": "Target Group"
+  },
+  {
+    "term": "CG",
+    "type": "Category",
+    "definition": "Control Group - users who are not exposed to the experimental feature, used as baseline for comparison",
+    "business_alias": "Control Group"
+  },
+  {
+    "term": "PTS Banner 2.0",
+    "type": "Category",
+    "definition": "New version of the Payment Transaction Success banner used for promoting UPI features",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bank Linking",
+    "type": "Category",
+    "definition": "UPI feature that allows users to link their bank accounts to the payment platform",
+    "business_alias": NaN
+  },
+  {
+    "term": "RuPay CC Linking",
+    "type": "Category",
+    "definition": "UPI feature that allows users to link their RuPay Credit Cards to the platform",
+    "business_alias": "RuPay Credit Card Linking"
+  },
+  {
+    "term": "UPI Lite Activation",
+    "type": "Category",
+    "definition": "Feature activation for UPI Lite service, enabling small-value transactions without PIN",
+    "business_alias": "Lite Activation"
+  },
+  {
+    "term": "UPI Statement",
+    "type": "Category",
+    "definition": "Feature allowing users to download their UPI transaction statements",
+    "business_alias": "Download UPI Statement"
+  },
+  {
+    "term": "UPI Lite Auto Top UP",
+    "type": "Category",
+    "definition": "Feature for automatically topping up UPI Lite balance when it falls below threshold",
+    "business_alias": "UPI Lite Auto Top-up, Lite auto top-up"
+  },
+  {
+    "term": "SUM(users_viewed_banner)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all users who viewed banners across all UPI features",
+    "business_alias": NaN
+  },
+  {
+    "term": "TG CG tracking",
+    "type": "Category",
+    "definition": "Target Group and Control Group tracking methodology for measuring banner effectiveness",
+    "business_alias": "Target Group Control Group tracking"
+  },
+  {
+    "term": "Download UPI Statement",
+    "type": "Category",
+    "definition": "Feature allowing users to download their UPI transaction statements",
+    "business_alias": "UPI Statement"
+  },
+  {
+    "term": "Receive Money widget",
+    "type": "Category",
+    "definition": "Widget feature for receiving money through UPI interface",
+    "business_alias": NaN
+  },
+  {
+    "term": "Scan & Pay widget",
+    "type": "Category",
+    "definition": "Widget feature for scanning QR codes and making UPI payments",
+    "business_alias": "Scan and Pay widget"
+  },
+  {
+    "term": "Spends Analytics",
+    "type": "Category",
+    "definition": "Feature providing users with analytics and insights on their spending patterns",
+    "business_alias": NaN
+  },
+  {
+    "term": "Success",
+    "type": "Metric",
+    "definition": "A transaction status indicating the transaction was completed successfully. Count of UPI transactions with status 'success' or 'deemed'. Used both as a categorical status value and as a metric for counting successful transactions across dashboards.",
+    "business_alias": "Success_txn"
+  },
+  {
+    "term": "TXNs (also: txns, Txns)",
+    "type": "Metric",
+    "definition": "Total number of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status. This metric represents the total count of transactions processed across the system.",
+    "business_alias": "Transactions"
+  },
+  {
+    "term": "Cashback",
+    "type": "Metric / Calculated Field",
+    "definition": "Total sum of standardized cashburn amounts aggregated over time, representing the monetary value of cashback given to users",
+    "business_alias": NaN
+  },
+  {
+    "term": "Cashburn",
+    "type": "Metric / Calculated Field",
+    "definition": "Calculated cashback value converted to standard currency based on redemption type: coins divided by 166.67, goldcoins divided by 100, UPI amount plus 0.2478, otherwise original amount. This represents the cash equivalent value of redeemed rewards across different redemption channels.",
+    "business_alias": "Cash Burn Amount, Burn Value"
+  },
+  {
+    "term": "SuperCash",
+    "type": "Category",
+    "definition": "Reward system offering cash benefits through various redemption types including coins, goldcoins, and UPI transactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Redemption Type",
+    "type": "Category",
+    "definition": "Classification of how cashback is redeemed including coins, goldcoins, and UPI methods, each with different conversion rates",
+    "business_alias": "Reward Type, Redemption Method"
+  },
+  {
+    "term": "Fulfillment Status",
+    "type": "Category",
+    "definition": "Status tracking for cashback processing including Given (3), Processing (2), and Pending (1) states",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(cashburn)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total sum of cashburn amounts across all transactions, aggregated from individual cashburn calculations",
+    "business_alias": "Total Cash Burn, Cash Burn Sum, Total Cashburn, Cashburn Sum"
+  },
+  {
+    "term": "Campaign",
+    "type": "Category",
+    "definition": "UPI SuperCash campaign identifier that groups transactions by specific promotional campaigns. Marketing campaign identifier associated with SuperCash offers and promotions, used to track and categorize promotional activities.",
+    "business_alias": "Campaign Name, Promo Campaign, Campaign ID"
+  },
+  {
+    "term": "Status",
+    "type": "Category",
+    "definition": "Transaction status indicating completion state of SuperCash transactions. Status values include: Given (completed), Processing (in progress), Pending (awaiting fulfillment), and Unscratched (not activated). This field tracks the current state of transactions throughout their lifecycle and represents the current state of SuperCash transactions.",
+    "business_alias": "Transaction Status, Fulfillment Status"
+  },
+  {
+    "term": "Wallet",
+    "type": "Category",
+    "definition": "Digital wallet platform, service, or payment method associated with the SuperCash campaign and transactions. Encompasses both the wallet provider/platform and the specific digital wallet type used for payments. This includes wallet platforms or services as well as the digital wallet types or payment methods used in SuperCash transactions.",
+    "business_alias": "Wallet Provider, Payment Wallet"
+  },
+  {
+    "term": "Cash Burn",
+    "type": "Metric / Calculated Field",
+    "definition": "Calculated cashback amount based on redemption type: coins (amount/166.67), goldcoins (amount/100), UPI (amount+0.2478), or original amount for other types",
+    "business_alias": "Cashburn"
+  },
+  {
+    "term": "Given",
+    "type": "Category",
+    "definition": "Status category for cashback that has been successfully delivered to users (status=1, fulfillment_status=3)",
+    "business_alias": NaN
+  },
+  {
+    "term": "Processing",
+    "type": "Category",
+    "definition": "Status category for cashback that is currently being processed (status=1, fulfillment_status=2)",
+    "business_alias": NaN
+  },
+  {
+    "term": "Pending",
+    "type": "Category",
+    "definition": "Cashback status when status=1 and fulfillment_status=1, indicating cashback is awaiting processing",
+    "business_alias": NaN
+  },
+  {
+    "term": "Unscratched",
+    "type": "Category",
+    "definition": "Status category for scratch cards that have not been scratched by users (status=2, fulfillment_status=1)",
+    "business_alias": NaN
+  },
+  {
+    "term": "Coins",
+    "type": "Category",
+    "definition": "Redemption type for cashback where amount is divided by 166.67 to calculate cash burn",
+    "business_alias": NaN
+  },
+  {
+    "term": "Goldcoins",
+    "type": "Category",
+    "definition": "Redemption type for cashback where amount is divided by 100 to calculate cash burn",
+    "business_alias": NaN
+  },
+  {
+    "term": "MTD Daily Users",
+    "type": "Metric / Calculated Field",
+    "definition": "Month-to-date count of unique users who performed transactions on a daily basis",
+    "business_alias": "Month-to-Date Daily Users"
+  },
+  {
+    "term": "COUNT_DISTINCT(user_id)",
+    "type": "Metric",
+    "definition": "Unique count of user identifiers, representing the number of distinct users",
+    "business_alias": "Unique Users, Daily Active Users"
+  },
+  {
+    "term": "MTD Gratified Users",
+    "type": "Metric",
+    "definition": "Month-to-date count of unique users who have been gratified (received benefits) through the UPI SuperCash program",
+    "business_alias": "Gratified Users"
+  },
+  {
+    "term": "UPI SuperCash",
+    "type": "Category",
+    "definition": "Cashback program related to UPI transactions offering rewards through various redemption types including coins, goldcoins, and direct UPI transfers",
+    "business_alias": "SuperCash"
+  },
+  {
+    "term": "redemption_type",
+    "type": "Category",
+    "definition": "Type of SuperCash redemption method including coins, goldcoins, UPI, and other payment methods",
+    "business_alias": "Redemption Method"
   }
 ]

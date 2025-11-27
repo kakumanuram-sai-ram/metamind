@@ -26,8 +26,8 @@
       "total_files": 11,
       "completed_files_count": 11,
       "error": null,
-      "start_time": "2025-11-22T21:41:54.418069",
-      "end_time": "2025-11-22T21:42:54.508053"
+      "start_time": "2025-11-27T03:21:30.540225",
+      "end_time": "2025-11-27T03:22:16.982952"
     }
   },
   "merge_status": {
@@ -45,6 +45,6 @@
     "status": "completed",
     "current_step": null
   },
-  "start_time": "2025-11-22T21:41:54.417668",
-  "last_update": "2025-11-22T21:42:54.568865"
+  "start_time": "2025-11-27T03:21:30.539808",
+  "last_update": "2025-11-27T03:26:04.827183"
 }

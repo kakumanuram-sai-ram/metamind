@@ -1,8 +1,9 @@
 {
   "dashboard_ids": [
-    511
+    511,
+    729
   ],
-  "incremental_merge": false,
+  "incremental_merge": true,
   "merged_files": {
     "table_metadata": "extracted_meta/merged_metadata/consolidated_table_metadata.csv",
     "columns_metadata": "extracted_meta/merged_metadata/consolidated_columns_metadata.csv",
@@ -12,11 +13,11 @@
     "conflicts_report": "extracted_meta/merged_metadata/conflicts_report.json"
   },
   "statistics": {
-    "total_tables": 1,
-    "total_columns": 16,
+    "total_tables": 41,
+    "total_columns": 370,
     "total_joins": 0,
-    "total_terms": 19,
-    "total_conflicts": 0
+    "total_terms": 120,
+    "total_conflicts": 40
   },
   "conflict_resolution_rules": {
     "most_common_wins": "For categorical fields (refresh_frequency, vertical, variable_type), use the most common value across dashboards",

@@ -1,0 +1,59 @@
+================================================================================
+SQL QUERY GENERATION AGENT - INSTRUCTION SET
+================================================================================
+
+Generated: 2025-11-27T03:26:04.797311
+Version: 2.0-fallback
+Generation Method: Template (LLM unavailable)
+
+----------------------------------------
+BUSINESS CONTEXT
+----------------------------------------
+Vertical: General Analytics
+
+----------------------------------------
+INSTRUCTIONS
+----------------------------------------
+
+### Available Tables [HIGH]
+
+The following tables are available:
+
+- hive.cdo.fact_upi_transactions_snapshot_v3: data_description: This is a comprehensive UPI transactions snapshot table containing detailed transa
+- hive.tpap_pms.account_snapshot_v3: data_description: The account_snapshot_v3 table is a comprehensive repository of account-level data 
+- hive.user_paytm_payments.upi_flow_wise_base: data_description: The upi_flow_wise_base table contains UPI (Unified Payments Interface) transaction
+- hive.cdo.fact_upi_customer_lifecycle_snapshot_v3: data_description: The fact_upi_customer_lifecycle_snapshot_v3 table is a comprehensive snapshot tabl
+- all_accounts: data_description: The all_accounts table is a derived dataset containing UPI account information ext
+- users: data_description: This table represents a derived dataset of UPI users with their account profiles a
+- hive.user_paytm_payments.upi_flow_wise_base_cm: data_description: This table contains UPI (Unified Payments Interface) transaction flow data specifi
+- hive.tpap_pms.user_snapshot_v3: data_description: This table contains comprehensive user profile snapshots for UPI services, storing
+- out: data_description: The 'out' table contains aggregated UPI (Unified Payments Interface) transaction m
+- hive.user_paytm_payments.upi_flow_wise_base_partitioned: data_description: This table contains UPI transaction flow data partitioned by day, storing informat
+
+### Join Patterns [MEDIUM]
+
+Use these join patterns:
+
+
+
+### General Guidelines [HIGH]
+
+
+1. Always use fully qualified table names (catalog.schema.table)
+2. Include partition filters (dt or day_id) for performance
+3. Use CTEs for complex queries
+4. Round percentages to 2 decimal places
+5. Order results by date then primary dimension
+
+
+----------------------------------------
+METADATA SUMMARY
+----------------------------------------
+Tables: 41
+Columns: 370
+Joins: 0
+Definitions: 120
+
+================================================================================
+END OF INSTRUCTION SET
+================================================================================

@@ -409,7 +409,9 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         print("\n[Step 4.2] Extracting table metadata using LLM (chart-by-chart)...", flush=True)
         
         charts = dashboard_info_dict.get('charts', [])
-        print(f"  Processing {len(charts)} charts in parallel...", flush=True)
+        total_charts = len(charts)
+        print(f"  Processing {total_charts} charts in parallel...", flush=True)
+        print(f"  Progress: 0/{total_charts} charts processed", flush=True)
         
         # Get API key and config
         api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -434,6 +436,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds ({step_time/60:.2f} minutes)", flush=True)
+        print(f"  Progress: {total_charts}/{total_charts} charts processed", flush=True)
         print(f"  📊 Generated metadata for {len(table_metadata)} tables", flush=True)
         
         # Step 4.3: Save table metadata to CSV
@@ -517,7 +520,9 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         print("\n[Step 5.2] Extracting column metadata using LLM (chart-by-chart)...", flush=True)
         
         charts = dashboard_info_dict.get('charts', [])
-        print(f"  Processing {len(charts)} charts in parallel...", flush=True)
+        total_charts = len(charts)
+        print(f"  Processing {total_charts} charts in parallel...", flush=True)
+        print(f"  Progress: 0/{total_charts} charts processed", flush=True)
         
         # Get API key and config
         api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -543,6 +548,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds ({step_time/60:.2f} minutes)", flush=True)
+        print(f"  Progress: {total_charts}/{total_charts} charts processed", flush=True)
         print(f"  📊 Generated metadata for {len(column_metadata)} columns", flush=True)
         
         # Step 5.3: Save column metadata to CSV
@@ -623,7 +629,9 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         # Step 6.2: Extract joining conditions using LLM (chart-by-chart for token optimization)
         step_start = time.time()
         print("\n[Step 6.2] Extracting joining conditions using LLM (chart-by-chart)...", flush=True)
-        print(f"  Processing {len(dashboard_info_dict.get('charts', []))} charts in parallel...", flush=True)
+        total_charts = len(dashboard_info_dict.get('charts', []))
+        print(f"  Processing {total_charts} charts in parallel...", flush=True)
+        print(f"  Progress: 0/{total_charts} charts processed", flush=True)
         
         # Get API key and config
         api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -650,6 +658,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds ({step_time/60:.2f} minutes)", flush=True)
+        print(f"  Progress: {total_charts}/{total_charts} charts processed", flush=True)
         print(f"  📊 Found {len(joining_conditions)} joining conditions", flush=True)
         
         if len(joining_conditions) == 0:
@@ -739,7 +748,9 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         # Step 7.2: Generate filter conditions using LLM (chart-by-chart for token optimization)
         step_start = time.time()
         print("\n[Step 7.2] Generating filter conditions documentation using LLM (chart-by-chart)...", flush=True)
-        print(f"  Processing {len(dashboard_info_dict.get('charts', []))} charts in parallel...", flush=True)
+        total_charts = len(dashboard_info_dict.get('charts', []))
+        print(f"  Processing {total_charts} charts in parallel...", flush=True)
+        print(f"  Progress: 0/{total_charts} charts processed", flush=True)
         
         # Get API key and config
         api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -766,7 +777,8 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds ({step_time/60:.2f} minutes)", flush=True)
-        print(f"  📊 Generated filter conditions for {len(dashboard_info_dict.get('charts', []))} charts", flush=True)
+        print(f"  Progress: {total_charts}/{total_charts} charts processed", flush=True)
+        print(f"  📊 Generated filter conditions for {total_charts} charts", flush=True)
         
         # Step 7.3: Save filter conditions to text file
         step_start = time.time()
@@ -845,7 +857,9 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         # Step 8.2: Extract term definitions using LLM (chart-by-chart for token optimization)
         step_start = time.time()
         print("\n[Step 8.2] Extracting term definitions using LLM (chart-by-chart)...", flush=True)
-        print(f"  Processing {len(dashboard_info_dict.get('charts', []))} charts in parallel...", flush=True)
+        total_charts = len(dashboard_info_dict.get('charts', []))
+        print(f"  Processing {total_charts} charts in parallel...", flush=True)
+        print(f"  Progress: 0/{total_charts} charts processed", flush=True)
         
         # Get API key and config
         api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -871,6 +885,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds ({step_time/60:.2f} minutes)", flush=True)
+        print(f"  Progress: {total_charts}/{total_charts} charts processed", flush=True)
         print(f"  📊 Generated {len(term_definitions)} term definitions", flush=True)
         
         # Step 8.3: Save term definitions to CSV

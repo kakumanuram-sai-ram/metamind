@@ -29,11 +29,17 @@ class KnowledgeBaseBuilder:
         os.makedirs(self.kb_dir, exist_ok=True)
         self.progress_tracker = get_progress_tracker()
     
-    def build_from_merged_metadata(self):
+    def build_from_merged_metadata(self, vertical: str = None, sub_vertical: str = None):
         """
         Build knowledge base from merged metadata files.
         Creates specific JSON files and a compressed zip archive.
+        
+        Args:
+            vertical: Business vertical ID for instruction set generation
+            sub_vertical: Sub-vertical name for instruction set generation
         """
+        self._vertical = vertical
+        self._sub_vertical = sub_vertical
         # Initialize KB build progress
         self.progress_tracker.start_kb_build()
         
@@ -94,11 +100,18 @@ class KnowledgeBaseBuilder:
         self._create_empty_business_context_json()
         
         # Create empty validations.json
-        print("\n[7/7] Creating validations.json...")
+        print("\n[7/9] Creating validations.json...")
         self._create_empty_validations_json()
         
+        # Generate instruction set files
+        print("\n[8/9] Generating instruction set...")
+        self._generate_instruction_set(
+            vertical=getattr(self, '_vertical', None),
+            sub_vertical=getattr(self, '_sub_vertical', None)
+        )
+        
         # Create compressed zip file
-        print("\n[8/8] Creating compressed zip archive...")
+        print("\n[9/9] Creating compressed zip archive...")
         zip_file = self._create_zip_archive()
         
         # Don't mark KB build as completed yet - wait for all dashboard metadata files
@@ -249,6 +262,39 @@ class KnowledgeBaseBuilder:
             json.dump({}, f, indent=2, ensure_ascii=False)
         print(f"   ✅ Created empty validations.json")
     
+    def _generate_instruction_set(self, vertical: str = None, sub_vertical: str = None):
+        """Generate instruction set files for SQL agent."""
+        try:
+            from instruction_set_generator import generate_instruction_set_file
+            
+            # Generate JSON format
+            generate_instruction_set_file(
+                vertical=vertical,
+                sub_vertical=sub_vertical,
+                kb_dir=self.kb_dir,
+                output_format='json'
+            )
+            
+            # Generate TXT format
+            generate_instruction_set_file(
+                vertical=vertical,
+                sub_vertical=sub_vertical,
+                kb_dir=self.kb_dir,
+                output_format='txt'
+            )
+            
+            print(f"   ✅ Generated instruction_set.json and instruction_set.txt")
+        except Exception as e:
+            print(f"   ⚠️  Error generating instruction set: {str(e)}")
+            # Create empty files as fallback
+            for ext in ['json', 'txt']:
+                output_file = f"{self.kb_dir}/instruction_set.{ext}"
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    if ext == 'json':
+                        json.dump({'error': str(e), 'instructions': []}, f, indent=2)
+                    else:
+                        f.write(f"# Instruction Set\n\nError generating instructions: {str(e)}")
+    
     def _create_zip_archive(self) -> str:
         """Create compressed zip archive with all knowledge base files."""
         zip_file = f"{self.kb_dir}/knowledge_base.zip"
@@ -260,7 +306,9 @@ class KnowledgeBaseBuilder:
             'definitions.json',
             'filter_conditions.txt',
             'business_context.json',
-            'validations.json'
+            'validations.json',
+            'instruction_set.json',
+            'instruction_set.txt'
         ]
         
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:

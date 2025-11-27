@@ -1,0 +1,156 @@
+{
+  "dashboard_id": 476,
+  "timestamp": "2025-11-25T20:50:21.608359",
+  "summary": {
+    "overall_confidence": 48.2,
+    "status": "NEEDS_IMPROVEMENT",
+    "average_scores": {
+      "completeness": 51.0,
+      "accuracy": 51.6
+    },
+    "total_issues": {
+      "missing_items": 16,
+      "quality_issues": 19,
+      "recommendations": 24
+    }
+  },
+  "detailed_reports": {
+    "table_metadata": {
+      "metadata_type": "table_metadata",
+      "scores": {
+        "completeness": 95.0,
+        "accuracy": 88.0,
+        "confidence": 89.0,
+        "clarity": 85.0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Several derived tables (out, users, all_accounts, cc, reten, lm, etc.) have empty or minimal column information",
+        "Some temporary tables like temp_upi_test2 and upi_abhay may not need extensive metadata as they appear to be analytical workspaces",
+        "The metadata includes many CTE-derived tables which may be over-documented for temporary query constructs"
+      ],
+      "recommendations": [
+        "Focus metadata documentation on physical base tables rather than CTEs and derived query results",
+        "Add more specific technical details about partition strategies for high-volume tables like fact_upi_transactions_snapshot_v3",
+        "Clarify which tables are permanent vs temporary/analytical",
+        "Add refresh frequency details for key analytical tables",
+        "Include data retention policies for transaction tables",
+        "Specify primary keys and indexing strategies for performance optimization"
+      ],
+      "status": "GOOD"
+    },
+    "column_metadata": {
+      "metadata_type": "column_metadata",
+      "scores": {
+        "completeness": 75.0,
+        "accuracy": 80.0,
+        "confidence": 68.0,
+        "business_context": 45.0
+      },
+      "missing_items": [
+        "virtual_table.%",
+        "virtual_table.TPU",
+        "virtual_table.GPU",
+        "virtual_table.SR",
+        "virtual_table.Retention"
+      ],
+      "quality_issues": [
+        "Many columns lack explicit data type specifications",
+        "Business descriptions are too technical (e.g., lifecycle, handles, accounts columns)",
+        "Generic descriptions like 'identifier' or 'timestamp' don't explain business purpose",
+        "Some key computed metrics from SQL queries missing from metadata",
+        "Required flags are inconsistently specified across similar column types"
+      ],
+      "recommendations": [
+        "Add business context explanations for lifecycle stages and what they mean for customer retention",
+        "Include data types for all columns currently marked as empty",
+        "Add metadata for key derived columns like TPU, GPU, SR that appear in dashboard calculations",
+        "Expand descriptions to explain business impact rather than just technical function",
+        "Standardize required field flagging across similar tables",
+        "Add examples of categorical values where relevant (e.g., lifecycle values, flow_category options)"
+      ],
+      "status": "ACCEPTABLE"
+    },
+    "joining_conditions": {
+      "metadata_type": "joining_conditions",
+      "scores": {
+        "completeness": 0.0,
+        "accuracy": 0.0,
+        "confidence": 0.0,
+        "context": 0.0
+      },
+      "missing_items": [
+        "users u JOIN all_accounts a ON u.id = a.user_id",
+        "upi a LEFT JOIN top20 b ON a.payer_cust_id = b.customer_id",
+        "upi a LEFT JOIN nrr c ON a.payer_cust_id = c.custid",
+        "lm a LEFT JOIN nrr x ON a.customer_id = x.custid",
+        "upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id",
+        "lm a LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id",
+        "banner b LEFT JOIN ftr f ON b.customer_id = f.custid"
+      ],
+      "quality_issues": [
+        "Complete failure to extract any joining conditions from SQL queries",
+        "Empty CSV with no data despite presence of multiple JOIN operations in source queries",
+        "No identification of table relationships or join types",
+        "Missing all business context and relationship explanations",
+        "No documentation of join keys or conditions"
+      ],
+      "recommendations": [
+        "Implement JOIN extraction functionality to parse SQL queries and identify JOIN clauses",
+        "Add logic to extract table names, join conditions, and join types from complex SQL statements",
+        "Include CTE and subquery JOIN detection capabilities",
+        "Provide business context and relationship type documentation for each extracted join",
+        "Add validation to ensure extraction completeness before outputting results"
+      ],
+      "status": "POOR"
+    },
+    "filter_conditions": {
+      "metadata_type": "filter_conditions",
+      "scores": {
+        "completeness": 85.0,
+        "accuracy": 90.0,
+        "confidence": 84.0,
+        "clarity": 75.0
+      },
+      "missing_items": [
+        "Flow_category NOT IN ('Mandate_Onus'",
+        "'Onus_ExcMandates'",
+        "'Mandate_Online'",
+        "'Other P2M'); banner_id IN specific filter sets for growth tracking; day(transaction_date_key) constraints in several retention metrics; TEMPORAL_RANGE filters with specific date boundaries"
+      ],
+      "quality_issues": [
+        "Missing explanation for mandate flow exclusions",
+        "Banner ID filter sets not documented in growth metrics",
+        "Some temporal filter boundaries unclear",
+        "Filter interdependencies not explained",
+        "Technical jargon in some filter descriptions"
+      ],
+      "recommendations": [
+        "Add missing flow category exclusion filters with business rationale",
+        "Document banner ID filter sets for growth tracking features",
+        "Explain temporal filter boundary logic more clearly",
+        "Add section explaining filter interdependencies",
+        "Simplify technical language for business user understanding",
+        "Include filter impact on metric calculations"
+      ],
+      "status": "GOOD"
+    },
+    "definitions": {
+      "metadata_type": "definitions",
+      "scores": {
+        "completeness": 0,
+        "accuracy": 0,
+        "usefulness": 0,
+        "confidence": 0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
+      ],
+      "recommendations": [
+        "Fix judging error and retry"
+      ],
+      "status": "POOR"
+    }
+  }
+}

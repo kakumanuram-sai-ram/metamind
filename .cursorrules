@@ -1,0 +1,273 @@
+# MetaMind - Intelligent Dashboard Metadata Extraction System
+
+## Project Overview
+
+MetaMind extracts, analyzes, and consolidates metadata from Apache Superset dashboards using LLM-powered analysis. The system identifies tables, columns, relationships, filter conditions, and business context from dashboard SQL queries, then merges metadata from multiple dashboards into a unified knowledge base.
+
+## Tech Stack
+
+**Backend:**
+- Python 3.11, FastAPI (port 8000), Uvicorn
+- Pandas for data manipulation
+- DSPy framework for LLM integration (Claude Sonnet 4)
+- Requests for API calls
+
+**Frontend:**
+- React 18 (port 3000/5173)
+- Styled Components for styling
+- Axios for HTTP requests
+
+**Integrations:**
+- Apache Superset REST API (dashboard metadata)
+- Trino/Starburst (column datatypes via Superset SQL Lab)
+- Anthropic Claude API via internal proxy
+
+## Architecture
+
+```
+React Frontend (3000) → FastAPI Server (8000) → Superset API
+                                             → Trino/Starburst
+                                             → Claude LLM (DSPy)
+                                             → File System (extracted_meta/)
+```
+
+## Key Features (Current Implementation)
+
+### 1. Business Vertical Selection
+- **Location**: `frontend/src/components/BusinessVertical.js`
+- **Verticals**: UPI, Merchant, Lending, Travel, Recharges
+- **Sub-Verticals**: Each vertical has specific sub-verticals (e.g., UPI → UPI Growth, User Growth)
+- **Purpose**: Filter dashboards by business domain for targeted extraction
+
+### 2. Dashboard Selection by Tags
+- **Tag-Based Filtering**: Dashboards are filtered by tags matching selected vertical/sub-vertical
+- **Logic** (`scripts/instruction_set_generator.py:get_tags_for_vertical`):
+  - If sub-vertical selected: search by sub-vertical name (e.g., `['UPI Growth']`)
+  - If only vertical selected: search by vertical short_name (e.g., `['UPI']`)
+- **API Endpoint**: `POST /api/dashboards/by-vertical` → returns filtered dashboard list
+- **Superset Integration**: Fetches all dashboards with tags, matches lowercase
+
+### 3. Multi-Dashboard Processing
+- **Parallel Extraction**: Process multiple dashboards simultaneously
+- **Phase Tracking**:
+  - Phase 1: Dashboard Extraction (Superset API → JSON/CSV/SQL)
+  - Phase 2: LLM Table/Column Extraction (DSPy → tables_columns.csv)
+  - Phase 3: Trino Schema Enrichment (datatypes → tables_columns_enriched.csv)
+  - Phase 4: Table Metadata Generation (LLM → table_metadata.csv)
+  - Phase 5: Column Metadata Generation (LLM → columns_metadata.csv)
+  - Phase 6: Joining Conditions (LLM → joining_conditions.csv)
+  - Phase 7: Filter Conditions (LLM → filter_conditions.txt)
+  - Phase 8: Term Definitions (LLM → definitions.csv)
+  - Phase 9: Metadata Consolidation (merge → merged_metadata/)
+  - Phase 10: Knowledge Base Build (KB format → knowledge_base.zip)
+
+### 4. Progress Tracking (`scripts/progress_tracker.py`)
+- **Real-time Updates**: Progress tracked per-dashboard, per-phase
+- **File Completion**: Tracks which metadata files are completed
+- **Chart-level Progress**: Shows "X/Y charts processed" for LLM phases
+- **UI Integration**: Frontend polls `/api/progress` every 3 seconds
+- **Individual File Status**: Each metadata card polls file availability independently
+
+### 5. UI Status Display
+- **Dashboard-Level**: Shows overall phase (e.g., "Phase 4: Table Metadata")
+- **File-Level**: Each metadata file shows its own status:
+  - "Checking..." - Polling for file existence
+  - "Processing..." - Phase in progress
+  - "Completed" - File exists and ready
+  - "Waiting..." - Pending file generation
+- **Independent Polling**: Each file checks availability every 3 seconds during processing
+
+## File Structure
+
+```
+metamind/
+├── .cursor/                      # Cursor AI documentation (consolidated)
+│   ├── architecture.md           # System design and architecture
+│   ├── features.md               # Current features and capabilities
+│   ├── api-reference.md          # API endpoints and usage
+│   ├── development-guide.md      # Development workflow
+│   └── workflows.md              # Processing pipelines
+│
+├── scripts/                      # Python backend
+│   ├── api_server.py             # FastAPI REST API server
+│   ├── config.py                 # Configuration (URLs, auth, LLM)
+│   ├── query_extract.py          # Superset dashboard extraction
+│   ├── sql_parser.py             # Rule-based SQL parsing
+│   ├── llm_extractor.py          # LLM extraction via DSPy
+│   ├── trino_client.py           # Trino/Starburst integration
+│   ├── metadata_generator.py     # Metadata file generation
+│   ├── instruction_set_generator.py  # Business verticals & tags
+│   ├── orchestrator.py           # Multi-dashboard extraction
+│   ├── merger.py                 # LLM-based metadata merging
+│   ├── knowledge_base_builder.py # KB generation
+│   ├── progress_tracker.py       # Progress tracking
+│   ├── extract_dashboard_with_timing.py  # Single dashboard entry point
+│   ├── process_multiple_dashboards.py    # Multi-dashboard entry point
+│   └── chart_level_extractor.py  # Chart-by-chart LLM extraction
+│
+├── frontend/                     # React frontend
+│   └── src/
+│       ├── App.js                # Main app (manages vertical selection)
+│       ├── components/
+│       │   ├── BusinessVertical.js  # Vertical/sub-vertical selector
+│       │   ├── SupersetTab.js       # Dashboard selection & extraction
+│       │   └── DashboardSection.js  # Progress display per dashboard
+│       └── services/
+│           └── api.js            # API client
+│
+├── extracted_meta/               # Output directory
+│   ├── {dashboard_id}/           # Per-dashboard metadata
+│   ├── merged_metadata/          # Consolidated (multi-dashboard)
+│   ├── knowledge_base/           # KB format
+│   └── progress.json             # Progress tracking state
+│
+└── README.md                     # Main documentation entry point
+```
+
+## Code Style & Patterns
+
+### Python (Backend)
+- **Type Hints**: Use for function parameters and return types
+- **Docstrings**: Required for public functions/classes
+- **Error Handling**: Continue on error for multi-dashboard, log exceptions
+- **Thread Safety**: Use locks for shared state (progress_tracker.py)
+- **Logging**: Use Python logging module, store in logs/
+- **Async Operations**: Background threads for LLM calls (non-blocking API)
+
+### JavaScript (Frontend)
+- **Components**: Functional components with hooks
+- **Styled Components**: All styling via styled-components
+- **State Management**: React hooks (useState, useEffect, useCallback)
+- **API Calls**: Centralized in services/api.js
+- **Error Handling**: Try-catch with user-friendly messages
+- **Polling**: Use intervals for progress updates, cleanup on unmount
+
+### Critical Patterns
+
+**1. Tag-Based Dashboard Filtering:**
+```python
+# scripts/instruction_set_generator.py
+def get_tags_for_vertical(vertical: str, sub_vertical: str = None) -> List[str]:
+    """Return [sub_vertical] if provided, else [vertical_short_name]"""
+    tags = []
+    if sub_vertical:
+        tags.append(sub_vertical)
+    elif vertical in VERTICAL_CONTEXT:
+        tags.append(VERTICAL_CONTEXT[vertical]['short_name'])
+    return tags
+```
+
+**2. Independent File Status Tracking:**
+```javascript
+// frontend/src/components/DashboardSection.js
+useEffect(() => {
+  const checkFileExists = async () => {
+    const files = await dashboardAPI.getDashboardFiles(dashboardId);
+    setFileAvailable(files.files?.some(f => f.type === fileType));
+  };
+  
+  checkFileExists();
+  // Poll every 3 seconds during processing
+  if (status === 'processing' || status === 'pending') {
+    pollInterval = setInterval(checkFileExists, 3000);
+  }
+}, [dashboardId, fileType, status]);
+```
+
+**3. Progress Tracking:**
+```python
+# scripts/progress_tracker.py
+def add_completed_file(self, dashboard_id: int, filename: str):
+    """Mark a file as completed for progress tracking"""
+    with self.lock:
+        dashboard_progress['completed_files'].append(filename)
+        dashboard_progress['completed_files_count'] = len(dashboard_progress['completed_files'])
+```
+
+## API Endpoints (Latest)
+
+### Dashboard Management
+- `GET /api/dashboards` - List extracted dashboards
+- `GET /api/dashboard/{id}/files` - List available files for dashboard
+- `GET /api/dashboard/{id}/file/{file_type}` - Get specific file
+
+### Vertical & Tag-Based Selection
+- `GET /api/verticals` - Get all verticals with sub-verticals
+- `POST /api/dashboards/by-vertical` - Get dashboards by vertical/sub-vertical tags
+  ```json
+  {
+    "vertical": "upi",
+    "sub_vertical": "UPI Growth"
+  }
+  ```
+
+### Extraction & Processing
+- `POST /api/dashboard/extract` - Extract single dashboard
+- `POST /api/dashboards/process-multiple` - Process multiple dashboards
+  ```json
+  {
+    "dashboard_ids": [476, 511, 729],
+    "extract": true,
+    "merge": true,
+    "build_kb": true,
+    "use_existing": {}
+  }
+  ```
+
+### Progress & Downloads
+- `GET /api/progress` - Get current processing progress
+- `GET /api/dashboard/{id}/download/{file_type}` - Download specific file
+- `GET /api/knowledge-base/download` - Download KB ZIP
+
+## Common Tasks
+
+### Adding a New Vertical
+1. Update `VERTICAL_CONTEXT` in `scripts/instruction_set_generator.py`
+2. Add short_name, sub_verticals, and tags
+3. Update `BusinessVertical.js` verticals array
+4. Ensure Superset dashboards have matching tags
+
+### Adding a New Metadata Type
+1. Add extraction logic in `chart_level_extractor.py`
+2. Add merge logic in `merger.py` (DSPy signature)
+3. Update `knowledge_base_builder.py` to include in KB
+4. Add UI card in `DashboardSection.js`
+
+### Debugging Processing Issues
+1. Check backend logs: `logs/api_server_{timestamp}.log`
+2. Check progress state: `extracted_meta/progress.json`
+3. Verify file creation: `extracted_meta/{dashboard_id}/`
+4. Check API errors in browser console
+5. Verify Superset API connectivity and auth
+
+## External Dependencies
+
+- **Superset API**: Requires valid session cookie and CSRF token in `scripts/config.py`
+- **Claude API**: Requires `ANTHROPIC_API_KEY` environment variable
+- **Trino/Starburst**: Accessed via Superset SQL Lab API (no direct connection)
+
+## Testing
+
+Run specific dashboard extraction:
+```bash
+python scripts/extract_dashboard_with_timing.py 476
+```
+
+Test tag filtering:
+```bash
+python scripts/api_server.py  # Start server
+curl -X POST http://localhost:8000/api/dashboards/by-vertical \
+  -H "Content-Type: application/json" \
+  -d '{"vertical": "upi", "sub_vertical": "UPI Growth"}'
+```
+
+## References
+
+- Main README: `/home/devuser/sai_dev/metamind/README.md`
+- Architecture docs: `/home/devuser/sai_dev/metamind/.cursor/architecture.md`
+- API reference: `/home/devuser/sai_dev/metamind/.cursor/api-reference.md`
+- Dev guide: `/home/devuser/sai_dev/metamind/.cursor/development-guide.md`
+
+
+
+

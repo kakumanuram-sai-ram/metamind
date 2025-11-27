@@ -30,7 +30,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds default timeout for most operations
+  timeout: 30000, // 30 seconds default timeout for most operations
 });
 
 // Performance tracking
@@ -292,6 +292,67 @@ export const dashboardAPI = {
    */
   enableOnPrism: async () => {
     const response = await api.post('/api/knowledge-base/enable-prism');
+    return response.data;
+  },
+
+  /**
+   * Get available business verticals with sub-verticals
+   */
+  getVerticals: async () => {
+    const response = await api.get('/api/verticals');
+    return response.data;
+  },
+
+  /**
+   * Get dashboards by vertical and sub-vertical selection
+   * Returns dashboards matching the tags for the selected vertical/sub-vertical
+   */
+  getDashboardsByVertical: async (vertical, subVertical = null) => {
+    const response = await api.post('/api/dashboards/by-vertical', {
+      vertical,
+      sub_vertical: subVertical,
+    }, {
+      timeout: 60000, // 60 seconds timeout - fetching all dashboards from Superset takes time
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all dashboards from Superset with their tags
+   */
+  getAllDashboardsWithTags: async () => {
+    const response = await api.get('/api/dashboards/all-with-tags', {
+      timeout: 30000, // 30 seconds timeout for fetching all dashboards
+    });
+    return response.data;
+  },
+
+  /**
+   * Generate instruction set for SQL agent
+   */
+  generateInstructionSet: async (vertical = null, subVertical = null) => {
+    const response = await api.post('/api/instruction-set/generate', {
+      vertical,
+      sub_vertical: subVertical,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get instruction set content for display
+   */
+  getInstructionSetContent: async () => {
+    const response = await api.get('/api/instruction-set/content');
+    return response.data;
+  },
+
+  /**
+   * Download instruction set file
+   */
+  downloadInstructionSet: async (format = 'json') => {
+    const response = await api.get(`/api/instruction-set/download/${format}`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

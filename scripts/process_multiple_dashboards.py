@@ -220,7 +220,9 @@ def process_multiple_dashboards(
     print("      📄 filter_conditions.txt")
     print("      📄 business_context.json (empty)")
     print("      📄 validations.json (empty)")
-    print("      📄 knowledge_base.zip (compressed archive of all 7 files)")
+    print("      📄 instruction_set.json (LLM-generated SQL agent instructions)")
+    print("      📄 instruction_set.txt (human-readable version)")
+    print("      📄 knowledge_base.zip (compressed archive of all files)")
     print("="*80 + "\n")
 
 

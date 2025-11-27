@@ -198,119 +198,207 @@ const KnowledgeBaseDownload = ({ progress, dashboardIds = [] }) => {
   }, []);
 
   useEffect(() => {
-    // Only check if extraction is in progress or completed
-    // Don't check if status is idle or if there are no dashboards
-    if (!dashboardIds || dashboardIds.length === 0) {
+    // Don't check if no dashboards or no progress
+    if (!dashboardIds || dashboardIds.length === 0 || !progress) {
       setZipAvailable(false);
       setAllFilesReady(false);
       return;
     }
     
     const overallStatus = progress?.status || 'idle';
+    const kbStatus = progress?.kb_build_status?.status || 'pending';
+    const mergeStatus = progress?.merge_status?.status || 'pending';
     
-    // Check if ALL dashboard IDs are in progress (strict matching)
-    const progressDashboardIds = Object.keys(progress?.dashboards || {}).map(id => parseInt(id));
-    const allDashboardsMatch = dashboardIds.length > 0 && 
-                               dashboardIds.every(id => progressDashboardIds.includes(id));
-    
-    // If status is idle or progress doesn't match ALL our dashboards, don't check
-    if (overallStatus === 'idle' || !allDashboardsMatch) {
+    // If everything is idle, don't check
+    if (overallStatus === 'idle') {
       setZipAvailable(false);
       setAllFilesReady(false);
       return;
     }
     
-    // Only check files when there's an active extraction that's progressing or completed
-    // Check periodically if all files are ready (every 10 seconds to reduce load)
-    const interval = setInterval(() => {
-      checkAllFilesReady().then((ready) => {
-        if (ready) {
-          checkZipAvailability();
-        }
-      });
-    }, 10000); // Reduced from 5 to 10 seconds
+    // Check periodically if KB is processing or completed
+    const shouldCheck = kbStatus === 'processing' || 
+                       kbStatus === 'completed' || 
+                       mergeStatus === 'processing' ||
+                       mergeStatus === 'completed' ||
+                       overallStatus === 'completed';
+    
+    if (!shouldCheck) {
+      return;
+    }
+    
+    // Check files and ZIP availability
+    const performChecks = async () => {
+      // Always check ZIP if KB is complete or completed overall
+      if (kbStatus === 'completed' || overallStatus === 'completed') {
+        await checkZipAvailability();
+      }
+      
+      // Check dashboard files
+      const filesReady = await checkAllFilesReady();
+      
+      // If files ready and KB complete, check ZIP
+      if (filesReady && (kbStatus === 'completed' || overallStatus === 'completed')) {
+        await checkZipAvailability();
+      }
+    };
     
     // Initial check
-    checkAllFilesReady().then((ready) => {
-      if (ready) {
-        checkZipAvailability();
-      }
-    });
+    performChecks();
+    
+    // Poll every 5 seconds while processing or completed
+    const interval = setInterval(performChecks, 5000);
     
     return () => clearInterval(interval);
   }, [progress, dashboardIds, checkAllFilesReady, checkZipAvailability]);
+
+  // Calculate granular progress based on current step
+  const calculateProgress = (step, type = 'merge') => {
+    // Merge steps: preparing → table_metadata → columns_metadata → joining_conditions → definitions → filter_conditions → conflicts_report
+    const mergeSteps = ['preparing', 'table_metadata', 'columns_metadata', 'joining_conditions', 'definitions', 'filter_conditions', 'conflicts_report'];
+    
+    // KB build steps: tables → columns → joins → definitions → filter_conditions
+    const kbSteps = ['tables', 'columns', 'joins', 'definitions', 'filter_conditions'];
+    
+    if (type === 'merge') {
+      const stepIndex = mergeSteps.indexOf(step);
+      if (stepIndex === -1) return 45; // Default to start of merge range
+      
+      // Merge range: 45% → 65% (20% total, 7 steps = ~2.86% per step)
+      const startPercent = 45;
+      const rangePercent = 20;
+      const progressPercent = startPercent + ((stepIndex + 1) / mergeSteps.length) * rangePercent;
+      return Math.floor(progressPercent);
+    } else {
+      const stepIndex = kbSteps.indexOf(step);
+      if (stepIndex === -1) return 65; // Default to start of KB range
+      
+      // KB range: 65% → 100% (35% total, 5 steps = 7% per step)
+      const startPercent = 65;
+      const rangePercent = 35;
+      const progressPercent = startPercent + ((stepIndex + 1) / kbSteps.length) * rangePercent;
+      return Math.floor(progressPercent);
+    }
+  };
+
+  // Helper function to convert technical step names to user-friendly messages
+  const formatStepMessage = (step, type = 'merge') => {
+    if (!step) return type === 'merge' ? 'Merging metadata' : 'Building knowledge base';
+    
+    // Merge steps with user-friendly messages
+    const mergeSteps = {
+      'preparing': '📋 Preparing metadata for merge (1/7)',
+      'table_metadata': '🗂️  Merging table metadata (2/7)',
+      'columns_metadata': '📊 Merging column metadata (3/7)',
+      'joining_conditions': '🔗 Merging joining conditions (4/7)',
+      'definitions': '📖 Merging term definitions (5/7)',
+      'filter_conditions': '🔍 Merging filter conditions (6/7)',
+      'conflicts_report': '⚠️  Generating conflicts report (7/7)'
+    };
+    
+    // KB build steps with user-friendly messages
+    const kbSteps = {
+      'tables': '🗂️  Converting table metadata (1/5)',
+      'columns': '📊 Converting column metadata (2/5)',
+      'joins': '🔗 Converting joining conditions (3/5)',
+      'definitions': '📖 Converting term definitions (4/5)',
+      'filter_conditions': '🔍 Converting filter conditions (5/5)'
+    };
+    
+    if (type === 'merge') {
+      return mergeSteps[step] || `Merging: ${step}`;
+    } else {
+      return kbSteps[step] || `Building: ${step}`;
+    }
+  };
 
   const getStatus = () => {
     if (!progress || !dashboardIds || dashboardIds.length === 0) {
       return { status: 'pending', step: 'Waiting for extraction', progress: 0 };
     }
     
-    // Check if ALL dashboard IDs are in progress (strict matching)
-    const progressDashboardIds = Object.keys(progress.dashboards || {}).map(id => parseInt(id));
-    const allDashboardsMatch = dashboardIds.length > 0 && 
-                               dashboardIds.every(id => progressDashboardIds.includes(id));
-    
-    // If no matching dashboards, show pending
-    if (!allDashboardsMatch) {
-      return { status: 'pending', step: 'Waiting to start', progress: 0 };
-    }
-    
     const kbStatus = progress.kb_build_status?.status || 'pending';
     const mergeStatus = progress.merge_status?.status || 'pending';
     const overallStatus = progress.status || 'idle';
 
-    // Only mark as completed when all 5 files are ready AND KB is built AND ALL dashboards match
-    if (kbStatus === 'completed' && zipAvailable && allFilesReady && allDashboardsMatch) {
-      // Double-check that all dashboards are actually completed
-      const allDashboardsCompleted = dashboardIds.every(id => {
-        const dashProgress = progress.dashboards?.[id.toString()];
-        return dashProgress?.status === 'completed';
-      });
-      
-      if (allDashboardsCompleted) {
-        return { status: 'completed', step: 'Ready for download', progress: 100 };
-      }
+    // Count how many dashboards are completed
+    const completedDashboards = Object.values(progress.dashboards || {}).filter(
+      d => d.status === 'completed'
+    );
+    const completedCount = completedDashboards.length;
+    const totalDashboards = Object.keys(progress.dashboards || {}).length;
+    
+    // Check if all required dashboards in our selection are completed
+    const allDashboardsCompleted = dashboardIds.every(id => {
+      const dashProgress = progress.dashboards?.[id.toString()];
+      return dashProgress?.status === 'completed';
+    });
+
+    // PRIORITY 1: Overall Status Complete (simplest check - backend says done)
+    if (overallStatus === 'completed' && kbStatus === 'completed' && mergeStatus === 'completed') {
+      // Backend says everything is done, show as ready
+      return { status: 'completed', step: '✅ Ready for download', progress: 100 };
     }
     
-    if (kbStatus === 'completed' && !allFilesReady && allDashboardsMatch) {
-      return { status: 'processing', step: 'Waiting for all metadata files to be ready', progress: 90 };
+    // PRIORITY 2: KB Complete with verification
+    if (kbStatus === 'completed' && zipAvailable) {
+      return { status: 'completed', step: '✅ Ready for download', progress: 100 };
     }
     
-    if (kbStatus === 'processing' && allDashboardsMatch) {
-      const currentStep = progress.kb_build_status?.current_step || 'Building knowledge base';
-      return { status: 'processing', step: currentStep, progress: 75 };
+    // PRIORITY 3: KB Build In Progress (GRANULAR PROGRESS)
+    if (kbStatus === 'processing') {
+      const currentStep = progress.kb_build_status?.current_step;
+      const formattedStep = formatStepMessage(currentStep, 'kb');
+      const progressPercent = calculateProgress(currentStep, 'kb');
+      return { status: 'processing', step: formattedStep, progress: progressPercent };
     }
     
-    // Handle transition from merging completed to KB building
-    // If merging is completed but KB build hasn't started yet, show as processing (preparing for KB build)
-    if (mergeStatus === 'completed' && kbStatus === 'pending' && allDashboardsMatch) {
-      // Check if overall status indicates we're moving to KB building
+    // PRIORITY 4: KB Complete but ZIP check pending
+    if (kbStatus === 'completed' && !zipAvailable) {
+      return { status: 'processing', step: '⏳ Verifying knowledge base files...', progress: 98 };
+    }
+    
+    // PRIORITY 5: Merge Complete, Waiting for KB
+    if (mergeStatus === 'completed' && kbStatus === 'pending') {
       if (overallStatus === 'building_kb') {
-        // KB build is starting but status hasn't updated yet
-        return { status: 'processing', step: 'Preparing to build knowledge base', progress: 60 };
-      } else if (overallStatus === 'completed') {
-        // Everything is done, but KB status might not be updated yet
-        // Check if files are ready
-        if (allFilesReady) {
-          return { status: 'processing', step: 'Finalizing knowledge base', progress: 90 };
-        } else {
-          return { status: 'processing', step: 'Merging completed, preparing knowledge base', progress: 60 };
-        }
+        return { status: 'processing', step: '🔄 Starting knowledge base build...', progress: 65 };
       } else {
-        // Merging completed, waiting for KB build to start
-        return { status: 'processing', step: 'Merging completed, preparing knowledge base', progress: 60 };
+        return { status: 'processing', step: '✅ Merge complete, preparing knowledge base', progress: 65 };
       }
     }
     
-    if ((mergeStatus === 'processing' || overallStatus === 'merging') && allDashboardsMatch) {
-      const currentStep = progress.merge_status?.current_step || 'Merging metadata';
-      return { status: 'merging', step: currentStep, progress: 50 };
+    // PRIORITY 6: Merge In Progress (GRANULAR PROGRESS)
+    if (mergeStatus === 'processing' || overallStatus === 'merging') {
+      const currentStep = progress.merge_status?.current_step;
+      const formattedStep = formatStepMessage(currentStep, 'merge');
+      const progressPercent = calculateProgress(currentStep, 'merge');
+      return { status: 'merging', step: formattedStep, progress: progressPercent };
     }
     
-    if (overallStatus === 'extracting' && allDashboardsMatch) {
-      return { status: 'pending', step: 'Waiting for extraction to complete', progress: 25 };
+    // PRIORITY 7: Extraction Complete, Waiting for Merge
+    if (allDashboardsCompleted && mergeStatus === 'pending') {
+      return { status: 'pending', step: '✅ All dashboards extracted, starting merge...', progress: 45 };
     }
     
+    // PRIORITY 8: Extraction In Progress (GRANULAR PROGRESS)
+    if (overallStatus === 'extracting' || totalDashboards > 0) {
+      if (completedCount === 0) {
+        return { status: 'pending', step: '⏳ Extraction starting...', progress: 5 };
+      } else if (completedCount < totalDashboards) {
+        // Calculate granular extraction progress: 5% → 40% range
+        const extractionProgress = 5 + Math.floor((completedCount / totalDashboards) * 35);
+        return { 
+          status: 'pending', 
+          step: `⏳ Extracting dashboards (${completedCount}/${totalDashboards} completed)`, 
+          progress: extractionProgress
+        };
+      } else {
+        // All extracted but merge hasn't started
+        return { status: 'pending', step: '✅ Extraction complete, preparing merge...', progress: 40 };
+      }
+    }
+    
+    // PRIORITY 9: Idle/Waiting
     return { status: 'pending', step: 'Waiting to start', progress: 0 };
   };
 

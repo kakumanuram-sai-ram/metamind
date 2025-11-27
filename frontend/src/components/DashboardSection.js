@@ -169,57 +169,104 @@ const FileIcon = ({ size = 16 }) => (
 
 const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, currentStep, useExisting = false, isSelected = false, onClick = null }) => {
   const [fileAvailable, setFileAvailable] = useState(false);
+  const [checkingFile, setCheckingFile] = useState(false);
 
+  // Check file availability independently of overall progress
   useEffect(() => {
-    // If using existing metadata, files should already be available
+    let isCurrent = true;
+    let pollInterval = null;
+    
+    // If using existing metadata, immediately check for files and show as available
     if (useExisting) {
-      const checkFile = async () => {
+      const checkFileExists = async () => {
+        if (!isCurrent) return;
         try {
           const files = await dashboardAPI.getDashboardFiles(dashboardId);
           const hasFile = files.files?.some(f => f.type === fileType);
-          setFileAvailable(hasFile);
+          if (isCurrent) {
+            setFileAvailable(hasFile);
+            setCheckingFile(false);
+          }
         } catch (error) {
-          console.error(`Error checking file availability for ${fileType}:`, error);
-          setFileAvailable(false);
+          if (isCurrent) {
+            setFileAvailable(false);
+            setCheckingFile(false);
+          }
         }
       };
-      checkFile();
-      return;
-    }
-
-    // For fresh extraction: check based on progress.completed_files, not file existence
-    // This ensures we only show files from the current extraction
-    if (!progress) {
-      setFileAvailable(false);
-      return;
-    }
-    
-    // Check if file is marked as completed in progress tracking
-    const completedFiles = progress.completed_files || [];
-    const fileName = `${dashboardId}_${fileType}.${fileType === 'filter_conditions' ? 'txt' : 'csv'}`;
-    const isCompleted = completedFiles.includes(fileName);
-    
-    if (isCompleted) {
-      setFileAvailable(true);
-    } else {
-      // File not yet completed in current extraction
-      setFileAvailable(false);
       
-      // Also check periodically if processing (every 5 seconds) to catch newly completed files
-      if (status === 'processing') {
-        const interval = setInterval(() => {
-          // Re-check progress for completed files
-          const currentCompleted = progress.completed_files || [];
-          if (currentCompleted.includes(fileName)) {
-            setFileAvailable(true);
-            clearInterval(interval);
-          }
-        }, 5000);
-        
-        return () => clearInterval(interval);
-      }
+      checkFileExists();
+      return () => {
+        isCurrent = false;
+      };
     }
-  }, [dashboardId, fileType, status, useExisting, progress]);
+    
+    // If doing fresh extract (useExisting=false)
+    // Don't check for files until processing actually starts
+    // This prevents showing old files as "completed" when fresh extraction hasn't started yet
+    if (!useExisting && status === 'pending') {
+      // Fresh extract not started yet - don't show old files as available
+      setFileAvailable(false);
+      setCheckingFile(false);
+      return;
+    }
+    
+    // For fresh extract that's processing or completed
+    const checkFileExists = async () => {
+      if (!isCurrent) return;
+      
+      setCheckingFile(true);
+      try {
+        const files = await dashboardAPI.getDashboardFiles(dashboardId);
+        const hasFile = files.files?.some(f => f.type === fileType);
+        if (isCurrent) {
+          setFileAvailable(hasFile);
+          setCheckingFile(false);
+        }
+      } catch (error) {
+        // File doesn't exist yet, that's okay
+        if (isCurrent) {
+          setFileAvailable(false);
+          setCheckingFile(false);
+        }
+      }
+    };
+    
+    // Initial check for fresh extract that's already processing
+    if (status === 'processing' || status === 'completed') {
+      checkFileExists();
+    }
+    
+    // Poll every 3 seconds during processing
+    if (status === 'processing') {
+      pollInterval = setInterval(() => {
+        checkFileExists();
+      }, 3000);
+    }
+    
+    return () => {
+      isCurrent = false;
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [dashboardId, fileType, status, useExisting]);
+
+  // Determine display status based on file availability and useExisting flag
+  const getDisplayStatus = () => {
+    // If using existing metadata, show as "Using Existing"
+    if (useExisting) {
+      return fileAvailable ? 'Using Existing' : 'Available';
+    }
+    
+    // For fresh extracts
+    if (checkingFile) return 'Checking...';
+    if (fileAvailable) return 'Completed';
+    if (status === 'processing') return currentStep || 'Processing...';
+    if (status === 'pending') return 'Waiting...';
+    if (status === 'error') return 'Error';
+    return 'Pending';
+  };
 
   const handleDownload = async (format) => {
     try {
@@ -251,10 +298,22 @@ const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, c
     }
   };
 
-  const isCompleted = (useExisting && fileAvailable) || (status === 'completed' && fileAvailable);
-  const progressPercent = isCompleted ? 100 : (progress || 0);
+  // Determine completion and progress based on useExisting flag
+  let isCompleted, progressPercent;
+  
+  if (useExisting) {
+    // Using existing metadata - always show as completed if file exists
+    isCompleted = fileAvailable;
+    progressPercent = fileAvailable ? 100 : 0;
+  } else {
+    // Fresh extract - show actual progress based on file availability
+    isCompleted = fileAvailable;
+    progressPercent = isCompleted ? 100 : (status === 'processing' ? 50 : 0);
+  }
+  
   // Make card clickable even if not completed - will show appropriate state in viewer
   const isClickable = onClick !== null;
+  const displayStatus = getDisplayStatus();
 
   return (
     <MetadataCard 
@@ -262,16 +321,17 @@ const MetadataCardContent = ({ title, fileType, dashboardId, progress, status, c
       clickable={isClickable}
       onClick={() => {
         if (onClick) {
-          onClick(fileType);
+          // Toggle: if already selected, deselect (close viewer), otherwise select
+          onClick(isSelected ? null : fileType);
         }
       }}
     >
       <MetadataTitle>{title}</MetadataTitle>
       <ProgressBar>
-        <ProgressFill progress={progressPercent} status={status} />
+        <ProgressFill progress={progressPercent} status={isCompleted ? 'completed' : status} />
       </ProgressBar>
-      <StatusText status={status}>
-        {currentStep || (isCompleted ? 'Completed' : status === 'processing' ? 'Processing...' : 'Pending')}
+      <StatusText status={isCompleted ? 'completed' : status}>
+        {displayStatus}
       </StatusText>
       {isCompleted && (
         <DownloadButtons>
@@ -484,13 +544,21 @@ const MetadataFileViewer = ({ dashboardId, fileType, title }) => {
   }
 
   if (error) {
+    // Check if error is "File not found" - this means extraction hasn't completed yet
+    const isFileNotFound = error.includes('not found') || error.includes('Not Found');
     return (
       <FileContentViewer>
         <ViewerHeader>
           <ViewerTitle>{title}</ViewerTitle>
         </ViewerHeader>
         <ContentContainer>
-          <ErrorText>{error}</ErrorText>
+          {isFileNotFound ? (
+            <LoadingText style={{ color: '#6B7280' }}>
+              ⏳ This file hasn't been generated yet. Please wait for extraction to complete for this dashboard.
+            </LoadingText>
+          ) : (
+            <ErrorText>{error}</ErrorText>
+          )}
         </ContentContainer>
       </FileContentViewer>
     );

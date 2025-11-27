@@ -1,6 +1,6 @@
 -- SQL Queries for Dashboard: UPI Profile wise MAU Distribution
 -- Dashboard ID: 476
--- Total Charts: 23
+-- Total Charts: 52
 ================================================================================
 
 -- Chart 1: #back acc wise MAU distribution (ID: 2458)
@@ -8,9 +8,9 @@
 -- Dataset: RR - Use_case_n_profile_metric
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT accounts AS accounts, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) AS "Lifecycle CM", accounts AS accounts__, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
 (sum(users) filter(where use_case_mtd >0 )*1.0000)/
-(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100) AS "%" 
+(sum(sum(users) filter(where use_case_mtd >0 )) over(partition by max(lifecycle))*1.0000)*100) AS "%" 
 FROM (with  all_accounts AS (
     SELECT user_id, created_on,--a.account_type,
     detail_2,
@@ -50,56 +50,75 @@ group by 1
 ),
 
 use_cases_mtd as (
-select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day))
-and (current_Date - interval '01' day)
-group by 1
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
+              where final_category not in('Others','others')
+              and day_id 
+              between date_trunc('month',(current_Date - interval '01' day))
+              and (current_Date - interval '01' day)
+              group by 1
 ),
 
 use_cases_lmtd as (
-select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
-and (current_Date - interval '01' day - interval '01' month)
-group by 1
-)
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
+            where final_category not in('Others','others')
+            and day_id 
+            between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and (current_Date - interval '01' day - interval '01' month)
+            group by 1
+),
+
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day ))
+            and  current_Date - interval '01' day 
+  )
 
 
-SELECT a.handles,b.accounts,c.use_case use_case_mtd,d.use_case use_case_lmtd, count(a.customer_id) users
-from 
-(select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
-
-left join 
-(
-select customer_id, case when accounts<2 then 'a.=1_acc'
+SELECT if(lifecycle in ('c:react 1-3','c:react 3+'),'c:react',lifecycle)lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
                         when accounts=2 then 'b.=2_acc' 
                         when accounts>2 then 'c.>2_acc' 
                         else null end accounts
-from out
-
-)b on a.customer_id = b.customer_id
+                      from out   )b on a.customer_id = b.customer_id
 left join use_cases_mtd c on a.customer_id = c.customer_id
 left join use_cases_lmtd d on a.customer_id = d.customer_id
-group by 1,2,3,4
+group by lifecycle,2,3,4,5
+
+union all
+
+SELECT 'e.Overall' lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
 ) AS virtual_table 
-WHERE accounts IS NOT NULL GROUP BY accounts ORDER BY "#Users" DESC
+WHERE accounts IS NOT NULL GROUP BY if(lifecycle is null,'d.Dormant',lifecycle), accounts ORDER BY max(concat(lifecycle,cast(accounts as varchar))) ASC
 LIMIT 10000;
 
 
 
 ================================================================================
 
--- Chart 2: #Handle wise MAU distribution (ID: 2459)
+-- Chart 2: #back acc wise MAU distribution (ID: 2458)
 -- Chart Type: table
 -- Dataset: RR - Use_case_n_profile_metric
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT handles AS handles, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) AS "Lifecycle CM", accounts AS accounts__, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
 (sum(users) filter(where use_case_mtd >0 )*1.0000)/
-(sum(sum(users) filter(where use_case_mtd >0 )) over()*1.0000)*100) AS "%" 
+(sum(sum(users) filter(where use_case_mtd >0 )) over(partition by max(lifecycle))*1.0000)*100) AS "%" 
 FROM (with  all_accounts AS (
     SELECT user_id, created_on,--a.account_type,
     detail_2,
@@ -139,104 +158,421 @@ group by 1
 ),
 
 use_cases_mtd as (
-select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day))
-and (current_Date - interval '01' day)
-group by 1
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
+              where final_category not in('Others','others')
+              and day_id 
+              between date_trunc('month',(current_Date - interval '01' day))
+              and (current_Date - interval '01' day)
+              group by 1
 ),
 
 use_cases_lmtd as (
-select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
-and (current_Date - interval '01' day - interval '01' month)
-group by 1
-)
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
+            where final_category not in('Others','others')
+            and day_id 
+            between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and (current_Date - interval '01' day - interval '01' month)
+            group by 1
+),
+
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day ))
+            and  current_Date - interval '01' day 
+  )
 
 
-SELECT a.handles,b.accounts,c.use_case use_case_mtd,d.use_case use_case_lmtd, count(a.customer_id) users
-from 
-(select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
-
-left join 
-(
-select customer_id, case when accounts<2 then 'a.=1_acc'
+SELECT if(lifecycle in ('c:react 1-3','c:react 3+'),'c:react',lifecycle)lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
                         when accounts=2 then 'b.=2_acc' 
                         when accounts>2 then 'c.>2_acc' 
                         else null end accounts
-from out
-
-)b on a.customer_id = b.customer_id
+                      from out   )b on a.customer_id = b.customer_id
 left join use_cases_mtd c on a.customer_id = c.customer_id
 left join use_cases_lmtd d on a.customer_id = d.customer_id
-group by 1,2,3,4
-) AS virtual_table GROUP BY handles ORDER BY "#Users" DESC
+group by lifecycle,2,3,4,5
+
+union all
+
+SELECT 'e.Overall' lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
+) AS virtual_table 
+WHERE accounts IS NOT NULL GROUP BY if(lifecycle is null,'d.Dormant',lifecycle), accounts ORDER BY max(concat(lifecycle,cast(accounts as varchar))) ASC
 LIMIT 10000;
 
 
 
 ================================================================================
 
--- Chart 3: MAU by Usecase Distribution (ID: 2464)
+-- Chart 3: #Handle wise MAU distribution (ID: 2459)
+-- Chart Type: table
+-- Dataset: RR - Use_case_n_profile_metric
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) AS "Lifecycle CM", handles AS handles__, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
+(sum(users) filter(where use_case_mtd >0 )*1.0000)/
+(sum(sum(users) filter(where use_case_mtd >0 )) over(partition by max(lifecycle))*1.0000)*100) AS "%" 
+FROM (with  all_accounts AS (
+    SELECT user_id, created_on,--a.account_type,
+    detail_2,
+    account_type
+    FROM hive.tpap_pms.account_snapshot_v3
+    WHERE dl_last_updated IS NOT NULL 
+    and status = 'ACTIVE'
+      AND DATE(created_on) <= current_date+interval '-1' day 
+),
+users AS (
+    SELECT customer_id,id,psp_id
+    FROM hive.tpap_pms.user_snapshot_v3
+    WHERE dl_last_updated IS NOT NULL
+      AND psp_id IN (6, 7, 8, 9)
+      AND (
+        status = 'ACTIVE'
+        OR (status = 'DORMANT' AND comments IS NOT NULL)
+      )
+      AND type = 'PERSON'
+),
+out as(
+select customer_id,count(distinct account_key) accounts
+from(
+        select customer_id,dt,account_key
+        -- ,row_number() over (partition by account_key order by dt asc) rn
+            from( SELECT customer_id,
+                        -- if(a.status = 'ACTIVE' AND mpin_set = 1,1 ,0) active_flag,
+                        date(a.created_on) dt,--a.account_type,
+                        CONCAT(u.customer_id, '-', a.detail_2, '-', a.account_type) AS account_key
+                    FROM all_accounts a 
+                    JOIN users u ON u.id = a.user_id 
+
+    )   
+)x 
+-- where rn=1   
+group by 1
+),
+
+use_cases_mtd as (
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
+              where final_category not in('Others','others')
+              and day_id 
+              between date_trunc('month',(current_Date - interval '01' day))
+              and (current_Date - interval '01' day)
+              group by 1
+),
+
+use_cases_lmtd as (
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
+            where final_category not in('Others','others')
+            and day_id 
+            between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and (current_Date - interval '01' day - interval '01' month)
+            group by 1
+),
+
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day ))
+            and  current_Date - interval '01' day 
+  )
+
+
+SELECT if(lifecycle in ('c:react 1-3','c:react 3+'),'c:react',lifecycle)lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
+
+union all
+
+SELECT 'e.Overall' lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
+) AS virtual_table GROUP BY if(lifecycle is null,'d.Dormant',lifecycle), handles ORDER BY max(concat(lifecycle,cast(handles as varchar))) ASC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 4: #Handle wise MAU distribution (ID: 2459)
+-- Chart Type: table
+-- Dataset: RR - Use_case_n_profile_metric
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) AS "Lifecycle CM", handles AS handles__, sum(users) AS "#Users", sum(users) filter(where use_case_mtd >0 ) AS "MAU", format('%.2f%%',
+(sum(users) filter(where use_case_mtd >0 )*1.0000)/
+(sum(sum(users) filter(where use_case_mtd >0 )) over(partition by max(lifecycle))*1.0000)*100) AS "%" 
+FROM (with  all_accounts AS (
+    SELECT user_id, created_on,--a.account_type,
+    detail_2,
+    account_type
+    FROM hive.tpap_pms.account_snapshot_v3
+    WHERE dl_last_updated IS NOT NULL 
+    and status = 'ACTIVE'
+      AND DATE(created_on) <= current_date+interval '-1' day 
+),
+users AS (
+    SELECT customer_id,id,psp_id
+    FROM hive.tpap_pms.user_snapshot_v3
+    WHERE dl_last_updated IS NOT NULL
+      AND psp_id IN (6, 7, 8, 9)
+      AND (
+        status = 'ACTIVE'
+        OR (status = 'DORMANT' AND comments IS NOT NULL)
+      )
+      AND type = 'PERSON'
+),
+out as(
+select customer_id,count(distinct account_key) accounts
+from(
+        select customer_id,dt,account_key
+        -- ,row_number() over (partition by account_key order by dt asc) rn
+            from( SELECT customer_id,
+                        -- if(a.status = 'ACTIVE' AND mpin_set = 1,1 ,0) active_flag,
+                        date(a.created_on) dt,--a.account_type,
+                        CONCAT(u.customer_id, '-', a.detail_2, '-', a.account_type) AS account_key
+                    FROM all_accounts a 
+                    JOIN users u ON u.id = a.user_id 
+
+    )   
+)x 
+-- where rn=1   
+group by 1
+),
+
+use_cases_mtd as (
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base_cm
+              where final_category not in('Others','others')
+              and day_id 
+              between date_trunc('month',(current_Date - interval '01' day))
+              and (current_Date - interval '01' day)
+              group by 1
+),
+
+use_cases_lmtd as (
+            select payer_cust_id customer_id, count(Distinct final_category) use_case from  user_paytm_payments.upi_flow_wise_base
+            where final_category not in('Others','others')
+            and day_id 
+            between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and (current_Date - interval '01' day - interval '01' month)
+            group by 1
+),
+
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day ))
+            and  current_Date - interval '01' day 
+  )
+
+
+SELECT if(lifecycle in ('c:react 1-3','c:react 3+'),'c:react',lifecycle)lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
+
+union all
+
+SELECT 'e.Overall' lifecycle,
+         a.handles,b.accounts,c.use_case use_case_mtd,
+        d.use_case use_case_lmtd, count(a.customer_id) users
+from (select customer_id,count(distinct psp_id) handles from users GROUP by 1) a
+left join nrr x on a.customer_id= x.custid
+left join (select customer_id, case when accounts<2 then 'a.=1_acc'
+                        when accounts=2 then 'b.=2_acc' 
+                        when accounts>2 then 'c.>2_acc' 
+                        else null end accounts
+                      from out   )b on a.customer_id = b.customer_id
+left join use_cases_mtd c on a.customer_id = c.customer_id
+left join use_cases_lmtd d on a.customer_id = d.customer_id
+group by lifecycle,2,3,4,5
+) AS virtual_table GROUP BY if(lifecycle is null,'d.Dormant',lifecycle), handles ORDER BY max(concat(lifecycle,cast(handles as varchar))) ASC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 5: MAU by Usecase Distribution (ID: 2464)
 -- Chart Type: table
 -- Dataset: RR - MAU by usecase
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT use_case AS use_case, SUM(users)filter(where MTD_flag = 'LMTD') AS "LMTD - MAU", SUM(users)filter(where MTD_flag = 'MTD') AS "MTD - MAU", SUM(users)filter(where MTD_flag = 'LMTD') AS "LMTD % cont.", SUM(users)filter(where MTD_flag = 'MTD') AS "MTD % Cont." 
-FROM (with use_cases_ as (
-select
-case 
-when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'
-when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' 
-end as MTD_flag,
-payer_cust_id customer_id,
-count(Distinct final_category) use_case 
-from
-(
-
-select day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base_partitioned
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
-and (current_Date - interval '01' day)
-and day(day_id)<= day(current_Date - interval '01' day)
-
--- select day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base
--- where final_category not in('Others','others')
--- and day_id 
--- between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
--- and (current_Date - interval '01' day)
--- and day(day_id)<= day(current_Date - interval '01' day)
-union all
-select day_id,payer_cust_id,final_category from  user_paytm_payments.upi_flow_wise_base_cm
-where final_category not in('Others','others')
-and day_id 
-between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
-and (current_Date - interval '01' day)
-and day(day_id)<= day(current_Date - interval '01' day)
+SELECT lifecycle AS "Lifecycle CM", use_case AS use_case__, SUM(users)filter(where MTD_flag = 'LMTD') AS "LMTD - MAU", SUM(users)filter(where MTD_flag = 'MTD') AS "MTD - MAU" 
+FROM (with nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day))
+            and  current_Date- interval '01' day 
+  ),
+  outt as (  select day_id,payer_cust_id,final_category 
+          from user_paytm_payments.upi_flow_wise_base_partitioned
+            where final_category not in('Others','others')
+                and day_id 
+                between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+                and (current_Date - interval '01' day)
+                and day(day_id)<= day(current_Date - interval '01' day)
+    
+    -- select day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base
+    -- where final_category not in('Others','others')
+    -- and day_id 
+    -- between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+    -- and (current_Date - interval '01' day)
+    -- and day(day_id)<= day(current_Date - interval '01' day)
+    union all
+    select day_id,payer_cust_id,final_category from  user_paytm_payments.upi_flow_wise_base_cm
+    where final_category not in('Others','others')
+          and day_id 
+          between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+          and (current_Date - interval '01' day)
+          and day(day_id)<= day(current_Date - interval '01' day)
+    ),
+    
+use_cases_ as (
+          select lifecycle,
+              case 
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' 
+              end as MTD_flag,
+              payer_cust_id customer_id,
+              count(Distinct final_category) use_case 
+          from outt a
+          left join nrr b on a.payer_cust_id=b.custid
+          group by 1,2,3
+  union all
+      select 'd.Overall' lifecycle,
+              case 
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' 
+              end as MTD_flag,
+              payer_cust_id customer_id,
+              count(Distinct final_category) use_case 
+          from outt a 
+          group by 1,2,3
 )
-group by 1,2
-)
 
-SELECT MTD_flag,use_case , count(customer_id) users
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) Lifecycle, MTD_flag,use_case , count(customer_id) users
 from  use_cases_ c
-group by 1,2
-) AS virtual_table GROUP BY use_case ORDER BY "LMTD % cont." DESC
+group by 1,2,3
+) AS virtual_table GROUP BY lifecycle, use_case ORDER BY mIN(concat(lifecycle,CAST(use_case AS VARCHAR))) ASC
 LIMIT 1000;
 
 
 
 ================================================================================
 
--- Chart 4: DAU MAU Txns by NRR (ID: 2583)
+-- Chart 6: MAU by Usecase Distribution (ID: 2464)
+-- Chart Type: table
+-- Dataset: RR - MAU by usecase
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT lifecycle AS "Lifecycle CM", use_case AS use_case__, SUM(users)filter(where MTD_flag = 'LMTD') AS "LMTD - MAU", SUM(users)filter(where MTD_flag = 'MTD') AS "MTD - MAU" 
+FROM (with nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day))
+            and  current_Date- interval '01' day 
+  ),
+  outt as (  select day_id,payer_cust_id,final_category 
+          from user_paytm_payments.upi_flow_wise_base_partitioned
+            where final_category not in('Others','others')
+                and day_id 
+                between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+                and (current_Date - interval '01' day)
+                and day(day_id)<= day(current_Date - interval '01' day)
+    
+    -- select day_id,payer_cust_id,final_category from user_paytm_payments.upi_flow_wise_base
+    -- where final_category not in('Others','others')
+    -- and day_id 
+    -- between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+    -- and (current_Date - interval '01' day)
+    -- and day(day_id)<= day(current_Date - interval '01' day)
+    union all
+    select day_id,payer_cust_id,final_category from  user_paytm_payments.upi_flow_wise_base_cm
+    where final_category not in('Others','others')
+          and day_id 
+          between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+          and (current_Date - interval '01' day)
+          and day(day_id)<= day(current_Date - interval '01' day)
+    ),
+    
+use_cases_ as (
+          select lifecycle,
+              case 
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' 
+              end as MTD_flag,
+              payer_cust_id customer_id,
+              count(Distinct final_category) use_case 
+          from outt a
+          left join nrr b on a.payer_cust_id=b.custid
+          group by 1,2,3
+  union all
+      select 'd.Overall' lifecycle,
+              case 
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day) then 'MTD'
+              when date_trunc('month', day_id) = date_trunc('month', current_Date - interval '01' day - interval '01' month) then 'LMTD' 
+              end as MTD_flag,
+              payer_cust_id customer_id,
+              count(Distinct final_category) use_case 
+          from outt a 
+          group by 1,2,3
+)
+
+SELECT if(lifecycle is null,'d.Dormant',lifecycle) Lifecycle, MTD_flag,use_case , count(customer_id) users
+from  use_cases_ c
+group by 1,2,3
+) AS virtual_table GROUP BY lifecycle, use_case ORDER BY mIN(concat(lifecycle,CAST(use_case AS VARCHAR))) ASC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 7: DAU MAU Txns by NRR (ID: 2583)
 -- Chart Type: pivot_table_v2
 -- Dataset: DAU MAU Txns by NRR & T20n City
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT lifecycle AS lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum("Dau") AS "DAU__", sum("Mau") AS "MAU", sum(txns) AS "TXNs", sum(txns)*1.00/sum(DAU) AS "TPU" 
+SELECT lifecycle AS lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum("Dau") AS "DAU__", sum("Mau") AS "MAU", sum(txns) AS "TXNs", sum(txns)*1.00/sum(DAU) AS "TPU", sum(GMV)*1.00/sum(DAU) AS "GPU" 
 FROM (-- Users (DAU,MAU), Txns split by states and top 20 cities
 -- Users (DAU,MAU), Txns split by NRR
 -- Retention & TPU split by NRR
@@ -259,7 +595,7 @@ upi as( --select * from hive.user_paytm_payments.temp_upi_test2
 -- and  day_id<current_date
 -- group by 1,2
 
-select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
 where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
   and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
@@ -285,7 +621,8 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
               row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
-              sum(txns) txns
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id
             left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
@@ -293,16 +630,16 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
 )           
 
 select day_id,lifecycle, state,t20city,
-                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,
-                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
                 -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
                 -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
                 -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
                 -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
-                sum(txns) txns
+                sum(txns) TXNS,
+                SUM(GMV) GMV
 from out 
 group by 1,2,3,4
-order by 1
 ) AS virtual_table 
 WHERE lifecycle IS NOT NULL GROUP BY lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") DESC
 LIMIT 10000;
@@ -311,7 +648,88 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 5: DAU MAU Txns by T20 Cities (ID: 2587)
+-- Chart 8: DAU MAU Txns by NRR (ID: 2583)
+-- Chart Type: pivot_table_v2
+-- Dataset: DAU MAU Txns by NRR & T20n City
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT lifecycle AS lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum("Dau") AS "DAU__", sum("Mau") AS "MAU", sum(txns) AS "TXNs", sum(txns)*1.00/sum(DAU) AS "TPU", sum(GMV)*1.00/sum(DAU) AS "GPU" 
+FROM (-- Users (DAU,MAU), Txns split by states and top 20 cities
+-- Users (DAU,MAU), Txns split by NRR
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max(case when upper(popular_city) in (
+        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',
+        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'
+        ) then popular_city else 'Other' end) as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
+  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2
+
+),
+nrr as (select date_trunc('month',dt) mt,cust_id custid,            
+                user_type lifecycle
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1
+                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+            and  dt<current_date
+                group by 1,2,3
+),
+out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,
+              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,
+              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,
+              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,
+              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id
+            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
+            group by 1,2,3,4,5   
+)           
+
+select day_id,lifecycle, state,t20city,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
+                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
+                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
+                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
+                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
+                sum(txns) TXNS,
+                SUM(GMV) GMV
+from out 
+group by 1,2,3,4
+) AS virtual_table 
+WHERE lifecycle IS NOT NULL GROUP BY lifecycle, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 9: DAU MAU Txns by T20 Cities (ID: 2587)
 -- Chart Type: pivot_table_v2
 -- Dataset: DAU MAU Txns by NRR & T20n City
 -- Database: Trino
@@ -339,7 +757,7 @@ upi as( --select * from hive.user_paytm_payments.temp_upi_test2
 -- and  day_id<current_date
 -- group by 1,2
 
-select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
 where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
   and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
@@ -365,7 +783,8 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
               row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
-              sum(txns) txns
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id
             left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
@@ -373,16 +792,16 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
 )           
 
 select day_id,lifecycle, state,t20city,
-                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,
-                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
                 -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
                 -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
                 -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
                 -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
-                sum(txns) txns
+                sum(txns) TXNS,
+                SUM(GMV) GMV
 from out 
 group by 1,2,3,4
-order by 1
 ) AS virtual_table 
 WHERE lifecycle IS NOT NULL GROUP BY t20city, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") DESC
 LIMIT 10000;
@@ -391,7 +810,88 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 6: DAU MAU Txns by States (ID: 2588)
+-- Chart 10: DAU MAU Txns by T20 Cities (ID: 2587)
+-- Chart Type: pivot_table_v2
+-- Dataset: DAU MAU Txns by NRR & T20n City
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT t20city AS t20city, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum("Dau") AS "DAU__", sum("Mau") AS "MAU", sum(txns) AS "TXNs", sum(txns)*1.00/sum(DAU) AS "TPU" 
+FROM (-- Users (DAU,MAU), Txns split by states and top 20 cities
+-- Users (DAU,MAU), Txns split by NRR
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max(case when upper(popular_city) in (
+        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',
+        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'
+        ) then popular_city else 'Other' end) as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
+  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2
+
+),
+nrr as (select date_trunc('month',dt) mt,cust_id custid,            
+                user_type lifecycle
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1
+                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+            and  dt<current_date
+                group by 1,2,3
+),
+out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,
+              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,
+              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,
+              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,
+              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id
+            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
+            group by 1,2,3,4,5   
+)           
+
+select day_id,lifecycle, state,t20city,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
+                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
+                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
+                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
+                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
+                sum(txns) TXNS,
+                SUM(GMV) GMV
+from out 
+group by 1,2,3,4
+) AS virtual_table 
+WHERE lifecycle IS NOT NULL GROUP BY t20city, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 11: DAU MAU Txns by States (ID: 2588)
 -- Chart Type: pivot_table_v2
 -- Dataset: DAU MAU Txns by NRR & T20n City
 -- Database: Trino
@@ -419,7 +919,7 @@ upi as( --select * from hive.user_paytm_payments.temp_upi_test2
 -- and  day_id<current_date
 -- group by 1,2
 
-select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
 where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
   and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
@@ -445,7 +945,8 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
               row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
               row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
-              sum(txns) txns
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id
             left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
@@ -453,16 +954,16 @@ out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coales
 )           
 
 select day_id,lifecycle, state,t20city,
-                count(Distinct if(rn_dau=1,payer_cust_id,null)) Dau,
-                count(Distinct if(rn_mau=1,payer_cust_id,null)) Mau,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
                 -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
                 -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
                 -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
                 -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
-                sum(txns) txns
+                sum(txns) TXNS,
+                SUM(GMV) GMV
 from out 
 group by 1,2,3,4
-order by 1
 ) AS virtual_table 
 WHERE lifecycle IS NOT NULL GROUP BY state, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") ASC
 LIMIT 10000;
@@ -471,7 +972,88 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 7: UPI Overall Retention: Monthly (ID: 2611)
+-- Chart 12: DAU MAU Txns by States (ID: 2588)
+-- Chart Type: pivot_table_v2
+-- Dataset: DAU MAU Txns by NRR & T20n City
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT state AS state, date_trunc('day', CAST(day_id AS TIMESTAMP)) AS day_id, sum("Dau") AS "DAU__", sum("Mau") AS "MAU", sum(txns) AS "TXNs", sum(txns)*1.00/sum(DAU) AS "TPU" 
+FROM (-- Users (DAU,MAU), Txns split by states and top 20 cities
+-- Users (DAU,MAU), Txns split by NRR
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max(case when upper(popular_city) in (
+        'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD',
+        'PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA'
+        ) then popular_city else 'Other' end) as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id, count(distinct txn_id)txns, sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>= date_trunc('month',current_date+interval'-1' day)-interval '1' month
+  and transaction_date_key>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2
+
+),
+nrr as (select date_trunc('month',dt) mt,cust_id custid,            
+                user_type lifecycle
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1
+                where dt>=date_trunc('month',current_date+interval'-1' day)-interval '1' month
+            and  dt<current_date
+                group by 1,2,3
+),
+out as(  select  a.day_id,lifecycle,coalesce(popular_city,'Other')t20city,coalesce(state,'Other')state, a.payer_cust_id,
+              row_number() over(partition by payer_cust_id,day_id order by day_id) rn_dau,
+              row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau,
+              row_number() over(partition by lifecycle,payer_cust_id,day_id order by day_id) rn_dau_nrr,
+              row_number() over(partition by lifecycle,payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_nrr,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,day_id order by day_id) rn_dau_t20,
+              row_number() over(partition by coalesce(popular_city,'Other'),payer_cust_id,year(day_id),month(day_id) order by day_id) rn_mau_t20,
+              sum(txns) txns,
+              SUM(AMOUNT) gmv
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id
+            left join nrr c  on a.payer_cust_id=c.custid and c.mt=date_trunc('month',day_id)
+            group by 1,2,3,4,5   
+)           
+
+select day_id,lifecycle, state,t20city,
+                count(Distinct if(rn_dau=1,payer_cust_id,null)) DAU,
+                count(Distinct if(rn_mau=1,payer_cust_id,null)) MAU,
+                -- count(Distinct if(rn_dau_nrr=1,payer_cust_id,null)) dau_nrr,
+                -- count(Distinct if(rn_mau_nrr=1,payer_cust_id,null)) mau_nrr,
+                -- count(Distinct if(rn_dau_t20=1,payer_cust_id,null)) dau_t20,
+                -- count(Distinct if(rn_mau_t20=1,payer_cust_id,null)) mau_t20,
+                sum(txns) TXNS,
+                SUM(GMV) GMV
+from out 
+group by 1,2,3,4
+) AS virtual_table 
+WHERE lifecycle IS NOT NULL GROUP BY state, date_trunc('day', CAST(day_id AS TIMESTAMP)) ORDER BY sum("Dau") ASC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 13: UPI Overall Retention: Monthly (ID: 2611)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI Overall Retention
 -- Database: Trino
@@ -503,7 +1085,39 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 8: UPI Retention-New (ID: 2626)
+-- Chart 14: UPI Overall Retention: Monthly (ID: 2611)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI Overall Retention
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT diff AS diff, date_format(cast(base_month as date), '%Y- %m') AS base_month, sum("Retention") AS "Retention__" 
+FROM (with cc as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten as (
+select -- a.lifecycle, 
+date_diff('month',a.mt,b.mt) as diff,
+        a.mt base_month, b.mt retention_month,
+        count(distinct b.scope_cust_id) users 
+        from cc a
+        left  join  cc b on b.scope_cust_id=a.scope_cust_id
+        where  b.mt>=a.mt
+        group by 1,2,3)
+        
+        SELECT base_month, diff,users*1.0000/MAX(users) over (partition by base_month order by base_month) Retention
+from reten
+) AS virtual_table GROUP BY diff, date_format(cast(base_month as date), '%Y- %m') ORDER BY sum("Retention") DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 15: UPI Retention-New (ID: 2626)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI Retention NRR wise
 -- Database: Trino
@@ -547,7 +1161,51 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 9: UPI Retention-Repeat (ID: 2627)
+-- Chart 16: UPI Retention-New (ID: 2626)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI Retention NRR wise
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT diff AS diff, date_format(base_month,'%Y-%m') AS "Base_month", sum("NRR_retention") AS "Retention" 
+FROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten AS (
+    SELECT 
+        a.lifecycle, 
+        date_diff('month', a.mt, b.mt) AS diff,
+        a.mt AS base_month, 
+        b.mt AS retention_month,
+        COUNT(DISTINCT b.scope_cust_id) AS users 
+    FROM upi a
+    LEFT JOIN upi b 
+        ON b.scope_cust_id = a.scope_cust_id
+       AND b.mt >= a.mt
+    GROUP BY a.lifecycle, a.mt, b.mt
+)
+SELECT 
+    base_month,
+    lifecycle,
+    diff,
+    users,
+    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+FROM reten 
+ORDER BY 2,1
+) AS virtual_table 
+WHERE lifecycle = 'a:new' AND ((base_month is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY "Retention" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 17: UPI Retention-Repeat (ID: 2627)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI Retention NRR wise
 -- Database: Trino
@@ -591,7 +1249,51 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 10: UPI Retention-Reactivated (ID: 2630)
+-- Chart 18: UPI Retention-Repeat (ID: 2627)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI Retention NRR wise
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT diff AS diff, date_format(base_month,'%Y-%m') AS "Base_month", sum("NRR_retention") AS "Retention" 
+FROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten AS (
+    SELECT 
+        a.lifecycle, 
+        date_diff('month', a.mt, b.mt) AS diff,
+        a.mt AS base_month, 
+        b.mt AS retention_month,
+        COUNT(DISTINCT b.scope_cust_id) AS users 
+    FROM upi a
+    LEFT JOIN upi b 
+        ON b.scope_cust_id = a.scope_cust_id
+       AND b.mt >= a.mt
+    GROUP BY a.lifecycle, a.mt, b.mt
+)
+SELECT 
+    base_month,
+    lifecycle,
+    diff,
+    users,
+    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+FROM reten 
+ORDER BY 2,1
+) AS virtual_table 
+WHERE ((Base_month is not null) AND (lifecycle = 'b:repeat') AND (diff is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY "Retention" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 19: UPI Retention-Reactivated (ID: 2630)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI Retention NRR wise
 -- Database: Trino
@@ -635,7 +1337,51 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 11: UPI flow Wise SR (ID: 2639)
+-- Chart 20: UPI Retention-Reactivated (ID: 2630)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI Retention NRR wise
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT diff AS diff, date_format(base_month,'%Y-%m') AS "Base_month", sum("NRR_retention") AS "Retention" 
+FROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten AS (
+    SELECT 
+        a.lifecycle, 
+        date_diff('month', a.mt, b.mt) AS diff,
+        a.mt AS base_month, 
+        b.mt AS retention_month,
+        COUNT(DISTINCT b.scope_cust_id) AS users 
+    FROM upi a
+    LEFT JOIN upi b 
+        ON b.scope_cust_id = a.scope_cust_id
+       AND b.mt >= a.mt
+    GROUP BY a.lifecycle, a.mt, b.mt
+)
+SELECT 
+    base_month,
+    lifecycle,
+    diff,
+    users,
+    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+FROM reten 
+ORDER BY 2,1
+) AS virtual_table 
+WHERE lifecycle = 'c:react' AND ((Base_month is not null) AND (diff is not null)) GROUP BY diff, date_format(base_month,'%Y-%m') ORDER BY "Retention" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 21: UPI flow Wise SR (ID: 2639)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI SR DoD Flow wise 
 -- Database: Trino
@@ -665,7 +1411,37 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 12: UPI SR DoD Overall Line Trend (ID: 2640)
+-- Chart 22: UPI flow Wise SR (ID: 2639)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI SR DoD Flow wise 
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Flow_category" AS "Flow_category", date_trunc('day', CAST("Date" AS TIMESTAMP)) AS "Date", sum("Success_txn") AS "Success", sum("Overall_txn") AS "Overall",  cast(round(SUM(success_txn)*100/SUM(overall_txn),2) as varchar)||'%' AS "SR" 
+FROM (select transaction_date_key Date, Flow_category, 
+COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id
+    END
+  ) AS Success_txn,
+  COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id
+    END
+  ) AS Overall_txn
+  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and current_date+interval'-1' day
+and transaction_type in ('PAY','COLLECT') 
+  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1 ,2
+) AS virtual_table GROUP BY "Flow_category", date_trunc('day', CAST("Date" AS TIMESTAMP)) ORDER BY Date DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 23: UPI SR DoD Overall Line Trend (ID: 2640)
 -- Chart Type: echarts_area
 -- Dataset: UPI SR DoD Flow wise 
 -- Database: Trino
@@ -689,14 +1465,45 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-22' GROUP BY "Date" ORDER BY "Success" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' GROUP BY "Date" ORDER BY "Success" DESC
 LIMIT 100;
 
 
 
 ================================================================================
 
--- Chart 13: UPI SR Flow wise DoD Overall Line Trend (ID: 2654)
+-- Chart 24: UPI SR DoD Overall Line Trend (ID: 2640)
+-- Chart Type: echarts_area
+-- Dataset: UPI SR DoD Flow wise 
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Date" AS "Date", sum("Success_txn") AS "Success", sum("Overall_txn") AS "Overall",  cast(round(SUM(success_txn*1.00)*100/SUM(overall_txn),2) as int) AS "SR" 
+FROM (select transaction_date_key Date, Flow_category, 
+COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id
+    END
+  ) AS Success_txn,
+  COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id
+    END
+  ) AS Overall_txn
+  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and current_date+interval'-1' day
+and transaction_type in ('PAY','COLLECT') 
+  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1 ,2
+) AS virtual_table 
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' GROUP BY "Date" ORDER BY "Success" DESC
+LIMIT 100;
+
+
+
+================================================================================
+
+-- Chart 25: UPI SR Flow wise DoD Overall Line Trend (ID: 2654)
 -- Chart Type: echarts_timeseries_line
 -- Dataset: UPI SR DoD Flow wise 
 -- Database: Trino
@@ -720,14 +1527,45 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-22' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
 LIMIT 10000;
 
 
 
 ================================================================================
 
--- Chart 14: UPI Retention- M0 MAU (ID: 2687)
+-- Chart 26: UPI SR Flow wise DoD Overall Line Trend (ID: 2654)
+-- Chart Type: echarts_timeseries_line
+-- Dataset: UPI SR DoD Flow wise 
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Date" AS "Date", "Flow_category" AS "Flow_category",  SUM(success_txn*1.0000)/SUM(overall_txn) AS "SR" 
+FROM (select transaction_date_key Date, Flow_category, 
+COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id
+    END
+  ) AS Success_txn,
+  COUNT(  CASE
+      WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id
+    END
+  ) AS Overall_txn
+  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where a.dl_last_updated>=date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month
+  and current_date+interval'-1' day
+and transaction_type in ('PAY','COLLECT') 
+  and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1 ,2
+) AS virtual_table 
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 27: UPI Retention- M0 MAU (ID: 2687)
 -- Chart Type: table
 -- Dataset: UPI Retention M0
 -- Database: Trino
@@ -772,7 +1610,52 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 15: UPI Retention NRR MAU (ID: 2690)
+-- Chart 28: UPI Retention- M0 MAU (ID: 2687)
+-- Chart Type: table
+-- Dataset: UPI Retention M0
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT date_format(base_month,'%Y-%m') AS "Base_month", sum(users) AS "MAU", SUM(mom_growth*1.0000)/SUM(users)  AS "% Growth" 
+FROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                a.user_type user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten AS (
+    SELECT 
+        a.lifecycle, 
+        date_diff('month', a.mt, b.mt) AS diff,
+        a.mt AS base_month, 
+        b.mt AS retention_month,
+        COUNT(DISTINCT b.scope_cust_id) AS users 
+    FROM upi a
+    LEFT JOIN upi b 
+        ON b.scope_cust_id = a.scope_cust_id
+       AND b.mt >= a.mt
+    GROUP BY a.lifecycle, a.mt, b.mt
+)
+SELECT 
+    base_month,
+    lifecycle,
+    diff,
+    users,
+    users * 1.00 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+FROM reten 
+where diff=0
+ORDER BY 2,1
+) AS virtual_table 
+WHERE diff = 0 GROUP BY date_format(base_month,'%Y-%m') ORDER BY base_month ASC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 29: UPI Retention NRR MAU (ID: 2690)
 -- Chart Type: pivot_table_v2
 -- Dataset: UPI Retention NRR wise
 -- Database: Trino
@@ -816,7 +1699,51 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 16: UPI LMTD Retention (ID: 2755)
+-- Chart 30: UPI Retention NRR MAU (ID: 2690)
+-- Chart Type: pivot_table_v2
+-- Dataset: UPI Retention NRR wise
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT lifecycle AS lifecycle, date_format(base_month,'%Y-%m') AS "Base_month", sum(users) AS "MAU" 
+FROM (with upi as (select  mt, scope_cust_id,user_type lifecycle  from (
+            select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id ,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type)  user_type 
+                from   hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date+interval'-1' day)-interval '4' month   
+            )  where mt<current_date
+),
+reten AS (
+    SELECT 
+        a.lifecycle, 
+        date_diff('month', a.mt, b.mt) AS diff,
+        a.mt AS base_month, 
+        b.mt AS retention_month,
+        COUNT(DISTINCT b.scope_cust_id) AS users 
+    FROM upi a
+    LEFT JOIN upi b 
+        ON b.scope_cust_id = a.scope_cust_id
+       AND b.mt >= a.mt
+    GROUP BY a.lifecycle, a.mt, b.mt
+)
+SELECT 
+    base_month,
+    lifecycle,
+    diff,
+    users,
+    users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+    LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+    (users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+FROM reten 
+ORDER BY 2,1
+) AS virtual_table 
+WHERE diff = 0 AND ((base_month is not null)) GROUP BY lifecycle, date_format(base_month,'%Y-%m') ORDER BY "MAU" DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 31: UPI LMTD Retention (ID: 2755)
 -- Chart Type: table
 -- Dataset: UPI Retention LMTD
 -- Database: Trino
@@ -860,7 +1787,51 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 17: UPI MTD Retention (ID: 2757)
+-- Chart 32: UPI LMTD Retention (ID: 2755)
+-- Chart Type: table
+-- Dataset: UPI Retention LMTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT lifecycle AS lifecycle, sum("Base_users") AS "LM Users", sum("Reatined_users") AS "Retained Users", SUM(Reatined_users)*1.0000/SUM(Base_users) AS "Retention" 
+FROM (--lmtd retention
+with
+lm as (select mt,cast(scope_cust_id as varchar)scope_cust_id,lifecycle 
+        from (select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle 
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>=date_trunc('month',current_date +interval '-1' day) +interval '-2' month
+                      and  a.dt<=date_trunc('month',current_date +interval '-1' day) +interval '-1' month +interval '-1' day
+            )   
+),
+CMTD as (select scope_cust_id
+        from ( select customer_id_payer scope_cust_id
+                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+                        where a.dl_last_updated between date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+                            and current_date + interval '-1' day + interval '-1' month
+                        and transaction_date_key between   date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+                            and current_date + interval '-1' day + interval '-1' month
+                        and transaction_type in ('PAY','COLLECT')
+                        and a.status in('SUCCESS','DEEMED')
+                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+                            group by 1
+            )   
+)
+
+select a.lifecycle,
+count(distinct a.scope_cust_id) Base_users,
+        count(distinct b.scope_cust_id) Reatined_users 
+        from lm a 
+        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id 
+        group by 1
+) AS virtual_table GROUP BY lifecycle ORDER BY "LM Users" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 33: UPI MTD Retention (ID: 2757)
 -- Chart Type: table
 -- Dataset: UPI Retention MTD
 -- Database: Trino
@@ -904,7 +1875,51 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 18: RMG Retentions (ID: 2955)
+-- Chart 34: UPI MTD Retention (ID: 2757)
+-- Chart Type: table
+-- Dataset: UPI Retention MTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT lifecycle AS "Lifecycle", sum("Base_users") AS "Base Users", sum("Reatined_users") AS "Retention Users", SUM(Reatined_users*1.0000)/SUM(Base_users) AS "Retention" 
+FROM (--mtd retention
+with
+lm as (select mt,scope_cust_id,lifecycle 
+        from (select date_trunc('month',a.dt) mt ,cast(a.cust_id as varchar) scope_cust_id,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle 
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                where a.dt>= date_trunc('month',current_date +interval '-1' day) +interval '-1' month
+                 and  a.dt<= date_trunc('month',current_date +interval '-1' day) +interval '-1' day
+            )   
+),
+CMTD as (select scope_cust_id
+        from ( select customer_id_payer scope_cust_id
+                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+                        where a.dl_last_updated between date_trunc('month',current_date +interval '-1' day)   
+                       and   current_date +interval '-1' day
+                        and transaction_date_key between  date_trunc('month',current_date +interval '-1' day)   
+                       and  current_date +interval '-1' day
+                        and transaction_type in ('PAY','COLLECT')
+                        and a.status in('SUCCESS','DEEMED')
+                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+                            group by 1
+            )   
+)
+
+select a.lifecycle,
+count(distinct a.scope_cust_id) Base_users,
+        count(distinct b.scope_cust_id) Reatined_users 
+        from lm a 
+        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id 
+        group by 1
+) AS virtual_table GROUP BY lifecycle ORDER BY "Base Users" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 35: RMG Retentions (ID: 2955)
 -- Chart Type: pivot_table_v2
 -- Dataset: RMG Retentions
 -- Database: Trino
@@ -1005,12 +2020,117 @@ LIMIT 1000;
 
 ================================================================================
 
--- Chart 19: State n catg wise dod dump (ID: 3058)
--- Chart Type: table
+-- Chart 36: RMG Retentions (ID: 2955)
+-- Chart Type: pivot_table_v2
+-- Dataset: RMG Retentions
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Month" AS "Month", gm AS gm, lifecycle AS lifecycle, sum(users) AS "MAU Users", sum("Reatined_users") AS "Retained users", sum(Reatined_users*1.0000)*100/SUM(users)*1.0000 AS "Retention In %" 
+FROM (--combined
+select * from (
+with  category as (
+select 
+--a.mnt,
+a.payer_cust_id customer_id
+from user_paytm_payments.gaming_merchant_5816_analysis a
+where  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'
+and a.gaming_merc = 'Gaming merc'
+group by 1--,2
+ ),
+lm as (select mt,scope_cust_id,lifecycle,gm 
+        from (select date_trunc('month',date(dt)) mt ,a.cust_id scope_cust_id ,
+        if(b.customer_id is not null,1,0)gm,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle 
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                left join category b on --date_trunc('month',date(a.dt))=date_trunc('month',mnt) and
+                 a.cust_id=b.customer_id
+                where date(a.dt)>=date'2025-08-01'   and  date(a.dt)<=date'2025-08-31' 
+            )   
+),
+CMTD as (select scope_cust_id
+        from ( select customer_id_payer scope_cust_id
+                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+                        where a.dl_last_updated between date'2025-09-01'  
+                       and  date'2025-09-30' 
+                        and transaction_type in ('PAY','COLLECT')
+                        and a.status in('SUCCESS','DEEMED')
+                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+                        and transaction_date_key>=date'2025-09-01'      
+                        and  transaction_date_key<=date'2025-09-30' 
+                        and day(transaction_date_key)<day(current_date)
+                            group by 1
+            )   
+)
+
+select 'Aug to Sep' Month, a.lifecycle,a.gm, 
+        count(distinct a.scope_cust_id) users,
+        count(distinct b.scope_cust_id) Reatined_users 
+        from lm a
+        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id 
+        group by 1,2,3
+)
+union all
+--mtd retention
+select * from(
+with  category as (
+        select 
+       -- a.mnt,
+        a.payer_cust_id customer_id
+        from user_paytm_payments.gaming_merchant_5816_analysis a
+        where  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'
+        and a.gaming_merc = 'Gaming merc'
+        group by 1--,2
+        ),
+lm as (select mt,scope_cust_id,lifecycle ,gm
+        from (select date_trunc('month',a.dt) mt ,a.cust_id scope_cust_id,if(b.customer_id is not null,1,0)gm,
+                if(a.user_type in ('c:react 3+','c:react 1-3'),'c:react',a.user_type) lifecycle 
+                from hive.user_paytm_payments.paytm_upi_mau_final_nrr_1  a 
+                left join category b on --date_trunc('month',dt)=date_trunc('month',mnt) and
+                          a.cust_id=b.customer_id
+                where  date(a.dt)>=date'2025-09-01'   and  date(a.dt)<=date'2025-09-30' 
+            )   
+),
+CMTD as (select scope_cust_id
+        from ( select customer_id_payer scope_cust_id
+                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+                        where a.dl_last_updated between date'2025-10-01'  
+                       and  date'2025-10-31' 
+                        and transaction_date_key between  date'2025-10-01'  
+                       and  date'2025-10-31' 
+                        and day(transaction_date_key)<day(current_date)
+                        and transaction_type in ('PAY','COLLECT')
+                        and a.status in('SUCCESS','DEEMED')
+                        and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+                        and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') 
+                            group by 1
+            )   
+)
+
+select 'Sep to Oct' Month, a.lifecycle,gm,
+count(distinct a.scope_cust_id) Base_users,
+        count(distinct b.scope_cust_id) Reatined_users 
+        from lm a 
+        left  join  cmtd b on b.scope_cust_id=a.scope_cust_id 
+        group by 1,2,3
+)
+) AS virtual_table GROUP BY "Month", gm, lifecycle ORDER BY "MAU Users" DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 37: [Upi Profile wise] P2P P2M Ratio (ID: 3058)
+-- Chart Type: pivot_table_v2
 -- Dataset: State n catg wise dod dump
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, "Dau" AS "Dau", txns AS txns, amount AS amount 
+SELECT cast(month(day_id) as VARCHAR) AS day_id, p2m_p2p_flag AS p2m_p2p_flag, sum("Dau") AS "SUM(Dau)", (sum(if(p2m_p2p_flag='P2P',Dau,0))*1.0000)
+/
+sum(if(p2m_p2p_flag='P2M',Dau,1)) AS "Ratio DAU P2p/p2m", sum(txns) AS "SUM(txns)", sum(if(p2m_p2p_flag='P2P',txns,0))*1.0000/
+sum(if(p2m_p2p_flag='P2M',txns,1)) AS "Ratio txns P2p/p2m", sum(amount) AS "SUM(amount)", sum(if(p2m_p2p_flag='P2P',amount,0))*1.0000/
+sum(if(p2m_p2p_flag='P2M',amount,1)) AS "Ratio gmv P2p/p2m" 
 FROM (-- Users (DAU,MAU), Txns split by states  
 -- Retention & TPU split by NRR
 with top20 as(select
@@ -1035,8 +2155,10 @@ select transaction_date_key day_id,customer_id_payer payer_cust_id,
         end as p2m_p2p_flag,flow_category,
  count(distinct txn_id)txns,sum(amount) amount
  from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
-where a.dl_last_updated>= current_date+interval'-3' day
-  and transaction_date_key>=current_date+interval'-3' day
+where  a.dl_last_updated  BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
 and  transaction_date_key<current_date
 and transaction_type in ('PAY','COLLECT')
  and a.status in('SUCCESS','DEEMED')
@@ -1046,29 +2168,100 @@ group by 1,2,3,4
 
 ), 
 out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
-             p2m_p2p_flag,flow_category,
-              sum(txns) txns,
-              sum(amount) amount
+             p2m_p2p_flag,Flow_category,
+              sum(txns) Txns,
+              sum(amount) Amount
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id 
             group by 1,2,3,4,5   
 )           
 
-select day_id, state,p2m_p2p_flag,flow_category,
-                count(Distinct  payer_cust_id ) Dau, 
-                sum(txns) txns,
-                sum(amount) amount
+select Day_id, State,p2m_p2p_flag,Flow_category,
+                count(Distinct  payer_cust_id ) DAU, 
+                sum(txns) Txns,
+                sum(amount) Amount
 from out 
 group by 1,2,3,4
 order by 1
-) AS virtual_table ORDER BY day_id DESC
+) AS virtual_table 
+WHERE ((day(day_id)<day(current_date))) GROUP BY cast(month(day_id) as VARCHAR), p2m_p2p_flag ORDER BY "SUM(Dau)" DESC
 LIMIT 5000;
 
 
 
 ================================================================================
 
--- Chart 20: RMG TPU GPU (ID: 3072)
+-- Chart 38: [Upi Profile wise] P2P P2M Ratio (ID: 3058)
+-- Chart Type: pivot_table_v2
+-- Dataset: State n catg wise dod dump
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT cast(month(day_id) as VARCHAR) AS day_id, p2m_p2p_flag AS p2m_p2p_flag, sum("Dau") AS "SUM(Dau)", (sum(if(p2m_p2p_flag='P2P',Dau,0))*1.0000)
+/
+sum(if(p2m_p2p_flag='P2M',Dau,1)) AS "Ratio DAU P2p/p2m", sum(txns) AS "SUM(txns)", sum(if(p2m_p2p_flag='P2P',txns,0))*1.0000/
+sum(if(p2m_p2p_flag='P2M',txns,1)) AS "Ratio txns P2p/p2m", sum(amount) AS "SUM(amount)", sum(if(p2m_p2p_flag='P2P',amount,0))*1.0000/
+sum(if(p2m_p2p_flag='P2M',amount,1)) AS "Ratio gmv P2p/p2m" 
+FROM (-- Users (DAU,MAU), Txns split by states  
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max( upper(popular_city))  as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=current_date+interval'-5' day
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id,
+  case when is_p2p=True then 'P2P'
+        when is_p2m=True then 'P2M' else flow_category
+        end as p2m_p2p_flag,flow_category,
+ count(distinct txn_id)txns,sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where  a.dl_last_updated  BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2,3,4
+
+), 
+out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
+             p2m_p2p_flag,Flow_category,
+              sum(txns) Txns,
+              sum(amount) Amount
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id 
+            group by 1,2,3,4,5   
+)           
+
+select Day_id, State,p2m_p2p_flag,Flow_category,
+                count(Distinct  payer_cust_id ) DAU, 
+                sum(txns) Txns,
+                sum(amount) Amount
+from out 
+group by 1,2,3,4
+order by 1
+) AS virtual_table 
+WHERE ((day(day_id)<day(current_date))) GROUP BY cast(month(day_id) as VARCHAR), p2m_p2p_flag ORDER BY "SUM(Dau)" DESC
+LIMIT 5000;
+
+
+
+================================================================================
+
+-- Chart 39: RMG TPU GPU (ID: 3072)
 -- Chart Type: pivot_table_v2
 -- Dataset: RMG Use_case data
 -- Database: Trino
@@ -1119,7 +2312,58 @@ LIMIT 10000;
 
 ================================================================================
 
--- Chart 21: [Growth]TG CG tracking feature for New PTS Banner 2.0 (ID: 3238)
+-- Chart 40: RMG TPU GPU (ID: 3072)
+-- Chart Type: pivot_table_v2
+-- Dataset: RMG Use_case data
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT use_case AS use_case, "Month" AS "Month", "Gaming_flag" AS "Gaming_flag", sum(users) AS "Users__" 
+FROM (with rmg as (
+select 
+a.mnt,
+a.payer_cust_id customer_id
+from user_paytm_payments.gaming_merchant_5816_analysis a
+where  a.mnt >= date'2025-05-01' and  a.mnt <= date'2025-08-31'
+and a.gaming_merc = 'Gaming merc'
+group by 1,2
+ ),
+ 
+ use_case as(
+              SELECT payer_cust_id customer_id,month(day_id) Month,
+              count(Distinct final_category) use_case 
+              from (select transaction_date_key day_id,customer_id_payer payer_cust_id,txn_id,amount,
+                                  case  WHEN flow_category IN ('P2P') THEN 'P2P' WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+                                        WHEN flow_category IN ('Intent', 'P2M Collect', 'Mandate_Online') THEN 'Online' 
+                                        WHEN flow_category IN ('Onus_ExcMandates', 'Mandate_Onus') THEN 'Onus' else null end as final_category
+                        from   hive.cdo.fact_upi_transactions_snapshot_v3 a 
+                       where a.dl_last_updated between date_trunc('month',(current_Date - interval '01' day - interval '01' month)) and current_date 
+                                and transaction_type in ('PAY','COLLECT')
+                                and a.status in('SUCCESS','DEEMED')
+                                and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+                                and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')   
+                            -- and final_category not in('Others','others')
+                            and transaction_date_key 
+                            between date_trunc('month',(current_Date - interval '01' day - interval '01' month)) and (current_Date - interval '01' day) 
+                    )
+            group by 1,2
+            )
+
+SELECT if(rmg.customer_id is null, 'Non_gaming', 'Gaming' )Gaming_flag,
+        Month,
+        if(use_case=1,'1','2+') use_case, 
+        count(c.customer_id) users 
+from  use_case c
+left join rmg on rmg.customer_id=c.customer_id
+where use_case!=0
+group by 1,2,3
+) AS virtual_table GROUP BY use_case, "Month", "Gaming_flag" ORDER BY sum(users) DESC
+LIMIT 10000;
+
+
+
+================================================================================
+
+-- Chart 41: [Growth]TG CG tracking feature for New PTS Banner 2.0 (ID: 3238)
 -- Chart Type: table
 -- Dataset: [Growth]TG CG tracking feature for New PTS Banner 2.0
 -- Database: Trino
@@ -1286,12 +2530,179 @@ LIMIT 50000;
 
 ================================================================================
 
--- Chart 22: UPI Retention TPU wise MTD (ID: 5971)
+-- Chart 42: [Growth]TG CG tracking feature for New PTS Banner 2.0 (ID: 3238)
+-- Chart Type: table
+-- Dataset: [Growth]TG CG tracking feature for New PTS Banner 2.0
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT dt AS dt, property AS property, feature AS feature, users_viewed_banner AS users_viewed_banner, converted_post_viewing AS converted_post_viewing, users_clicked_banner AS users_clicked_banner, converted_post_clicking AS converted_post_clicking 
+FROM (--TG
+with ftr as (   
+    -- 1. Bank Linking
+    SELECT 'Bank Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.bank_link
+    WHERE  dt < current_date
+
+    UNION ALL
+     -- x. Mapper
+    SELECT 'Mapper' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.mapper
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 2. RuPay CC Linking
+    SELECT 'RuPay CC Linking' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.cc_all_linkages
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 3. Lite Activation
+    SELECT 'UPI Lite Activation' AS type, customer_id AS custid, lite_dt AS dt
+    FROM hive.user_paytm_payments.lite_active
+    WHERE  lite_dt < current_date
+
+    UNION ALL
+    -- 4. UPI Statement
+    SELECT 'Download UPI Statement' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.upi_statement_download_V1
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 5. Receive Money widget
+    SELECT 'Receive Money widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_rec_money_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 6. Scan & Pay widget
+    SELECT 'Scan & Pay widget' AS type, customer_id AS custid, dl_last_updated AS dt
+    FROM hive.user_paytm_payments.widget_added_snp_ER_daily
+    WHERE  dl_last_updated < current_date
+
+    UNION ALL
+    -- 7. Spends Analytics
+    SELECT 'Spends Analytics' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.spend_analytics
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 8. Lite auto top-up
+    SELECT 'UPI Lite Auto Top UP' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.lite_auto_topup
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 9. Total Balance
+    SELECT 'Total Balance' AS type, customer_id AS custid, DATE(dt) AS dt
+    FROM hive.user_paytm_payments.check_balance
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 10. Custom VPA
+    SELECT 'Custom VPA' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.customer_vpa
+    WHERE  dt < current_date
+
+    UNION ALL
+    -- 11. Hide Payments
+    SELECT 'Hide Payments' AS type, customer_id AS custid, dt
+    FROM hive.user_paytm_payments.hide_payments
+    WHERE  dt < current_date
+),
+  banner AS (
+  SELECT dt,
+       customer_id,
+       CASE 
+    WHEN banner_id IN (
+        '3159810','3159843','3159842','3159841','3159987',
+        '3159988','3159989','3160634','3159986','3041990',
+        '3159992','3159993','3159994','3159995'
+    ) THEN 'PTS Banner 2.0'
+
+    WHEN banner_id IN (
+        '3136301','3135794','3137732','3135803','3135814',
+        '3137499','3135812','3135813','3137500','3136333',
+        '3136337','3135809'
+    ) THEN 'PTS Curtain widget'
+END AS property,
+     CASE 
+    WHEN banner_id = '3159810' THEN 'Mapper'
+    WHEN banner_id = '3136301' THEN 'Mapper'
+    WHEN banner_id = '3159843' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3137500' THEN 'UPI Lite Auto Top UP'
+    WHEN banner_id = '3159842' THEN 'Spends Analytics'
+    WHEN banner_id = '3135813' THEN 'Spends Analytics'
+    WHEN banner_id = '3159841' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3137732' THEN 'RuPay CC Linking'
+    WHEN banner_id = '3159987' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3135812' THEN 'Scan & Pay widget'
+    WHEN banner_id = '3159988' THEN 'Receive Money widget'
+    WHEN banner_id = '3137499' THEN 'Receive Money widget'
+    WHEN banner_id = '3159989' THEN 'Download UPI Statement'
+    WHEN banner_id = '3135814' THEN 'Download UPI Statement'
+    WHEN banner_id = '3160634' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3135803' THEN 'UPI Lite Activation'
+    WHEN banner_id = '3159986' THEN 'Bank Linking'
+    WHEN banner_id = '3135794' THEN 'Bank Linking'
+    WHEN banner_id = '3041990' THEN 'Self Transfer'
+    WHEN banner_id = '3159992' THEN 'Total Balance'
+    WHEN banner_id = '3136333' THEN 'Total Balance'
+    WHEN banner_id = '3159993' THEN 'Custom VPA'
+    WHEN banner_id = '3136337' THEN 'Custom VPA'
+    WHEN banner_id = '3159994' THEN 'Hide Payments'
+    WHEN banner_id = '3135809' THEN 'Hide Payments'
+    WHEN banner_id = '3159995' THEN 'Handle Creation'
+END AS feature,
+       SUM(impressions) AS impressions,
+       SUM(clicks) AS clicks
+FROM team_measurement.banner_campaigns_customer_v1
+WHERE dt >=  current_date- interval '35' day
+  AND dt < CURRENT_DATE
+  AND try_cast(banner_id as varchar) IN (
+    '3159810','3136301',   -- Mapper
+    '3159843','3137500',   -- UPI Lite Auto Top UP
+    '3159842','3135813',   -- Spends Analytics
+    '3159841','3137732',   -- RuPay CC Linking
+    '3159987','3135812',   -- Scan & Pay widget
+    '3159988','3137499',   -- Receive Money widget
+    '3159989','3135814',   -- Download UPI Statement
+    '3160634','3135803',   -- UPI Lite Activation
+    '3159986','3135794',   -- Bank Linking
+    '3041990',             -- Self Transfer
+    '3159992','3136333',   -- Total Balance
+    '3159993','3136337',   -- Custom VPA
+    '3159994','3135809',   -- Hide Payments
+    '3159995'              -- Handle Creation
+)
+GROUP BY 1,2,3,4
+
+)
+
+    select b.dt,property,
+        b.feature, 
+        count(distinct case when b.impressions>0 then b.customer_id end) as users_viewed_banner,
+        count(distinct case when b.impressions>0 and f.custid is not null then b.customer_id end) as converted_post_viewing,
+        count(distinct case when b.clicks>0 then b.customer_id end) as users_clicked_banner,
+        count(distinct case when b.clicks>0 and f.custid is not null then b.customer_id end) as converted_post_clicking
+    from banner b 
+    -- left join (select custid,type, min(dt)dt from  ftr group by 1,2 having min(dt)>=DATE '2025-08-11' ) f
+    --         on b.customer_id=f.custid and b.feature=f.type and b.dt=f.dt
+      left join (select custid,type feature,  date(dt) dt from  ftr where dt>= current_date-interval '35' day group by 1,2,3  ) f
+            on b.customer_id=f.custid and b.feature=f.feature and b.dt=f.dt
+    group by 1,2,3
+) AS virtual_table ORDER BY dt DESC, users_clicked_banner DESC
+LIMIT 50000;
+
+
+
+================================================================================
+
+-- Chart 43: UPI Retention TPU wise MTD (ID: 5971)
 -- Chart Type: table
 -- Dataset: UPI Retention TPU wise MTD
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT "TPU_bucket" AS "TPU_bucket", sum("Base_users") AS "Base users", sum("Retained_users") AS "Retained users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "Retention" 
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle)  AS "Lifecycle(LM)", "TPU_bucket" AS "TPU_bucket__", sum("Base_users") AS "Base users", sum("Retained_users") AS "Retained users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "Retention" 
 FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
 WITH
 -- Current MTD users with TPU
@@ -1313,7 +2724,8 @@ CMTD AS (
 LM AS (
     SELECT 
         customer_id_payer AS scope_cust_id,
-        COUNT(DISTINCT txn_id) AS tpu
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(amount) gmv
     FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
     WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
                                  AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
@@ -1324,9 +2736,14 @@ LM AS (
       AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
       AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
     GROUP BY 1
-)
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
 
-SELECT 
+SELECT lifecycle,
     CASE 
         WHEN a.tpu = 1 THEN 'a.1'
         WHEN a.tpu = 2 THEN 'b.2'
@@ -1335,34 +2752,167 @@ SELECT
         WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
         WHEN a.tpu > 20 THEN 'f.20+'
     END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
 FROM lm a
-LEFT JOIN cmtd b
-    ON b.scope_cust_id = a.scope_cust_id
-GROUP BY 1
-ORDER BY 
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY lifecycle,2,3
+
+
+union all
+
+SELECT 'd. Overall' lifecycle,
     CASE 
-        WHEN tpu_bucket = 'a.1' THEN 1
-        WHEN tpu_bucket = 'b.2' THEN 2
-        WHEN tpu_bucket = 'c.3' THEN 3
-        WHEN tpu_bucket = 'd.4-10' THEN 4
-        WHEN tpu_bucket = 'e.11-20' THEN 5
-        WHEN tpu_bucket = 'f.20+' THEN 6
-    END
-) AS virtual_table GROUP BY "TPU_bucket" ORDER BY TPU_bucket DESC
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) , "TPU_bucket" ORDER BY concat(if(lifecycle is null, 'd. Fresh users (CM)', lifecycle),TPU_bucket) DESC
 LIMIT 1000;
 
 
 
 ================================================================================
 
--- Chart 23: UPI Retention TPU wise LMTD (ID: 5982)
+-- Chart 44: UPI Retention TPU wise MTD (ID: 5971)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise MTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle)  AS "Lifecycle(LM)", "TPU_bucket" AS "TPU_bucket__", sum("Base_users") AS "Base users", sum("Retained_users") AS "Retained users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "Retention" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+CMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY lifecycle,2,3
+
+
+union all
+
+SELECT 'd. Overall' lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) , "TPU_bucket" ORDER BY concat(if(lifecycle is null, 'd. Fresh users (CM)', lifecycle),TPU_bucket) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 45: UPI Retention TPU wise LMTD (ID: 5982)
 -- Chart Type: table
 -- Dataset: UPI Retention TPU wise LMTD
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT tpu_bucket AS tpu_bucket, sum("Base_users") AS "Base Users", sum("Retained_users") AS "Retained Users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "%" 
+SELECT "Lifecycle" AS "Lifecycle__", tpu_bucket AS tpu_bucket__, sum("Base_users") AS "Base Users", sum("Retained_users") AS "Retained Users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "%" 
 FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
 WITH
 -- Current MTD users with TPU
@@ -1385,7 +2935,8 @@ lMTD AS (
 LlM AS (
     SELECT 
         customer_id_payer AS scope_cust_id,
-        COUNT(DISTINCT txn_id) AS tpu
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(Amount) gmv
     FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
     WHERE a.dl_last_updated BETWEEN  date_trunc('month', current_date + interval '-1' day) - interval '2' month
                                  AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
@@ -1396,9 +2947,14 @@ LlM AS (
       AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
       AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
     GROUP BY 1
-)
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
 
-SELECT 
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     CASE 
         WHEN a.tpu = 1 THEN 'a.1'
         WHEN a.tpu = 2 THEN 'b.2'
@@ -1407,22 +2963,702 @@ SELECT
         WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
         WHEN a.tpu > 20 THEN 'f.20+'
     END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr c on a.scope_cust_id=c.custid 
+GROUP BY 1,2,3
+
+union all
+SELECT 'd. Overall' Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
 FROM llm a
 LEFT JOIN lmtd b
     ON b.scope_cust_id = a.scope_cust_id
-GROUP BY 1
-ORDER BY 
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY "Lifecycle", tpu_bucket ORDER BY concat(Lifecycle,tpu_bucket) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 46: UPI Retention TPU wise LMTD (ID: 5982)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise LMTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Lifecycle" AS "Lifecycle__", tpu_bucket AS tpu_bucket__, sum("Base_users") AS "Base Users", sum("Retained_users") AS "Retained Users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "%" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+lMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      and day(transaction_date_key)<day(current_date)
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LlM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(Amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN  date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     CASE 
-        WHEN tpu_bucket = 'a.1' THEN 1
-        WHEN tpu_bucket = 'b.2' THEN 2
-        WHEN tpu_bucket = 'c.3' THEN 3
-        WHEN tpu_bucket = 'd.4-10' THEN 4
-        WHEN tpu_bucket = 'e.11-20' THEN 5
-        WHEN tpu_bucket = 'f.20+' THEN 6
-    END
-) AS virtual_table GROUP BY tpu_bucket ORDER BY tpu_bucket DESC
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr c on a.scope_cust_id=c.custid 
+GROUP BY 1,2,3
+
+union all
+SELECT 'd. Overall' Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b
+    ON b.scope_cust_id = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY "Lifecycle", tpu_bucket ORDER BY concat(Lifecycle,tpu_bucket) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 47: State wise flow wise (ID: 7488)
+-- Chart Type: table
+-- Dataset: State n catg wise dod dump
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, "Dau" AS "Dau", txns AS txns, amount AS amount 
+FROM (-- Users (DAU,MAU), Txns split by states  
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max( upper(popular_city))  as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=current_date+interval'-5' day
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id,
+  case when is_p2p=True then 'P2P'
+        when is_p2m=True then 'P2M' else flow_category
+        end as p2m_p2p_flag,flow_category,
+ count(distinct txn_id)txns,sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where  a.dl_last_updated  BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2,3,4
+
+), 
+out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
+             p2m_p2p_flag,Flow_category,
+              sum(txns) Txns,
+              sum(amount) Amount
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id 
+            group by 1,2,3,4,5   
+)           
+
+select Day_id, State,p2m_p2p_flag,Flow_category,
+                count(Distinct  payer_cust_id ) DAU, 
+                sum(txns) Txns,
+                sum(amount) Amount
+from out 
+group by 1,2,3,4
+order by 1
+) AS virtual_table 
+WHERE (( day_id>=current_date-interval '4' day)) ORDER BY day_id DESC
+LIMIT 5000;
+
+
+
+================================================================================
+
+-- Chart 48: State wise flow wise (ID: 7488)
+-- Chart Type: table
+-- Dataset: State n catg wise dod dump
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, "Dau" AS "Dau", txns AS txns, amount AS amount 
+FROM (-- Users (DAU,MAU), Txns split by states  
+-- Retention & TPU split by NRR
+with top20 as(select
+        customer_id,
+        max( upper(popular_city))  as popular_city,
+        max(popular_state)state
+        from hive.midgar.engage_data_snapshot_v3 
+        where customer_id is not NULL 
+        group by 1
+),
+upi as( --select * from hive.user_paytm_payments.temp_upi_test2
+-- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
+--     select day_id, payer_cust_id, count(distinct txn_id)txns
+--         from hive.user_paytm_payments.upi_abhay
+--     where day_id>=current_date+interval'-5' day
+-- and  day_id<current_date
+-- group by 1,2
+
+select transaction_date_key day_id,customer_id_payer payer_cust_id,
+  case when is_p2p=True then 'P2P'
+        when is_p2m=True then 'P2M' else flow_category
+        end as p2m_p2p_flag,flow_category,
+ count(distinct txn_id)txns,sum(amount) amount
+ from  hive.cdo.fact_upi_transactions_snapshot_v3 a 
+where  a.dl_last_updated  BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND    current_date + interval '-1' day 
+and  transaction_date_key<current_date
+and transaction_type in ('PAY','COLLECT')
+ and a.status in('SUCCESS','DEEMED')
+ and  payer_handle in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+group by 1,2,3,4
+
+), 
+out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
+             p2m_p2p_flag,Flow_category,
+              sum(txns) Txns,
+              sum(amount) Amount
+            from upi a
+            left join top20 b on a.payer_cust_id=b.customer_id 
+            group by 1,2,3,4,5   
+)           
+
+select Day_id, State,p2m_p2p_flag,Flow_category,
+                count(Distinct  payer_cust_id ) DAU, 
+                sum(txns) Txns,
+                sum(amount) Amount
+from out 
+group by 1,2,3,4
+order by 1
+) AS virtual_table 
+WHERE (( day_id>=current_date-interval '4' day)) ORDER BY day_id DESC
+LIMIT 5000;
+
+
+
+================================================================================
+
+-- Chart 49: UPI Retention GPU wise MTD (ID: 7507)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise MTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle)  AS "Lifecycle(LM)", gmv_bkt AS gmv_bkt__, sum("Base_users") AS "Base users", sum("Retained_users") AS "Retained users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "Retention" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+CMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY lifecycle,2,3
+
+
+union all
+
+SELECT 'd. Overall' lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) , gmv_bkt ORDER BY concat(if(lifecycle is null, 'd. Fresh users (CM)', lifecycle),gmv_bkt) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 50: UPI Retention GPU wise MTD (ID: 7507)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise MTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle)  AS "Lifecycle(LM)", gmv_bkt AS gmv_bkt__, sum("Base_users") AS "Base users", sum("Retained_users") AS "Retained users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "Retention" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+CMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)
+                                 AND current_date + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY lifecycle,2,3
+
+
+union all
+
+SELECT 'd. Overall' lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS TPU_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM lm a
+LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr on nrr.custid = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) , gmv_bkt ORDER BY concat(if(lifecycle is null, 'd. Fresh users (CM)', lifecycle),gmv_bkt) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 51: UPI Retention GPU wise LMTD (ID: 7511)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise LMTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Lifecycle" AS "Lifecycle__", gmv_bkt AS gmv_bkt__, sum("Base_users") AS "Base Users", sum("Retained_users") AS "Retained Users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "%" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+lMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      and day(transaction_date_key)<day(current_date)
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LlM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(Amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN  date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr c on a.scope_cust_id=c.custid 
+GROUP BY 1,2,3
+
+union all
+SELECT 'd. Overall' Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b
+    ON b.scope_cust_id = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY "Lifecycle", gmv_bkt ORDER BY concat(Lifecycle,gmv_bkt) DESC
+LIMIT 1000;
+
+
+
+================================================================================
+
+-- Chart 52: UPI Retention GPU wise LMTD (ID: 7511)
+-- Chart Type: table
+-- Dataset: UPI Retention TPU wise LMTD
+-- Database: Trino
+--------------------------------------------------------------------------------
+SELECT "Lifecycle" AS "Lifecycle__", gmv_bkt AS gmv_bkt__, sum("Base_users") AS "Base Users", sum("Retained_users") AS "Retained Users", SUM(Retained_users*1.0000)/SUM(Base_users) AS "%" 
+FROM (-- MTD Retention by TPU Buckets (TPU calc inside source CTEs)
+WITH
+-- Current MTD users with TPU
+lMTD AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id 
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+      and day(transaction_date_key)<day(current_date)
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+-- Last month users with TPU
+LlM AS (
+    SELECT 
+        customer_id_payer AS scope_cust_id,
+        COUNT(DISTINCT txn_id) AS tpu,
+        sum(Amount) gmv
+    FROM hive.cdo.fact_upi_transactions_snapshot_v3 a
+    WHERE a.dl_last_updated BETWEEN  date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                                 AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+      AND a.transaction_type IN ('PAY','COLLECT')
+      AND a.status IN ('SUCCESS','DEEMED')
+      AND a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+      AND a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+    GROUP BY 1
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) between date_trunc('month',(current_Date - interval '01' day - interval '01' month))
+            and  date_trunc('month',current_Date)- interval '01' day 
+  )
+
+SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b ON b.scope_cust_id = a.scope_cust_id
+left join nrr c on a.scope_cust_id=c.custid 
+GROUP BY 1,2,3
+
+union all
+SELECT 'd. Overall' Lifecycle,
+    CASE 
+        WHEN a.tpu = 1 THEN 'a.1'
+        WHEN a.tpu = 2 THEN 'b.2'
+        WHEN a.tpu = 3 THEN 'c.3'
+        WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10'
+        WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20'
+        WHEN a.tpu > 20 THEN 'f.20+'
+    END AS tpu_bucket,
+    CASE 
+    WHEN gmv >= 1      AND gmv < 1000   THEN 'A: 1–1k'
+    WHEN gmv >= 1000   AND gmv < 3000   THEN 'B: 1k–3k'
+    WHEN gmv >= 3000   AND gmv < 5000   THEN 'C: 3k–5k'
+    WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
+    WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
+    WHEN gmv >= 20000                    THEN 'F: 20k+'
+    ELSE 'UNKNOWN'
+END AS gmv_bkt,
+    COUNT(DISTINCT a.scope_cust_id) AS Base_users,
+    COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
+FROM llm a
+LEFT JOIN lmtd b
+    ON b.scope_cust_id = a.scope_cust_id
+GROUP BY 1,2,3
+) AS virtual_table GROUP BY "Lifecycle", gmv_bkt ORDER BY concat(Lifecycle,gmv_bkt) DESC
 LIMIT 1000;
 
 

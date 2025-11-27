@@ -149,6 +149,87 @@ class SupersetExtractor:
         response = self._make_request('GET', endpoint)
         return response.get('result', {})
     
+    def list_all_dashboards(self, page_size: int = 100) -> List[Dict[str, Any]]:
+        """
+        List all dashboards from Superset with their tags and metadata.
+        
+        Args:
+            page_size: Number of dashboards per API call (default: 100)
+            
+        Returns:
+            List of dashboard dictionaries with id, title, url, tags, owners
+        """
+        all_dashboards = []
+        page = 0
+        
+        while True:
+            endpoint = f"/api/v1/dashboard/?q=(page:{page},page_size:{page_size})"
+            try:
+                response = self._make_request('GET', endpoint, silent=True)
+                dashboards = response.get('result', [])
+                
+                if not dashboards:
+                    break
+                
+                for dash in dashboards:
+                    dashboard_id = dash.get('id')
+                    dashboard_info = {
+                        'id': dashboard_id,
+                        'dashboard_title': dash.get('dashboard_title', 'Unknown'),
+                        'url': f"{self.base_url}/superset/dashboard/{dashboard_id}",
+                        'tags': [tag.get('name', '') for tag in dash.get('tags', [])],
+                        'owners': [owner.get('username', '') for owner in dash.get('owners', [])],
+                        'changed_on': dash.get('changed_on', ''),
+                        'status': dash.get('status', 'draft'),
+                    }
+                    all_dashboards.append(dashboard_info)
+                
+                # If we got fewer results than page_size, we're done
+                if len(dashboards) < page_size:
+                    break
+                    
+                page += 1
+                
+            except Exception as e:
+                print(f"Error fetching dashboards page {page}: {e}")
+                break
+        
+        return all_dashboards
+    
+    def get_dashboards_by_tags(self, tags: List[str]) -> List[Dict[str, Any]]:
+        """
+        Get dashboards that have any of the specified tags.
+        Simple matching: lower(dashboard_tag) == lower(vertical) OR lower(dashboard_tag) == lower(sub_vertical)
+        
+        Args:
+            tags: List of tag names to filter by (e.g., ['UPI', 'UPI Growth'])
+            
+        Returns:
+            List of dashboard dictionaries matching any of the tags
+        """
+        all_dashboards = self.list_all_dashboards()
+        
+        # Convert search tags to lowercase for comparison
+        search_tags_lower = [t.lower().strip() for t in tags if t]
+        
+        if not search_tags_lower:
+            return []
+        
+        # Filter dashboards that have at least one matching tag
+        matching_dashboards = []
+        
+        for dash in all_dashboards:
+            dash_tags = dash.get('tags', [])
+            # Convert dashboard tags to lowercase
+            dash_tags_lower = [t.lower().strip() for t in dash_tags]
+            
+            # Check if any dashboard tag matches any search tag
+            # lower(dashboard_tag) == lower(vertical) OR lower(dashboard_tag) == lower(sub_vertical)
+            if any(dash_tag in search_tags_lower for dash_tag in dash_tags_lower):
+                matching_dashboards.append(dash)
+        
+        return matching_dashboards
+    
     def get_chart_data_and_query(self, chart_id: int, dataset_id: int, 
                                  query_context: Optional[Dict] = None) -> Dict[str, Any]:
         """

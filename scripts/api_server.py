@@ -594,13 +594,6 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
                 except Exception as tracker_error:
                     print(f"⚠️  Failed to initialize progress tracker: {tracker_error}", flush=True)
                 
-                print(f"\n{'='*80}", flush=True)
-                print(f"🚀 Starting multi-dashboard processing", flush=True)
-                print(f"   Dashboard IDs: {request.dashboard_ids}", flush=True)
-                print(f"   Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
-                print(f"   Python: {sys.executable}", flush=True)
-                print(f"{'='*80}\n", flush=True)
-                
                 # Process metadata choices
                 metadata_choices = request.metadata_choices or {}
                 
@@ -608,6 +601,28 @@ async def process_multiple_dashboards(request: MultiDashboardRequest):
                 choices_dict = {}
                 if request.metadata_choices:
                     choices_dict = {int(k): bool(v) for k, v in request.metadata_choices.items()}
+                
+                # Delete old files for dashboards with fresh extract (use_existing=False)
+                if request.extract:
+                    for dashboard_id in request.dashboard_ids:
+                        use_existing = choices_dict.get(dashboard_id, False)
+                        if not use_existing:
+                            # Fresh extract - delete old files to prevent UI confusion
+                            dashboard_dir = os.path.join(metamind_dir, "extracted_meta", str(dashboard_id))
+                            if os.path.exists(dashboard_dir):
+                                try:
+                                    import shutil
+                                    shutil.rmtree(dashboard_dir)
+                                    print(f"🗑️  Deleted old files for dashboard {dashboard_id} (fresh extract)", flush=True)
+                                except Exception as e:
+                                    print(f"⚠️  Warning: Could not delete old files for dashboard {dashboard_id}: {e}", flush=True)
+                
+                print(f"\n{'='*80}", flush=True)
+                print(f"🚀 Starting multi-dashboard processing", flush=True)
+                print(f"   Dashboard IDs: {request.dashboard_ids}", flush=True)
+                print(f"   Extract: {request.extract}, Merge: {request.merge}, Build KB: {request.build_kb}", flush=True)
+                print(f"   Python: {sys.executable}", flush=True)
+                print(f"{'='*80}\n", flush=True)
                 
                 # Change to metamind directory for proper file paths
                 original_cwd = os.getcwd()
@@ -955,6 +970,182 @@ async def connect_to_n8n():
         print(f"[API] ERROR: {error_detail}", flush=True)
         sys.stdout.flush()
         raise HTTPException(status_code=500, detail=error_detail)
+
+
+@app.get("/api/verticals")
+async def get_verticals():
+    """Get list of available business verticals and sub-verticals"""
+    try:
+        from instruction_set_generator import get_verticals_with_sub_verticals
+        verticals = get_verticals_with_sub_verticals()
+        return {"success": True, "verticals": verticals}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting verticals: {str(e)}")
+
+
+class DashboardsByVerticalRequest(BaseModel):
+    vertical: str
+    sub_vertical: Optional[str] = None
+
+
+@app.post("/api/dashboards/by-vertical")
+async def get_dashboards_by_vertical(request: DashboardsByVerticalRequest):
+    """
+    Get dashboards that match the selected vertical and sub-vertical based on tags.
+    Returns dashboard list with id, title, and URL for dropdown selection.
+    """
+    try:
+        from instruction_set_generator import get_tags_for_vertical
+        
+        # Get tags to search for based on vertical/sub-vertical
+        tags = get_tags_for_vertical(request.vertical, request.sub_vertical)
+        
+        logger.info(f"Dashboard search - Vertical: {request.vertical}, SubVertical: {request.sub_vertical}, Tags: {tags}")
+        
+        if not tags:
+            logger.warning(f"No tags configured for vertical: {request.vertical}")
+            return {
+                "success": True,
+                "dashboards": [],
+                "message": f"No tags configured for vertical: {request.vertical}"
+            }
+        
+        # Initialize Superset extractor to fetch dashboards
+        extractor = SupersetExtractor(BASE_URL, HEADERS)
+        
+        # Get dashboards matching the tags
+        matching_dashboards = extractor.get_dashboards_by_tags(tags)
+        logger.info(f"Found {len(matching_dashboards)} dashboards matching tags {tags}")
+        
+        # Format response for frontend dropdown
+        dashboards_list = [
+            {
+                "id": dash["id"],
+                "title": dash["dashboard_title"],
+                "url": dash["url"],
+                "tags": dash.get("tags", []),
+            }
+            for dash in matching_dashboards
+        ]
+        
+        return {
+            "success": True,
+            "dashboards": dashboards_list,
+            "vertical": request.vertical,
+            "sub_vertical": request.sub_vertical,
+            "tags_searched": tags,
+            "total_count": len(dashboards_list)
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching dashboards: {str(e)}\n{traceback.format_exc()}"
+        )
+
+
+@app.get("/api/dashboards/all-with-tags")
+async def get_all_dashboards_with_tags():
+    """
+    Get all dashboards from Superset with their tags.
+    Useful for exploring available dashboards and their categorization.
+    """
+    try:
+        extractor = SupersetExtractor(BASE_URL, HEADERS)
+        all_dashboards = extractor.list_all_dashboards()
+        
+        return {
+            "success": True,
+            "dashboards": all_dashboards,
+            "total_count": len(all_dashboards)
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching dashboards: {str(e)}\n{traceback.format_exc()}"
+        )
+
+
+class InstructionSetRequest(BaseModel):
+    vertical: Optional[str] = None
+    sub_vertical: Optional[str] = None
+
+
+@app.post("/api/instruction-set/generate")
+async def generate_instruction_set(request: InstructionSetRequest):
+    """Generate instruction set based on vertical and sub-vertical"""
+    try:
+        from instruction_set_generator import generate_instruction_set_file
+        
+        kb_dir = "extracted_meta/knowledge_base"
+        
+        # Generate both JSON and TXT formats
+        json_file = generate_instruction_set_file(
+            vertical=request.vertical,
+            sub_vertical=request.sub_vertical,
+            kb_dir=kb_dir,
+            output_format='json'
+        )
+        
+        txt_file = generate_instruction_set_file(
+            vertical=request.vertical,
+            sub_vertical=request.sub_vertical,
+            kb_dir=kb_dir,
+            output_format='txt'
+        )
+        
+        return {
+            "success": True,
+            "message": "Instruction set generated successfully",
+            "files": {
+                "json": json_file,
+                "txt": txt_file
+            },
+            "vertical": request.vertical,
+            "sub_vertical": request.sub_vertical
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(status_code=500, detail=f"Error generating instruction set: {str(e)}\n{traceback.format_exc()}")
+
+
+@app.get("/api/instruction-set/download/{file_format}")
+async def download_instruction_set(file_format: str):
+    """Download instruction set file (json or txt)"""
+    if file_format not in ['json', 'txt']:
+        raise HTTPException(status_code=400, detail="Invalid format. Use 'json' or 'txt'")
+    
+    kb_dir = "extracted_meta/knowledge_base"
+    file_path = f"{kb_dir}/instruction_set.{file_format}"
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"Instruction set file not found. Please generate it first.")
+    
+    media_type = "application/json" if file_format == "json" else "text/plain"
+    
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=f"instruction_set.{file_format}"
+    )
+
+
+@app.get("/api/instruction-set/content")
+async def get_instruction_set_content():
+    """Get instruction set content as JSON for display in UI"""
+    kb_dir = "extracted_meta/knowledge_base"
+    json_file = f"{kb_dir}/instruction_set.json"
+    
+    if not os.path.exists(json_file):
+        raise HTTPException(status_code=404, detail="Instruction set not found. Please generate it first.")
+    
+    try:
+        with open(json_file, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+        return content
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading instruction set: {str(e)}")
 
 
 @app.post("/api/knowledge-base/enable-prism")

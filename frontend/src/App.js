@@ -79,6 +79,8 @@ function App() {
     activeDashboardIds: [],
     progress: null,
     statusMessage: null,
+    metadataChoices: {},
+    existingMetadata: {},
   });
 
 
@@ -89,6 +91,8 @@ function App() {
           <SupersetTab 
             preservedState={supersetState}
             onStateChange={setSupersetState}
+            selectedVertical={selectedVertical}
+            selectedSubVertical={selectedSubVertical}
           />
         );
       case 'googledocs':
@@ -100,6 +104,8 @@ function App() {
           <SupersetTab 
             preservedState={supersetState}
             onStateChange={setSupersetState}
+            selectedVertical={selectedVertical}
+            selectedSubVertical={selectedSubVertical}
           />
         );
     }
