@@ -1,10 +1,185 @@
 [
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"7d_avg_DAU",
+    "alias_column_name":"7d avg DAU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"7d_avg_DAU\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"7d_avg_gmv",
+    "alias_column_name":"7d avg Gmv",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"7d_avg_gmv\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"7d_avg_nr",
+    "alias_column_name":"7d avg NR",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"7d_avg_nr\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"7d_avg_txns",
+    "alias_column_name":"7d avg Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"7d_avg_txns\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"LMTD_gmv",
+    "alias_column_name":"LMTD Gmv",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"LMTD_gmv\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"LMTD_mau",
+    "alias_column_name":"LMTD MAU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"LMTD_mau\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"LMTD_nr",
+    "alias_column_name":"LMTD NR",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"LMTD_nr\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"LMTD_txns",
+    "alias_column_name":"LMTD Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"LMTD_txns\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_gmv",
+    "alias_column_name":"MTD GMV",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"MTD_gmv\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_gmv",
+    "alias_column_name":"MTD Gmv Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(MTD_gmv)\/avg(LMTD_gmv) -1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_mau",
+    "alias_column_name":"MTD MAU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"MTD_mau\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_mau",
+    "alias_column_name":"MTD MAU Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(MTD_mau)\/AVG(LMTD_mau) - 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_nr",
+    "alias_column_name":"MTD NR",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"MTD_nr\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_nr",
+    "alias_column_name":"MTD NR Grwoth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(MTD_nr)\/avg(LMTD_nr) - 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_txns",
+    "alias_column_name":"MTD Txn _Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(MTD_txns)\/avg(LMTD_txns)-1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"MTD_txns",
+    "alias_column_name":"MTD Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"MTD_txns\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_DAU",
+    "alias_column_name":"Yday DAU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Yday_DAU\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_DAU",
+    "alias_column_name":"Yday DAU Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(Yday_DAU)\/AVG(\"7d_avg_DAU\") - 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_gmv",
+    "alias_column_name":"Yday Gmv Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(Yday_gmv)\/avg(\"7d_avg_gmv\") - 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_gmv",
+    "alias_column_name":"yday Gmv",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Yday_gmv\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_nr",
+    "alias_column_name":"Yday NR",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Yday_nr\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_nr",
+    "alias_column_name":"Yday NR Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(yday_nr)\/avg(\"7d_avg_nr\")- 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_txns",
+    "alias_column_name":"Yday Txn Growth",
+    "source_or_derived":"derived",
+    "derived_column_logic":"avg(Yday_txns)\/avg(\"7d_avg_txns\") - 1"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Yday_txns",
+    "alias_column_name":"yday txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Yday_txns\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"amount",
     "alias_column_name":"amount",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"amount",
+    "alias_column_name":"gmv",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(cast (amount as double))"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -30,9 +205,65 @@
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"customer_id",
+    "alias_column_name":"NR",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.rn_ft = 1 and b.customer_id is not null then a.customer_id end)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"React",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.rn_ft = 1 and b.user_type = 'React_2M+' then a.customer_id end)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
     "alias_column_name":"customer_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"dau",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct a.customer_id)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"mau",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.rn_mau = 1 then a.customer_id end)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"new",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.rn_ft = 1 and b.user_type = 'New' then a.customer_id end)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"rn_ft",
+    "source_or_derived":"derived",
+    "derived_column_logic":"row_number() over (partition by customer_id, date_trunc('month', date(day_id)) order by created_on)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id",
+    "alias_column_name":"rn_mau",
+    "source_or_derived":"derived",
+    "derived_column_logic":"row_number() over (partition by customer_id,online_merchant_name, date_trunc('month', day_id) order by day_id)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"customer_id_payer",
+    "alias_column_name":"customer_id",
+    "source_or_derived":"derived",
+    "derived_column_logic":"customer_id_payer customer_id"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -43,10 +274,31 @@
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"day_id",
+    "alias_column_name":"mnt",
+    "source_or_derived":"derived",
+    "derived_column_logic":"date_trunc('month',day_id) mnt"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"day_id",
+    "alias_column_name":"periods",
+    "source_or_derived":"derived",
+    "derived_column_logic":"case when day_id between date_trunc('month',current_date - interval '01' day) and current_date - interval '01' day then 'MTD' when day_id between date_trunc('month',current_date - interval '01' day - interval '01' month) and current_date - interval '01' day - interval '01' month then 'LMTD' end"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"dt",
     "alias_column_name":"dt",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"flow_category",
+    "alias_column_name":"final_category",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN flow_category IN ('P2P') THEN 'P2P' WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP' WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online' WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus' ELSE 'Others' END"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -86,6 +338,13 @@
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"transaction_date_key",
+    "alias_column_name":"day_id",
+    "source_or_derived":"derived",
+    "derived_column_logic":"transaction_date_key day_id"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"transaction_date_key",
     "alias_column_name":"transaction_date_key",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
@@ -107,9 +366,23 @@
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"txn_id",
+    "alias_column_name":"n_txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct a.txn_id)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"txn_id",
     "alias_column_name":"txn_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"txn_timestamp",
+    "alias_column_name":"created_on",
+    "source_or_derived":"derived",
+    "derived_column_logic":"txn_timestamp created_on"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -126,378 +399,294 @@
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"LMTD_New_Users",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"LMTD_React2Mplus_Users",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"MTD_New_Users",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"MTD_React2Mplus_Users",
-    "alias_column_name":"MTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"amount",
     "alias_column_name":"amount",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"category",
     "alias_column_name":"category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"channel",
     "alias_column_name":"channel",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"cust_id",
     "alias_column_name":"cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"customer_id",
     "alias_column_name":"customer_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"customer_id_payer",
     "alias_column_name":"customer_id_payer",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"day_id",
     "alias_column_name":"day_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"dt",
     "alias_column_name":"dt",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"final_category",
     "alias_column_name":"final_category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"flow_category",
     "alias_column_name":"flow_category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"online_merchant_name",
     "alias_column_name":"online_merchant_name",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"payee_vpa",
     "alias_column_name":"payee_vpa",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"payer_cust_id",
     "alias_column_name":"payer_cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"payer_handle",
     "alias_column_name":"payer_handle",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"paytm_user_type",
-    "alias_column_name":"paytm_user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
-    "column_names":"period",
-    "alias_column_name":"period",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"status",
     "alias_column_name":"status",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"transaction_date_key",
     "alias_column_name":"transaction_date_key",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"transaction_type",
     "alias_column_name":"transaction_type",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"txn_date",
     "alias_column_name":"txn_date",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"txn_id",
     "alias_column_name":"txn_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"txn_timestamp",
     "alias_column_name":"txn_timestamp",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic",
     "column_names":"user_type",
     "alias_column_name":"user_type",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"LMTD_New_Users",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"LMTD_React2Mplus_Users",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"MTD_New_Users",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"MTD_React2Mplus_Users",
-    "alias_column_name":"MTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"amount",
     "alias_column_name":"amount",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"category",
     "alias_column_name":"category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"channel",
     "alias_column_name":"channel",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"cust_id",
     "alias_column_name":"cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"customer_id",
     "alias_column_name":"customer_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"customer_id_payer",
     "alias_column_name":"customer_id_payer",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"day_id",
     "alias_column_name":"day_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"dt",
     "alias_column_name":"dt",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"final_category",
     "alias_column_name":"final_category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"flow_category",
     "alias_column_name":"flow_category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"online_merchant_name",
     "alias_column_name":"online_merchant_name",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"payee_vpa",
     "alias_column_name":"payee_vpa",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"payer_cust_id",
     "alias_column_name":"payer_cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"payer_handle",
     "alias_column_name":"payer_handle",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"paytm_user_type",
-    "alias_column_name":"paytm_user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
-    "column_names":"period",
-    "alias_column_name":"period",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"status",
     "alias_column_name":"status",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"transaction_date_key",
     "alias_column_name":"transaction_date_key",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"transaction_type",
     "alias_column_name":"transaction_type",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"txn_date",
     "alias_column_name":"txn_date",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"txn_id",
     "alias_column_name":"txn_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"txn_timestamp",
     "alias_column_name":"txn_timestamp",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
   {
-    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm",
+    "tables_involved":"hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic",
     "column_names":"user_type",
     "alias_column_name":"user_type",
     "source_or_derived":"source",
@@ -519,24 +708,10 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"LMTD_New_Users",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
     "column_names":"LMTD_React2Mplus_Users",
     "alias_column_name":"LMTD React Users",
     "source_or_derived":"derived",
     "derived_column_logic":"sum(\"LMTD_React2Mplus_Users\")"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"LMTD_React2Mplus_Users",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
@@ -551,13 +726,6 @@
     "alias_column_name":"MTD New users",
     "source_or_derived":"derived",
     "derived_column_logic":"sum(\"MTD_New_Users\")"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"MTD_New_Users",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
@@ -579,13 +747,6 @@
     "alias_column_name":"MTD React Users",
     "source_or_derived":"derived",
     "derived_column_logic":"sum(\"MTD_React2Mplus_Users\")"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"MTD_React2Mplus_Users",
-    "alias_column_name":"MTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
@@ -625,34 +786,6 @@
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
     "column_names":"customer_id",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"derived",
-    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'New' and a.period = 'LMTD' then  a.payer_cust_id end)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"customer_id",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"derived",
-    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'LMTD' then  a.payer_cust_id end)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"customer_id",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"derived",
-    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'New' and a.period = 'MTD' then  a.payer_cust_id end)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"customer_id",
-    "alias_column_name":"MTD_React2Mplus_Users",
-    "source_or_derived":"derived",
-    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'MTD' then  a.payer_cust_id end)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"customer_id",
     "alias_column_name":"customer_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
@@ -660,16 +793,9 @@
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
     "column_names":"customer_id",
-    "alias_column_name":"users_lmtd",
+    "alias_column_name":"krn",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(case when period = 'LMTD' then users end)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"customer_id",
-    "alias_column_name":"users_mtd",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(case when period = 'MTD' then users end)"
+    "derived_column_logic":"row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
@@ -723,6 +849,48 @@
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
     "column_names":"payer_cust_id",
+    "alias_column_name":"LMTD_New_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'New' and a.period = 'LMTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"LMTD_React2Mplus_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'LMTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"LMTD_Repeat_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'LMTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"MTD_New_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'New' and a.period = 'MTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"MTD_React2Mplus_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'React_2M+' and a.period = 'MTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"MTD_Repeat_Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct case when a.paytm_user_type = 'Repeat' and a.period = 'MTD' then  a.payer_cust_id end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
     "alias_column_name":"payer_cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
@@ -736,22 +904,22 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"users_lmtd",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(case when period = 'LMTD' then users end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"users_mtd",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(case when period = 'MTD' then users end)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
     "column_names":"payer_handle",
     "alias_column_name":"payer_handle",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"paytm_user_type",
-    "alias_column_name":"paytm_user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
-    "column_names":"period",
-    "alias_column_name":"period",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -775,6 +943,41 @@
     "alias_column_name":"transaction_type",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"txn_date",
+    "alias_column_name":"krn",
+    "source_or_derived":"derived",
+    "derived_column_logic":"row_number() over(partition by customer_id, date_Trunc('month',txn_date) order by txn_date)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"txn_date",
+    "alias_column_name":"lmtd_end",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"txn_date",
+    "alias_column_name":"lmtd_start",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"txn_date",
+    "alias_column_name":"mtd_end",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_ADD('day', -1, CURRENT_DATE)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
+    "column_names":"txn_date",
+    "alias_column_name":"mtd_start",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE))"
   },
   {
     "tables_involved":"hive.user_paytm_payments.rolling_nrr_v1",
@@ -876,8 +1079,22 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"day_id",
+    "alias_column_name":"day_id",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
     "column_names":"dt",
     "alias_column_name":"dt",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"final_category",
+    "alias_column_name":"final_category",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -890,6 +1107,13 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"mnt",
+    "alias_column_name":"mnt",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
     "column_names":"online_merchant_name",
     "alias_column_name":"online_merchant_name",
     "source_or_derived":"source",
@@ -897,8 +1121,29 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"online_merchant_name",
+    "alias_column_name":"top_1K_MTU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(1) filter (where  top_1k = 1)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"online_merchant_name",
+    "alias_column_name":"top_1k",
+    "source_or_derived":"derived",
+    "derived_column_logic":"case when TP.online_merchant_name is not null then 1 else 0 end"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
     "column_names":"payee_vpa",
     "alias_column_name":"payee_vpa",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"payer_cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -953,36 +1198,15 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
+    "column_names":"updated_on",
+    "alias_column_name":"updated_on",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss",
     "column_names":"user_type",
     "alias_column_name":"user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"LMTD_New_Users",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"LMTD_React2Mplus_Users",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"MTD_New_Users",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"MTD_React2Mplus_Users",
-    "alias_column_name":"MTD_React2Mplus_Users",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -1100,20 +1324,6 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"paytm_user_type",
-    "alias_column_name":"paytm_user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
-    "column_names":"period",
-    "alias_column_name":"period",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping",
     "column_names":"status",
     "alias_column_name":"status",
     "source_or_derived":"source",
@@ -1177,6 +1387,13 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
+    "column_names":"mnt",
+    "alias_column_name":"mnt",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
     "column_names":"online_merchant_name",
     "alias_column_name":"Live_MTU",
     "source_or_derived":"derived",
@@ -1221,34 +1438,6 @@
     "tables_involved":"hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1",
     "column_names":"updated_on",
     "alias_column_name":"updated_on",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"LMTD_New_Users",
-    "alias_column_name":"LMTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"LMTD_React2Mplus_Users",
-    "alias_column_name":"LMTD_React2Mplus_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"MTD_New_Users",
-    "alias_column_name":"MTD_New_Users",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"MTD_React2Mplus_Users",
-    "alias_column_name":"MTD_React2Mplus_Users",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -1313,7 +1502,21 @@
     "column_names":"day_id",
     "alias_column_name":"day_id__",
     "source_or_derived":"derived",
-    "derived_column_logic":"day(b.day_id)"
+    "derived_column_logic":"day_id AS day_id__"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"day_id",
+    "alias_column_name":"lmtd_end",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"day_id",
+    "alias_column_name":"lmtd_start",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)))"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
@@ -1321,6 +1524,20 @@
     "alias_column_name":"mnt",
     "source_or_derived":"derived",
     "derived_column_logic":"date_trunc('day', CAST(mnt AS TIMESTAMP))"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"day_id",
+    "alias_column_name":"mtd_end",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_ADD('day', -1, CURRENT_DATE)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"day_id",
+    "alias_column_name":"mtd_start",
+    "source_or_derived":"derived",
+    "derived_column_logic":"DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE))"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
@@ -1359,6 +1576,13 @@
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"mnt",
+    "alias_column_name":"mnt",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"online_merchant_name",
     "alias_column_name":"online_merchant_name",
     "source_or_derived":"source",
@@ -1374,49 +1598,49 @@
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"Live_Merchants",
+    "alias_column_name":"Live_Merch_MTU",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Live_Merchants\")"
+    "derived_column_logic":"sum(live_merchants)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"Non_Live(Excl. Live)",
+    "alias_column_name":"Non_Live_MTU(excld_Live)",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Non_live(Excl. Live)\")"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"payer_cust_id",
-    "alias_column_name":"Overall_MTU",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"total_Mtd\")"
+    "derived_column_logic":"sum(non_live_exc_live)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
     "alias_column_name":"Overall_MTU__",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Overall_MTU\")"
+    "derived_column_logic":"sum(overall_mtu)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"Top_15_Merch",
+    "alias_column_name":"Top_15_Merch_MTU",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Top_15_Merch\")"
+    "derived_column_logic":"sum(\"Top_15_merc\")"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"Top_merc",
+    "alias_column_name":"Top_15_merc",
     "source_or_derived":"derived",
     "derived_column_logic":"count(distinct payer_cust_id) filter(where coalesce(Top_15_MTU,0)>=1)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"live_",
+    "alias_column_name":"Top_1K_MTU",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Top_1K_MTU\")"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"payer_cust_id",
+    "alias_column_name":"live_merchants",
     "source_or_derived":"derived",
     "derived_column_logic":"count(distinct payer_cust_id) filter(where coalesce(Live_MTU,0)>=1)"
   },
@@ -1430,6 +1654,13 @@
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
+    "alias_column_name":"overall_mtu",
+    "source_or_derived":"derived",
+    "derived_column_logic":"count(distinct payer_cust_id)"
+  },
+  {
+    "tables_involved":"hive.user_paytm_payments.upi_abhay",
+    "column_names":"payer_cust_id",
     "alias_column_name":"payer_cust_id",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
@@ -1437,23 +1668,9 @@
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",
     "column_names":"payer_cust_id",
-    "alias_column_name":"total_Mtd",
+    "alias_column_name":"rnk",
     "source_or_derived":"derived",
-    "derived_column_logic":"count(distinct payer_cust_id)"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"paytm_user_type",
-    "alias_column_name":"paytm_user_type",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.user_paytm_payments.upi_abhay",
-    "column_names":"period",
-    "alias_column_name":"period",
-    "source_or_derived":"source",
-    "derived_column_logic":"NA"
+    "derived_column_logic":"ROW_NUMBER() OVER (PARTITION BY payer_cust_id ORDER BY txn_timestamp ASC)"
   },
   {
     "tables_involved":"hive.user_paytm_payments.upi_abhay",

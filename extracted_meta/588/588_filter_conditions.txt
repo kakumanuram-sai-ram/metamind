@@ -1,0 +1,1693 @@
+## Hourly SR Trend (T vs T-1)- 588
+
+Hourly Success Rate Trend tracks the percentage of successful UPI transactions per hour, enabling real-time monitoring of transaction performance across the UPI ecosystem. This metric measures operational health by calculating the ratio of successful transactions to total transaction attempts, filtered for major PSP handles including Paytm and partner banks. The analysis focuses on recent transactions from the last day, excluding mandate initiation mode 14, and categorizes transactions into various flow types like P2P, P2M collect, QR payments, and intent-based transactions. The hourly granularity allows teams to identify performance degradation patterns and respond quickly to operational issues affecting transaction success rates.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for real-time monitoring
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on payment and collect transaction types
+ti.type IN ('PAY','COLLECT') AND
+--- include VPA-based transaction categories
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate initiation mode 14
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- filter for major PSP ecosystem participants
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant data currency requirements
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- link payer participant data
+tp1.participant_type = 'PAYER' AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- link payee participant data
+tp2.participant_type = 'PAYEE'
+
+--- calculation_logic
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS') * 1.0000) / (COUNT(txn_id) * 1.0000) AS success_rate,
+hour(created_on) AS hour_dimension,
+dt AS date_dimension
+
+
+
+
+## Top Bank Codes (T vs T-1)- 588
+
+This metric tracks UPI transaction failures by payee bank handle, comparing today's performance against yesterday's at the same time to enable fair day-over-day analysis. It measures failure counts for today and yesterday, plus calculates failure growth percentage to identify deteriorating bank performance trends. The temporal filtering ensures comparisons use the same hour cutoff (current hour minus 1) to avoid skewed results from incomplete current hour data. This supports real-time UPI success rate monitoring by providing bank-level failure insights with meaningful growth indicators for operational teams to identify and respond to emerging issues.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1 (payer)
+hive.switch.txn_participants_snapshot_v3 tp2 (payee)
+user_paytm_payments.onus_vpa_base ov
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit to recent data for performance optimization
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- include transactions from yesterday and today only
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on core UPI payment types
+ti.type IN ('PAY','COLLECT') AND
+--- include all standard UPI categories
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate auto-debit transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- focus on partner PSP ecosystem
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+--- specific filters
+--- isolate failure transactions for failure rate analysis
+ti.status IN ('FAILURE')
+
+--- calculation_logic
+pattern: temporal_hourly_comparison_with_growth
+base_metric: COUNT(txn_id)
+time_periods: [today, yesterday]
+hour_cutoff: current_hour - 1
+
+
+
+
+## Top Error Codes (T vs T-1)- 588
+
+This metric tracks UPI transaction failure patterns by error codes, comparing current day performance against the previous day to identify trending issues. It analyzes failed transactions across the UPI ecosystem, filtering for major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excluding mandate-related flows. The comparison uses hour-adjusted temporal filtering to ensure fair day-over-day analysis by only comparing data up to the same hour on both days. The growth calculation helps identify whether specific error codes are becoming more or less frequent, enabling proactive issue detection and resolution. This supports operational monitoring by highlighting which error codes require immediate attention based on their trending patterns.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+user_paytm_payments.onus_vpa_base on_us_vpa
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit to recent data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- include recent transaction data
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on payment transactions
+ti.type in ('PAY','COLLECT') AND
+ti.category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude specific initiation modes
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- filter for major PSP ecosystem
+lower(ti.psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant type filtering
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- focus on failed transactions only
+ti.status = 'FAILURE'
+
+--- calculation_logic
+pattern: temporal_hourly_comparison
+base_metrics: COUNT(txn_id)
+temporal_conditions: [today_up_to_current_hour, yesterday_up_to_same_hour]
+growth_calculation: safe_division_with_zero_check
+
+
+
+
+## Hourly SR Trend (T vs T-1)- 588
+
+This metric tracks the hourly success rate (SR) for UPI transactions, calculated as the percentage of successful transactions out of total transaction attempts. It provides operational monitoring capability for real-time performance assessment by comparing current day performance with previous day trends on an hourly basis. The metric filters for specific PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes certain initiation modes, focusing on core UPI payment flows including P2P, P2M, QR codes, and mandates. The calculation considers both SUCCESS and DEEMED statuses as successful transactions, providing a comprehensive view of transaction completion rates for operational teams to identify performance issues and trends throughout the day.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2  
+hive.user_paytm_payments.onus_vpa_base ovb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- recent data processing filter for performance optimization
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- transaction date range for current analysis period
+date(ti.created_on) >= current_date - interval '01' day AND
+--- core UPI transaction types for payment processing
+ti.type IN ('PAY','COLLECT') AND
+--- UPI category scope for comprehensive payment coverage
+ti.category IN('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- PSP ecosystem focus on major payment service providers
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude specific initiation mode for data quality
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- participant type definitions for transaction flow analysis
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- temporal range filters from chart configuration
+--- created_on: No filter (accepts all time ranges)
+--- date_time_hourly: No filter (accepts all hourly groupings)
+
+--- calculation_logic
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) AS SR
+
+
+
+
+## Top Error Codes (T vs T-1)- 588
+
+This metric tracks failed UPI transactions segmented by error codes to monitor system health and identify problematic error patterns. It provides day-over-day analysis comparing today's failures with yesterday's failures up to the same hour, along with growth percentage calculations. The analysis focuses specifically on failed transactions (status = 'FAILURE') across all UPI transaction types including P2P, P2M, and merchant transactions. Error codes are derived from either NPCI response codes or application response codes, helping operations teams identify specific failure reasons and track whether error rates are increasing or decreasing compared to the previous day for proactive issue resolution.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1 (payer)
+hive.switch.txn_participants_snapshot_v3 tp2 (payee)
+user_paytm_payments.onus_vpa_base on_us_vpa
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- include recent transaction data only
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on UPI payment and collect transactions
+ti.type in ('PAY','COLLECT') AND
+ti.category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate initiation mode 14
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- limit to main PSP ecosystem
+lower(ti.psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+lower(tp1.handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+tp1.participant_type = 'PAYER' AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- focus on failed transactions only for error analysis
+ti.status IN ('FAILURE')
+
+--- calculation_logic
+pattern: temporal_hourly_comparison_today_vs_yesterday
+base_metric: count(txn_id)
+error_code: coalesce(npci_resp_code, app_resp_code)
+temporal_filter: hour-matched comparison between current_date and current_date - 1 day
+
+
+
+
+## Top Bank Codes (T vs T-1)- 588
+
+This metric tracks UPI transaction failure counts by payee bank codes, comparing today's performance against yesterday's same-time performance to identify trending issues. It measures failure transaction volumes up to the current hour minus one, enabling real-time monitoring of bank-specific payment processing problems. The analysis focuses on transactions from major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes mandate transactions with initiation mode 14. The growth calculation provides percentage change indicators to quickly identify banks experiencing increased failure rates, supporting operational monitoring and partner performance management in the UPI ecosystem.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+user_paytm_payments.onus_vpa_base onus
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit to recent data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- include transactions from last 2 days for comparison
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on payment transaction types
+ti.type IN ('PAY','COLLECT') AND
+--- include VPA-based transactions only
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- major PSP ecosystem focus
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude mandate initiation mode 14
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14'
+
+--- specific filters
+--- failure transactions only for failure rate analysis
+ti.status = 'FAILURE' AND
+--- temporal comparison up to current hour minus 1
+--- for today: date(created_on) = current_date AND hour(created_on) <= hour(current_time - interval '1' hour)
+--- for yesterday: date(created_on) = current_date - interval '1' day AND hour(created_on) <= hour(current_time - interval '1' hour)
+
+--- calculation_logic
+pattern: temporal_daily_comparison_hourly_cutoff
+base_metric: COUNT(txn_id)
+dimensions: [payee_handle]
+growth_formula: CASE WHEN yesterday_count = 0 THEN 0 ELSE (today_count * 1.0 / yesterday_count) - 1 END
+
+
+
+
+## Top Error Codes X Bank (T vs T-1)- 588
+
+This metric tracks UPI transaction failure patterns by error code and payer bank, comparing current day performance against the previous day. It measures the volume of failed transactions for today and yesterday, calculating the day-over-day growth rate in failures to identify deteriorating performance trends. The analysis focuses specifically on transactions with error codes (excluding successful transactions) across Paytm ecosystem banks including paytm, ptyes, ptaxis, pthdfc, and ptsbi. This enables real-time monitoring of bank-specific failure patterns and rapid identification of emerging issues that could impact overall UPI success rates and customer experience.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2  
+user_paytm_payments.onus_vpa_base onus
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- focus on current and previous day transactions
+date(ti.created_on) >= current_date - interval '01' day AND
+--- include pay and collect transaction types only
+ti.type IN ('PAY','COLLECT') AND
+--- focus on UPI categories
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- restrict to paytm ecosystem PSPs
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude mandate renewal transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- participant type filters
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- focus only on failed transactions with error codes
+error_code IS NOT NULL
+
+--- calculation_logic
+sum(total_today_failures) as today_failure,
+sum(total_yest_failures) as yday_failure,
+(sum(total_today_failures * 1.000) / sum(total_yest_failures * 1.000)) - 1 as failure_growth
+
+
+
+
+## PSP wise (T vs T-1)- 588
+
+This metric tracks failure transaction counts across different Payment Service Providers (PSPs) with day-over-day comparison for operational monitoring. It measures yesterday's failure count, today's failure count, and calculates failure growth percentage, all segmented by payer PSP including paytm, ptyes, ptaxis, pthdfc, and ptsbi. The analysis applies hour-normalized filtering to ensure fair comparison between today and yesterday by only including transactions up to the same hour. This enables real-time monitoring of PSP performance degradation and helps identify which payment partners are experiencing increased failure rates, supporting proactive operational response and partner management decisions.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+hive.user_paytm_payments.onus_vpa_base onus
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- include standard UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude specific initiation modes per business rules
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14'
+
+--- specific filters
+--- focus on failure transactions only for monitoring
+ti.status IN ('FAILURE') AND
+--- analyze major PSP ecosystem partners
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- hour-normalized temporal comparison for fair day-over-day analysis
+ti.date(created_on) >= current_date - interval '01' day AND
+hour(ti.created_on) <= hour((cast((current_timestamp AT TIME ZONE 'Asia/Kolkata') as TIMESTAMP) - interval '01' hour))
+
+--- calculation_logic
+pattern: temporal_daily_comparison_failure
+base_metric: COUNT(txn_id)
+dimensions: [payer_handle]
+temporal_normalization: hour-based_cutoff
+
+
+
+
+## Top Error Codes X Bank (T vs T-1)- 588
+
+This metric tracks transaction failure analysis for bank 588, comparing today's failure counts against yesterday's to monitor error code patterns and calculate day-over-day failure growth rates. The analysis segments failures by error code and payer bank, focusing on UPI transactions across multiple PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) excluding mandate transactions with initiation mode 14. The metric filters for records with non-null error codes and includes temporal comparison logic to identify deteriorating error patterns. This supports real-time service reliability monitoring by highlighting which specific error codes are trending upward and which payer banks are experiencing increased failure rates.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+hive.user_paytm_payments.onus_vpa_base ovb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness for temporal comparison
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- focus on recent transaction window for T vs T-1 analysis
+date(ti.created_on) >= current_date - interval '01' day AND
+--- limit to core UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate initiation transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- focus on key PSP ecosystem
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- join conditions for participant mapping
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters  
+--- exclude records without error information
+error_code IS NOT NULL
+
+--- calculation_logic
+sum(total_today_failures) as today_failure,
+sum(total_yest_failures) as yday_failure,
+(sum(total_today_failures * 1.000) / sum(total_yest_failures * 1.000)) - 1 as failure_growth
+WITH temporal filters:
+- today: date(created_on) = current_date
+- yesterday: date(created_on) = current_date - interval '1' day
+
+
+
+
+## PSP wise (T vs T-1)- 588
+
+This metric tracks failure transaction counts segmented by PSP (payer handle) with day-over-day comparison for operational monitoring. It measures yesterday's failures, today's failures up to the current hour, and calculates failure growth percentage to identify PSP-specific performance degradation. The analysis filters for FAILURE status transactions and includes major PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi. The temporal comparison ensures fair day-over-day analysis by comparing equivalent time windows (up to current hour minus 1). This enables real-time identification of PSP-specific failure spikes and supports proactive intervention in UPI transaction processing issues across the payment ecosystem.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+hive.user_paytm_payments.onus_vpa_base on_us_vpa
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+--- focus on current and previous day transactions
+date(ti.created_on) >= current_date - interval '01' day AND
+--- include only payment and collect transaction types
+ti.type in ('PAY','COLLECT') AND
+--- focus on core UPI transaction categories
+ti.category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude specific initiation mode to filter out certain transaction types
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') !='14' AND
+--- ensure participant data freshness
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day
+
+--- specific filters
+--- focus on failure transactions for operational monitoring
+ti.status = 'FAILURE' AND
+--- segment by major PSPs for performance comparison
+--- parameter values: paytm (Paytm), ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), ptsbi (SBI)
+lower(ti.psp_handle) IN ({psp_handle}: paytm, ptyes, ptaxis, pthdfc, ptsbi) AND
+lower(tp1.handle) IN ({psp_handle}: paytm, ptyes, ptaxis, pthdfc, ptsbi) AND
+--- ensure payer participant type for accurate segmentation
+tp1.participant_type = 'PAYER' AND
+--- ensure payee participant type for complete transaction view
+tp2.participant_type = 'PAYEE'
+
+--- calculation_logic
+pattern: temporal_daily_comparison_hourly_cutoff
+base_metric: count(txn_id)
+temporal_filters: [current_date, current_date - interval '01' day]
+hour_cutoff: hour((current_timestamp AT TIME ZONE 'Asia/Kolkata') - interval '01' hour)
+growth_calculation: (today_value / yesterday_value) - 1 with zero division handling
+
+
+
+
+## Top Error Codes X Payer Handle (T vs T-1) : Exc (U30-Z9 & U30-ZM)- 588
+
+This metric tracks UPI transaction failure analysis by error code and payer handle, comparing daily failure counts between today and yesterday with growth rate calculations. It monitors failure patterns across major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) to identify trending issues and performance degradation. The analysis excludes null error codes to focus on actual failure scenarios and includes specific filtering for error code ranges U30-Z9 and U30-ZM. The temporal comparison enables rapid detection of emerging failure patterns, supporting operational monitoring and incident response. Growth calculations help identify whether failure rates are increasing, stable, or decreasing day-over-day, enabling proactive system health management.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+hive.user_paytm_payments.onus_vpa_base on_us_vpa
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+--- focus on current and previous day for T vs T-1 comparison
+date(ti.created_on) >= current_date - interval '01' day AND
+--- limit to core UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+--- focus on core UPI categories
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- restrict to major PSP ecosystem handles
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude wallet-to-wallet transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14'
+
+--- specific filters
+--- exclude transactions without error codes to focus on actual failures
+error_code IS NOT NULL AND
+--- participant join conditions for payer data
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp1.participant_type = 'PAYER' AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant join conditions for payee data
+tp2.dl_last_updated >= current_date - interval '01' day AND
+tp2.participant_type = 'PAYEE'
+
+--- calculation_logic
+count(txn_id) FILTER(WHERE date(created_on) = current_date) AS n_today_failures,
+count(txn_id) FILTER(WHERE date(created_on) = current_date - interval '01' day) AS n_yest_failures,
+CASE WHEN sum(total_yest_failures) = 0 THEN 0 
+     ELSE (sum(total_today_failures) * 1.0000) / (sum(total_yest_failures) * 1.0000) - 1 
+END AS growth_rate
+
+
+
+
+## Top Error Codes X Payee Handle (T vs T-1): Exc (U30-Z9 & U30-ZM)- 588
+
+This metric tracks UPI transaction failure patterns segmented by error code and payee handle (PSP), comparing current day performance against the previous day. It measures failure counts and growth rates to identify deteriorating error patterns across different PSPs including Paytm, Yes Bank, Axis, HDFC, and SBI. The analysis focuses on transactions with non-null error codes, categorizing UPI flows into P2P, P2M, QR payments, and other transaction types. The metric excludes successful transactions to isolate failure patterns and includes temporal comparisons to detect emerging issues. This monitoring tool helps identify PSP-specific error trends and enables proactive issue resolution in the UPI ecosystem by highlighting both absolute failure counts and relative growth in failure rates.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2  
+hive.user_paytm_payments.onus_vpa_base ouv
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance optimization
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- focus on current and previous day transactions for T vs T-1 analysis
+date(ti.created_on) >= current_date - interval '01' day AND
+--- include only UPI payment and collect transactions
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate auto-debit transactions initiated by system
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- restrict to specific PSP ecosystem handles for focused monitoring
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+--- specific filters
+--- exclude transactions with null error codes to focus on failures only
+ti.error_code IS NOT NULL AND
+--- participant type filters for proper join conditions
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- calculation_logic
+pattern: temporal_daily_comparison
+base_metrics: [count(txn_id), sum(total_today_failures), sum(total_yest_failures)]
+dimensions: [error_code, payee_handle]
+temporal_filters: [
+  today: date(created_on) = current_date,
+  yesterday: date(created_on) = current_date - interval '01' day
+]
+growth_calculation: sum(total_today_failures*1.0000)/sum(total_yest_failures*1.0000)-1
+
+
+
+
+## Top Error Codes X Payer Handle (T vs T-1) : Exc (U30-Z9 & U30-ZM)- 588
+
+This metric tracks UPI transaction failure patterns by analyzing specific error codes (U30-Z9 & U30-ZM) segmented by payer handle (PSP) with day-over-day comparison. It measures today's failure count versus yesterday's failure count and calculates growth percentage to identify trends in error patterns. The analysis focuses on major PSPs including Paytm, Yes Bank, Axis, HDFC, and SBI, filtering out specific initiation modes and excluding successful transactions. This enables monitoring of error code distribution across different PSPs and helps identify which handles are experiencing increasing or decreasing error rates for critical error categories, supporting operational monitoring and PSP performance analysis.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+hive.user_paytm_payments.onus_vpa_base onus
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to major PSP ecosystem handles
+lower(psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- focus on pay and collect transaction types
+type IN ('PAY','COLLECT') AND
+--- upi transaction categories only
+category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude specific initiation mode
+JSON_EXTRACT_SCALAR(extended_info, '$.initiationMode') != '14' AND
+--- recent data window for temporal comparison
+dl_last_updated >= current_date - interval '1' day AND
+date(created_on) >= current_date - interval '1' day
+
+--- specific filters
+--- error analysis focus - exclude successful transactions
+error_code IS NOT NULL AND
+--- specific error code categories for monitoring
+error_code IN ('U30-Z9', 'U30-ZM')
+
+--- calculation_logic
+--- temporal comparison structure
+count(txn_id) FILTER(WHERE date(created_on) = current_date) as total_today_failures,
+count(txn_id) FILTER(WHERE date(created_on) = current_date - interval '1' day) as total_yest_failures,
+--- growth calculation with zero division protection
+CASE WHEN sum(total_yest_failures) = 0 THEN 0 
+     ELSE (sum(total_today_failures) * 1.0000) / (sum(total_yest_failures) * 1.0000) - 1 
+END as growth_rate
+
+
+
+
+## Top Error Codes X Payee Handle (T vs T-1): Exc (U30-Z9 & U30-ZM)- 588
+
+This metric tracks UPI transaction failure patterns by error code and payee handle, comparing today's failures against yesterday's to identify trending issues. It specifically monitors error codes U30-Z9 and U30-ZM across different Payment Service Providers (payee handles). The analysis helps identify which PSPs are experiencing increasing failure rates for specific error types, enabling proactive issue resolution. The growth calculation shows the percentage change in failure volume day-over-day, allowing teams to spot deteriorating performance trends. This is essential for maintaining UPI ecosystem health and ensuring service quality across partner PSPs during operational monitoring.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+hive.user_paytm_payments.onus_vpa_base ouv
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- focus on relevant UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mandate-specific initiation mode
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- limit to major PSP ecosystem
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+--- specific filters
+--- ensure error code analysis excludes null values
+error_code IS NOT NULL AND
+--- temporal range for T vs T-1 comparison
+date(ti.created_on) >= current_date - interval '01' day
+
+--- calculation_logic
+count(txn_id) FILTER(WHERE date(created_on) = current_date) AS total_today_failures,
+count(txn_id) FILTER(WHERE date(created_on) = current_date - interval '1' day) AS total_yest_failures,
+sum(total_today_failures*1.0000)/sum(total_yest_failures*1.0000)-1 AS failure_growth
+
+
+
+
+## UPI SR Monitoring(T & T-1) Top 10 Remiter Bank
+
+This metric tracks UPI Success Rate (SR) for top 10 remitter banks, measuring the percentage of successful UPI transactions out of total transaction attempts for each payer bank. The success rate is calculated as successful transactions divided by total transactions, providing insights into bank-specific performance and reliability. The analysis covers transactions from major PSP handles including Paytm, Yes Bank, Axis Bank, HDFC Bank, and SBI. It filters for standard UPI transaction types (PAY/COLLECT) across VPA2VPA, VPA2ACCOUNT, and VPA2MERCHANT categories while excluding specific initiation modes like mode 14. This metric enables monitoring of bank performance trends and identifying potential issues in the UPI ecosystem by comparing current day (T) versus previous day (T-1) success rates.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter
+ti.dl_last_updated >= current_date - interval '01' day AND
+--- transaction recency filter for current analysis window
+date(ti.created_on) >= current_date - interval '01' day AND
+--- transaction type filter for payment flows
+ti.type IN ('PAY','COLLECT') AND
+--- category filter for UPI transaction types
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- PSP ecosystem filter for major players
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude specific initiation mode
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- participant data freshness
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- payer participant type filter
+tp1.participant_type = 'PAYER' AND
+--- payee participant type filter
+tp2.participant_type = 'PAYEE' AND
+--- payer handle consistency check
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+--- specific filters
+--- temporal range for T and T-1 comparison (configurable via dashboard filter)
+--- no additional temporal filter specified - uses standard recency filter
+
+--- calculation_logic
+sum(CASE WHEN status IN ('SUCCESS','DEEMED') THEN txn_count ELSE 0 END) * 1.0000 / sum(txn_count) AS success_rate
+GROUP BY payer_bank, dt
+ORDER BY success_rate DESC
+LIMIT 10
+
+
+
+
+## UPI SR Monitoring(T & T-1) Top 10 Remiter Bank
+
+This metric tracks UPI transaction success rates for the top 10 remitter banks in a day-over-day monitoring dashboard. It calculates the success rate as the ratio of successful transactions (SUCCESS/DEEMED status) to total transaction attempts, segmented by payer bank. The metric includes comprehensive transaction flow categorization covering P2P transfers, P2M payments, QR transactions, mandates, and intent-based payments. Standard filters limit analysis to major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and exclude specific initiation modes. This monitoring enables identification of bank-specific performance issues and supports operational decision-making for UPI transaction processing optimization across different payment flows and partner banks.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+hive.user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness for current operational monitoring
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- transaction type scope for UPI payments
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- PSP ecosystem focus on major players
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude specific initiation modes
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- participant type filters for proper joins
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- temporal range for day-over-day monitoring
+dt TEMPORAL_RANGE (No filter - uses standard date filtering above)
+
+--- calculation_logic
+(sum(Success_txns)*1.0000) / (SUM(total_Txn)*1.00000) as SR
+where Success_txns = count(txn_id) WHERE status IN ('SUCCESS','DEEMED')
+and total_Txn = count(txn_id) for all transaction attempts
+
+
+
+
+## Top 5 Error Code & Bank (T-1 vs L7D)
+
+This metric tracks the top 5 error codes by bank combinations based on UPI transaction failure volumes, comparing yesterday's failures against the last 7-day average to identify trending issues. It focuses on operational monitoring by ranking banks by total failure volume to identify the top 5 most problematic banks, then within each bank identifies the top 5 error codes by failure count. The analysis includes percentage change calculation to highlight deteriorating or improving error patterns. It filters for specific Paytm ecosystem PSPs and excludes purpose code 14, focusing on payment and collect transaction failures to provide actionable insights for operations teams to prioritize error resolution efforts.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data recency filter for performance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+--- transaction date range for analysis window
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- upi payment transaction types only
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem psp handles only
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard upi transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose code
+txn.purpose_code != '14' AND
+--- failure transactions only for error analysis
+lower(txn.status) = 'failure' AND
+--- valid error codes only
+coalesce(txn.npci_resp_code, txn.app_resp_code) IS NOT NULL
+
+--- specific filters
+--- temporal analysis windows
+--- yesterday: date(txn.txn_timestamp) = (current_date - interval '1' day)
+--- last 7 days: date(txn.txn_timestamp) between (current_date - interval '8' day) and (current_date - interval '2' day)
+
+--- calculation_logic
+WITH ranking logic:
+1. Bank ranking: ROW_NUMBER() OVER (ORDER BY SUM(yest_failures) DESC, SUM(Last_7D_AVG_failures) DESC) <= 5
+2. Error code ranking per bank: ROW_NUMBER() OVER (PARTITION BY payer_bank_name ORDER BY yest_failures DESC, Last_7D_AVG_failures DESC) <= 5
+3. Metrics: count(distinct txn_id) for failures, avg over 7 days, percentage change calculation
+
+
+
+
+## Top Error Codes (T-1 vs L7D Avg)
+
+This metric tracks UPI transaction failure patterns by analyzing error codes and comparing yesterday's failure volume against the 7-day average to identify anomalies or trends. It measures the count of failed transactions grouped by NPCI response codes, providing both absolute failure counts and percentage change indicators. The analysis focuses on Paytm ecosystem transactions (including partner PSPs) with standard UPI transaction filters applied. The temporal comparison helps identify whether yesterday's error patterns represent normal fluctuation or significant deviations requiring attention. This enables proactive monitoring of payment system health and quick identification of emerging technical issues across different error categories.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- focus on core UPI payment operations
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem including partner PSPs
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose code
+txn.purpose_code != '14'
+
+--- specific filters
+--- focus on failure transactions only
+txn.status = 'FAILURE' AND
+--- create period buckets for temporal comparison
+CASE
+  WHEN date(txn.txn_timestamp) = (current_date - interval '01' day) THEN 'Yday'
+  WHEN date(txn.txn_timestamp) BETWEEN (current_date - interval '08' day) AND (current_date - interval '02' day) THEN 'last7day'
+END IS NOT NULL
+
+--- calculation_logic
+COUNT(txn_id) FILTER(WHERE period = 'Yday') as yesterdays_failure,
+COUNT(txn_id) FILTER(WHERE period = 'last7day')/7 as last7day_avg_failure,
+(COUNT(txn_id) FILTER(WHERE period = 'Yday')*1.0000) / (COUNT(txn_id) FILTER(WHERE period = 'last7day')*1.0000/7) - 1 as change_percentage
+
+
+
+
+## Top Error Codes (T-1 vs L7D Avg)
+
+This metric tracks UPI transaction failure patterns by analyzing error codes and comparing yesterday's failure volume against the 7-day average baseline. It measures the count of failed transactions grouped by NPCI response codes, calculating both the absolute failure counts and percentage change to identify trending error patterns. The analysis focuses on Paytm ecosystem PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) for payment and collect transaction types, excluding purpose code 14. This helps operations teams quickly identify which specific error codes are showing unusual spikes or improvements compared to recent historical performance, enabling targeted troubleshooting and issue resolution.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for performance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+--- transaction date range for temporal analysis
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- core UPI transaction types only
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem PSPs only
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard UPI categories excluding merchant-specific flows
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose code
+txn.purpose_code != '14'
+
+--- specific filters
+--- failure transactions only for error analysis
+txn.status = 'FAILURE'
+
+--- calculation_logic
+pattern: temporal_comparison_with_baseline
+base_metric: count(txn_id)
+comparison_periods: yesterday vs 7day_average
+grouping_dimension: coalesce(npci_resp_code,app_resp_code)
+
+
+
+
+## Top 5 Error Code & Bank (T-1 vs L7D)
+
+This metric tracks UPI transaction failure patterns by analyzing the top 5 error codes within the top 5 banks ranked by failure volume, comparing yesterday's failures against the last 7-day average. It helps identify emerging failure trends and problematic bank-error code combinations in the UPI ecosystem. The analysis focuses on failures from major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) for PAY and COLLECT transaction types, excluding purpose code 14. The percentage change calculation reveals whether specific bank-error combinations are worsening or improving compared to recent trends, enabling proactive failure management and partner engagement.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness and transaction recency
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- core UPI transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- major PSP ecosystem focus
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- UPI transaction categories excluding merchant-to-merchant
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose code
+txn.purpose_code != '14'
+
+--- specific filters
+--- failure analysis focus
+lower(txn.status) = 'failure' AND
+--- valid error codes only
+coalesce(txn.npci_resp_code, txn.app_resp_code) IS NOT NULL
+
+--- calculation_logic
+WITH multi_level_ranking:
+1. Calculate yesterday failures and L7D average by bank-error combination
+2. Rank top 5 banks by total failure volume
+3. Within each top bank, rank top 5 error codes by failure volume
+4. Calculate percentage change: (yesterday/L7D_avg - 1)
+Time periods: yesterday = current_date-1, L7D = days -8 to -2 divided by 7
+
+
+
+
+## Top 5 Error Code & Payer Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+
+This metric tracks UPI transaction failure patterns by analyzing the top 5 error codes for each payer PSP, comparing yesterday's failure counts against the last 7-day average with percentage change calculation. It monitors failure trends across major PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) while excluding specific NPCI response codes U30-Z9 and U30-ZM from analysis. The ranking system identifies both the top 5 payer handles by total failure volume and their respective top 5 error codes, enabling focused monitoring of critical failure patterns. This helps operations teams quickly identify emerging failure trends, deteriorating error code performance, or successful remediation efforts across different PSPs in the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- focus on core UPI transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- exclude specific business purpose code
+txn.purpose_code != '14' AND
+--- include standard UPI categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+
+--- specific filters
+--- focus on major PSP ecosystem partners
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- analyze only failed transactions
+lower(txn.status) = 'failure' AND
+--- ensure error code is available for analysis
+txn.npci_resp_code IS NOT NULL AND
+--- exclude specific NPCI response codes from analysis
+upper(coalesce(txn.npci_resp_code, txn.app_resp_code)) NOT IN ('U30-Z9','U30-ZM')
+
+--- calculation_logic
+pattern: temporal_failure_comparison
+base_metrics: [yesterday_failures, last_7d_avg_failures]
+ranking_logic: top_5_payers_by_failure_volume, top_5_error_codes_per_payer
+comparison_formula: (yesterday_failures / last_7d_avg_failures) - 1
+
+
+
+
+## Top 5 Error Code & Payee Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+
+This metric tracks UPI transaction failure patterns by analyzing the top 5 payee handles and their most frequent error codes, comparing yesterday's failures against the 7-day average to identify deteriorating trends. It focuses on unexpected failures by excluding standard timeout errors (U30-Z9, U30-ZM) and limits analysis to Paytm ecosystem PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi). The metric helps operations teams quickly identify which PSP partners are experiencing increased failure rates and what specific error codes are driving those failures, enabling targeted investigation and remediation efforts for service reliability monitoring.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for performance optimization
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- UPI transaction types for payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- Paytm ecosystem PSP analysis scope
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- UPI category filtering for relevant transaction types
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude refund transactions
+txn.purpose_code != '14' AND
+--- failure analysis focus
+lower(txn.status) = 'failure' AND
+--- valid error code requirement
+txn.npci_resp_code IS NOT NULL
+
+--- specific filters
+--- exclude standard timeout errors from failure analysis
+upper(txn.npci_resp_code) NOT IN ('U30-Z9','U30-ZM')
+
+--- calculation_logic
+-- Step 1: Calculate daily failure counts for T-1 and L7D average by payee_handle and error code
+-- Step 2: Rank top 5 payee handles by total yesterday failures
+-- Step 3: For each top payee handle, get top 5 error codes by yesterday failures
+-- Step 4: Calculate percentage change: (yesterday_failures/L7D_avg_failures - 1) * 100
+count(distinct case when date(txn.created_on) = current_date - interval '1' day then txn.txn_id end) as yest_failures,
+count(distinct case when date(txn.created_on) between current_date - interval '8' day and current_date - interval '2' day then txn.txn_id end)/7 as L7D_avg_failures
+
+
+
+
+## Top 5 Error Code & Payee Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+
+This metric tracks error code performance for UPI transaction monitoring by analyzing the top 5 payee handles and their respective top 5 error codes, comparing yesterday's failure counts against the 7-day average to calculate percentage change. The analysis excludes specific error codes U30-Z9 and U30-ZM and focuses only on failed transactions with valid NPCI response codes. It serves operational monitoring purposes by identifying deteriorating error patterns that require immediate attention, helping teams prioritize remediation efforts based on both failure volume and trend direction. The ranking methodology ensures focus on the most impactful combinations of payee handles and error codes.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness and transaction scope
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- focus on core payment transactions
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- ecosystem scope - Paytm and partner PSPs
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- transaction category filtering
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose codes
+txn.purpose_code != '14'
+
+--- specific filters
+--- failure transaction analysis only
+lower(txn.status) = 'failure' AND
+--- valid error code requirement
+coalesce(txn.npci_resp_code, txn.app_resp_code) IS NOT NULL AND
+--- exclude specific error codes from analysis
+upper(coalesce(txn.npci_resp_code, txn.app_resp_code)) NOT IN ('U30-Z9', 'U30-ZM')
+
+--- calculation_logic
+pattern: temporal_comparison_with_ranking
+base_metrics: count(distinct txn_id) for yesterday vs 7-day average
+ranking: top 5 payee_handle by failure volume, then top 5 npci_resp_code per payee
+temporal_logic: yesterday = date(created_on) = current_date - 1, L7D_avg = date(created_on) between current_date - 8 and current_date - 2
+percentage_change: (yesterday_failures / L7D_avg_failures - 1) * 100
+
+
+
+
+## Top 5 Error Code & Payer Handle (T-1 vs L7D Avg) : Exc (U30-Z9 & U30-ZM)
+
+This metric tracks UPI transaction failure trends by analyzing the top 5 error codes and payer handles, comparing yesterday's failures against the last 7-day average excluding specific error codes (U30-Z9 and U30-ZM). It serves as an operational monitoring tool to identify emerging failure patterns that deviate from recent historical performance. The analysis focuses on Paytm ecosystem partners (paytm, ptyes, ptaxis, pthdfc, ptsbi) and calculates percentage change to highlight deteriorating error rates. This helps operations teams quickly identify which payer handles and error codes are experiencing unusual spikes in failures, enabling proactive intervention before customer impact escalates.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data recency and performance optimization
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- transaction type scope for UPI operations
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- category scope for VPA-based transactions
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude bulk transactions
+txn.purpose_code != '14' AND
+--- paytm ecosystem focus
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- failure analysis scope
+lower(txn.status) = 'failure' AND
+txn.npci_resp_code IS NOT NULL
+
+--- specific filters
+--- exclude specific error codes as mentioned in chart title
+upper(coalesce(txn.npci_resp_code, txn.app_resp_code)) NOT IN ('U30-Z9','U30-ZM')
+
+--- calculation_logic
+WITH BankFailures AS (
+  SELECT payer_handle, npci_resp_code,
+    count(distinct case when date(created_on) = current_date - interval '1' day then txn_id end) as yest_failures,
+    count(distinct case when date(created_on) between current_date - interval '8' day and current_date - interval '2' day then txn_id end)/7 as Last_7D_AVG_failures
+),
+TopBanks (top 5 by yesterday's failures), TopBankCodes (top 5 codes per bank),
+Final metrics: SUM(yest_failures), SUM(Last_7D_AVG_failures), percentage_change
+
+
+
+
+## All Bank (T-1 vs L7D)
+
+This metric tracks UPI transaction failure rates by payer bank, comparing yesterday's performance against the previous 7-day average to identify performance degradation or improvement trends. It measures three related components: yesterday's absolute failure count, the daily average failure count over the last 7 days, and the percentage change between these periods. The analysis is filtered to failure transactions only within the Paytm ecosystem (payer handles: paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes specific transaction categories and purpose codes. This monitoring tool helps identify which banks are experiencing increased failure rates and require immediate attention for service reliability improvements.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ecosystem limitation to Paytm and partner PSPs
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard transaction types for payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- standard category filters for valid UPI transactions
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude bill payment transactions
+txn.purpose_code != '14' AND
+--- data freshness filter
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+txn.transaction_date_key >= (current_date - interval '08' day)
+
+--- specific filters
+--- focus on failure transactions only for performance monitoring
+txn.status = 'FAILURE'
+
+--- calculation_logic
+pattern: temporal_comparison_with_period_buckets
+base_metric: count(txn_id)
+period_logic: CASE WHEN date(txn_timestamp) = (current_date - interval '01' day) THEN 'Yday' 
+              WHEN date(txn_timestamp) BETWEEN (current_date - interval '08' day) AND (current_date - interval '02' day) THEN 'last7day' END
+comparison_metrics: [yday_count, last7day_avg, change_percentage]
+
+
+
+
+## All Bank (T-1 vs L7D)
+
+This metric tracks UPI transaction failure analysis by comparing yesterday's failure count against the 7-day average failure rate, segmented by payer bank name. It measures service reliability by identifying banks with abnormal failure patterns, helping operations teams detect performance degradation or improvement trends. The analysis focuses on Paytm ecosystem transactions (paytm, ptyes, ptaxis, pthdfc, ptsbi handles) and excludes purpose code 14 transactions. The temporal comparison reveals whether yesterday's failure rate represents an anomaly or follows recent trends, with the change percentage indicating directional movement in failure patterns for proactive monitoring.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for performance optimization
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+--- transaction date range covering analysis window
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- core UPI transaction types for payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem handles for internal monitoring
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude specific purpose code transactions
+txn.purpose_code != '14'
+
+--- specific filters
+--- focus on failure transactions only for reliability analysis
+txn.status = 'FAILURE'
+
+--- calculation_logic
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday') as yesterdays_failure,
+COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')/7 as last7day_avg_failure,
+(COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'Yday')*1.0000) / (COUNT(txn_id) filter(WHERE status = 'FAILURE' and period = 'last7day')*1.0000/7) - 1 as change_percentage
+
+
+
+
+## Error Code & Bank All Data (T-1 vs L7D Avg)
+
+This metric tracks UPI transaction failure trends by comparing yesterday's failure count against the last 7-day average daily failures, segmented by NPCI response code and payer bank name. It measures operational health by identifying error code patterns and bank-specific failure rates within the Paytm PSP ecosystem. The analysis focuses on standard payment flows (P2P, merchant, and account transfers) while excluding mandate transactions. By calculating the percentage change between yesterday and recent average, it helps detect anomalous failure spikes or improvements in specific error categories, enabling targeted operational interventions and partner bank performance monitoring.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction window for performance and relevance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+--- ensure transaction date alignment with data freshness
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- focus on standard payment transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- limit to paytm psp ecosystem transactions only
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- include standard upi transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude mandate/recurring transactions
+txn.purpose_code != '14'
+
+--- specific filters
+--- focus analysis on failed transactions only
+txn.status = 'FAILURE'
+
+--- calculation_logic
+pattern: temporal_failure_comparison
+base_metric: count(txn_id)
+filter_conditions: [status = 'FAILURE' and period = 'Yday', status = 'FAILURE' and period = 'last7day']
+period_logic: case when date(txn_timestamp) = (current_date - interval '01' day) then 'Yday' when date(txn_timestamp) between (current_date - interval '08' day) and (current_date - interval '02' day) then 'last7day' end
+grouping_dimensions: [npci_resp_code, payer_bank_name]
+
+
+
+
+## Error Code & Bank All Data (T-1 vs L7D Avg)
+
+This metric tracks UPI transaction failures by error code and payer bank, comparing yesterday's failure count against the 7-day average to identify performance anomalies. It measures operational health by analyzing failure patterns across different banks and error codes within Paytm's UPI ecosystem. The analysis focuses on failure transactions only, filtered to specific payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes mandate transactions (purpose_code 14). The metric provides three key measurements: yesterday's failure count, 7-day average daily failures, and percentage change between them. This enables proactive monitoring of payment system stability and quick identification of emerging issues or improvements in specific bank partnerships or error categories.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance and relevance
+txn.dl_last_updated >= (current_date - interval '08' day) AND
+--- ensure transaction date alignment with data freshness
+txn.transaction_date_key >= (current_date - interval '08' day) AND
+--- focus on core UPI payment operations
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- limit to paytm ecosystem PSPs for internal monitoring
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard UPI transaction categories excluding bulk transfers
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- exclude mandate transactions which have different failure patterns
+txn.purpose_code != '14'
+
+--- specific filters
+--- analyze only failure transactions for error pattern identification
+txn.status = 'FAILURE'
+
+--- calculation_logic
+pattern: temporal_comparison_yesterday_vs_7day_avg
+base_metric: count(txn_id)
+filter_condition: status = 'FAILURE'
+dimensions: [npci_resp_code, payer_bank_name]
+periods: yesterday vs last_7day_average
+
+
+
+
+## Hourly SR Trend By Category (T vs T-1)- 588
+
+This metric tracks hourly success rate trends by transaction category for current day UPI transactions, enabling real-time monitoring of payment performance across different flow types. The success rate is calculated as the percentage of successful transactions (including deemed success) out of total transaction attempts. Data is filtered to include only current day transactions from major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes "Other P2M" category transactions. The categorization logic groups transactions into P2P (person-to-person), SnP (scan and pay including QR codes), Online (intent and collect flows), and Onus (on-us transactions) based on transaction type, merchant category, channel codes, and initiation modes, providing granular visibility into different payment corridors' performance.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1 (payer)
+hive.switch.txn_participants_snapshot_v3 tp2 (payee)
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- current day transaction filter
+date(ti.created_on) = current_date AND
+--- data freshness filter
+ti.dl_last_updated >= current_date - interval '01' day AND
+--- transaction type filter for payment flows
+ti.type IN ('PAY','COLLECT') AND
+--- UPI category filter
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- PSP ecosystem filter
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude specific initiation mode
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14'
+
+--- specific filters
+--- exclude Other P2M category from analysis
+flow_cat != 'Other P2M'
+
+--- calculation_logic
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) as success_rate,
+date_trunc('hour', created_on) as hourly_time,
+Complex CASE WHEN logic for final_Category classification:
+- P2P: VPA2VPA and VPA2ACCOUNT flows
+- SnP: QR-based payments (3P QR, Paytm QR)  
+- Online: Intent and P2M Collect flows
+- Onus: On-us transactions and mandates
+
+
+
+
+## Hourly SR Trend By Category (T vs T-1)- 588
+
+This metric tracks hourly success rate trends by transaction category for UPI transaction monitoring. It measures the percentage of successful transactions (SUCCESS/DEEMED status) versus total transaction attempts, segmented by final business categories including P2P, SnP (Scan and Pay), Online, and Onus. The metric filters data to current day performance and excludes "Other P2M" transactions. It uses complex business logic to categorize raw UPI transactions into meaningful segments based on transaction type, category, channel, and merchant characteristics. This enables real-time monitoring of transaction success rates across different UPI flow types with hourly granularity for operational insights.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+user_paytm_payments.onus_vpa_base onus
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- current day transaction data only
+date(ti.created_on) = current_date AND
+--- data freshness constraint
+ti.dl_last_updated >= current_date - interval '1' day AND
+--- core UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+--- UPI category filtering
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- partner PSP ecosystem
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude USSD transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14'
+
+--- specific filters
+--- exclude other P2M category from analysis
+final_Category != 'Other P2M'
+
+--- calculation_logic
+--- success rate calculation
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS') * 1.0000) / (COUNT(txn_id) * 1.0000) AS SR
+
+--- complex categorization logic
+CASE 
+  WHEN flow_cat IN ('P2P') THEN 'P2P'
+  WHEN flow_cat IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN flow_cat IN ('Intent', 'P2M Collect') OR (flow_cat = 'MANDATE' AND onus_vpa IS NULL) THEN 'Online'
+  WHEN flow_cat IN ('Onus_ExcMandates','Mandate_Onus') OR (flow_cat = 'MANDATE' AND onus_vpa IS NOT NULL) THEN 'Onus'
+  ELSE flow_cat
+END AS final_Category
+
+
+
+
+## Paytm to Competition P2P SR (T & T-1)
+
+This metric tracks the success rate performance of P2P transactions originating from Paytm users and sent to competing payment service providers. It measures transaction volume, successful completions (SUCCESS and DEEMED status), calculated success rate percentage, and day-over-day percentage change in success rates. The analysis is filtered to Paytm as the payer with VPA-to-VPA and VPA-to-account transaction types, providing insights into Paytm's interoperability performance with competitor networks. The temporal comparison enables monitoring of success rate trends across different hours and payee providers, helping identify performance degradation or improvement patterns in the competitive payment ecosystem.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for different values
+--- restrict analysis to Paytm originating transactions
+virtual_table.payer_ = 'Paytm' AND
+--- focus on P2P transaction categories (VPA to VPA and VPA to Account)
+virtual_table.category IN ('VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- temporal range filter (configurable based on analysis period)
+--- virtual_table.dt TEMPORAL_RANGE ({time_period})
+
+--- calculation_logic
+sum(txns) as total_txn,
+sum(txns) FILTER(WHERE status IN ('SUCCESS','DEEMED')) as success_txns,
+((sum(txns) FILTER(WHERE status IN ('SUCCESS','DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate,
+LAG(success_rate) OVER(PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) as prev_day_sr,
+(success_rate - prev_day_sr) as sr_change_percentage
+
+
+
+
+## Paytm to Competition Overall SR (T & T-1)
+
+This metric tracks Paytm's transaction success rate performance when transacting with competitive payee partners, providing day-over-day comparison analysis. The success rate is calculated as the percentage of transactions with SUCCESS or DEEMED status out of total transactions. The analysis is segmented by hour and payee partner to identify performance patterns and competitive positioning. The temporal comparison uses LAG function to show how success rates are changing compared to the previous day for the same hour-payee combination. This enables Paytm to monitor its payment processing effectiveness across different competitive partners and time periods, identifying potential issues or improvements in real-time payment processing capabilities.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus analysis on Paytm as payer for competitive performance monitoring
+virtual_table.payer_ = 'Paytm'
+
+--- specific filters
+--- temporal range filter available but not applied in this instance
+--- virtual_table.dt temporal range filter (configurable)
+
+--- calculation_logic
+sum(txns) as total_transactions,
+sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) as success_transactions,
+((sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate,
+success_rate - LAG(success_rate) OVER(PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) as day_over_day_sr_change
+
+
+
+
+## Paytm to Competition Overall SR (T & T-1)
+
+This metric tracks Paytm's transaction success rate performance against competing payment service providers, providing day-over-day comparative analysis. It measures total transaction volume, successful transaction counts, calculated success rate percentages, and percentage change in success rate from the previous day for identical hour and payee combinations. The analysis is filtered to focus specifically on transactions where Paytm acts as the payer, segmented by receiving payee PSPs and hourly time periods. This enables monitoring of Paytm's competitive positioning and performance trends, identifying patterns in success rate fluctuations across different competitor relationships and time periods for operational optimization and strategic decision-making.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to Paytm as payer for competitive performance measurement
+virtual_table.payer_ = 'Paytm'
+
+--- specific filters
+--- temporal range filter available but set to 'No filter' by default
+--- virtual_table.dt TEMPORAL_RANGE {temporal_range}
+
+--- calculation_logic
+sum(txns) as total_transactions,
+sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) as successful_transactions,
+((sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate_percentage,
+lag(success_rate_percentage) OVER(PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) for day_over_day_comparison
+
+
+
+
+## Paytm to Competition P2P SR (T & T-1)
+
+This metric tracks Paytm's P2P transaction success rates compared to competition, measuring performance across total transactions, successful transactions, success rate percentage, and day-over-day success rate changes. It focuses specifically on Paytm as the payer entity conducting P2P transactions (VPA2VPA and VPA2ACCOUNT categories) with various payee partners. The success rate calculation considers both SUCCESS and DEEMED transaction statuses as successful outcomes. Data is segmented by date, hour, and payee partner to enable granular competitive analysis and performance trending. The percentage change metric uses lag functions to compare current day performance against the previous day, partitioned by hour and payee for accurate temporal comparisons.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to Paytm as transaction initiator
+virtual_table.payer_ = 'Paytm' AND
+--- include only peer-to-peer transaction types
+virtual_table.category IN ('VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- temporal range filter (configurable in dashboard)
+--- dt temporal range as specified by user selection
+
+--- calculation_logic
+sum(txns) as total_transactions,
+sum(txns) FILTER(WHERE status IN ('SUCCESS', 'DEEMED')) as successful_transactions,
+((sum(txns) FILTER(WHERE status IN ('SUCCESS', 'DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate,
+success_rate - LAG(success_rate) OVER (PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) as sr_change_percent
+
+
+
+
+## Competition to Paytm P2P SR (T & T-1)
+
+Competition to Paytm P2P Success Rate monitoring tracks transaction performance metrics for non-Paytm PSPs in peer-to-peer payment flows. This analysis measures total transaction volume, successful transaction counts, success rate percentages, and day-over-day success rate changes across different hours and competitor PSPs. The dashboard excludes Paytm's own transactions to focus on competitive landscape analysis, filtering for VPA-to-VPA and VPA-to-Account payment categories. Success is defined as transactions with 'SUCCESS' or 'DEEMED' status. The temporal comparison enables identification of performance trends and competitive positioning in the UPI ecosystem by tracking how competitor success rates fluctuate compared to previous days.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude Paytm transactions to focus on competitor analysis
+virtual_table.payer_ != 'Paytm' AND
+--- focus on peer-to-peer payment categories
+virtual_table.category IN ('VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- temporal filter configurable via dashboard
+--- virtual_table.dt TEMPORAL_RANGE (No filter - shows all available dates)
+
+--- calculation_logic
+pattern: success_rate_with_temporal_comparison
+base_metrics: [sum(txns), sum(txns)filter(where status in('SUCCESS','DEEMED'))]
+temporal_dimension: date_trunc('day', CAST(dt AS TIMESTAMP))
+partition_by: [hr, payer_]
+
+
+
+
+## Competition to Paytm P2P SR (T & T-1)
+
+This metric tracks competitive P2P transaction success rates excluding Paytm to benchmark competitor performance against Paytm's ecosystem. It measures total transaction volume, successful transactions (SUCCESS/DEEMED status), success rate percentage, and day-over-day SR changes segmented by competitor PSPs and hourly intervals. The analysis focuses on VPA2VPA and VPA2ACCOUNT transaction categories to capture peer-to-peer payment flows. The temporal comparison enables identification of SR trends and competitor performance fluctuations, providing insights for competitive positioning and market share analysis in the UPI P2P segment.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude Paytm to focus on competitor analysis
+virtual_table.payer_ != 'Paytm' AND
+--- filter P2P transaction types only
+virtual_table.category IN ('VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- temporal filter configurable via dashboard
+--- dt TEMPORAL_RANGE (No filter - shows all available dates)
+
+--- calculation_logic
+pattern: success_rate_with_temporal_comparison
+base_metrics: sum(txns), sum(txns) FILTER(WHERE status IN ('SUCCESS','DEEMED'))
+dimensions: [date_trunc('day', dt), hr, payer_]
+temporal_window: day-over-day using LAG function
+
+
+
+
+## Paytm to Competition QR SR (T & T-1)
+
+This metric tracks Paytm's QR code payment success rates when transacting with competition payee PSPs, comparing current day performance against previous day. It measures total transaction volume, successful transaction count, success rate percentage, and day-over-day change in success rate across different hours and payee PSPs. The analysis focuses specifically on Paytm as the payer entity using both third-party QR codes and Paytm's own QR infrastructure. This enables monitoring of Paytm's outbound payment performance across the competitive landscape, identifying success rate trends and potential issues with specific payee partners over time.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR vt
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to paytm as payer for outbound transaction analysis
+vt.payer_ = 'Paytm' AND
+--- include both third-party and paytm qr transactions
+vt.QR_FLAG IN ('3P QR', 'Paytm QR')
+
+--- specific filters
+--- temporal range filter (configurable)
+--- dt TEMPORAL_RANGE filter (No filter = all available dates)
+
+--- calculation_logic
+sum(txns) as total_transactions,
+sum(txns) FILTER(WHERE status IN ('SUCCESS','DEEMED')) as success_transactions,
+((sum(txns) FILTER(WHERE status IN ('SUCCESS','DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate,
+success_rate - lag(success_rate) OVER(PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) as sr_change_pct
+
+
+
+
+## Paytm to Competition QR SR (T & T-1)
+
+This metric tracks Paytm's QR code transaction success rate performance against competition, measuring total transactions, successful transactions, success rate percentage, and day-over-day success rate changes. It focuses specifically on Paytm as the payer across both third-party QR codes and Paytm's own QR infrastructure. The analysis segments performance by hour and payee to identify temporal patterns and competitive positioning. The success rate calculation includes both 'SUCCESS' and 'DEEMED' statuses as positive outcomes, while the percentage change metric compares current day performance against the previous day for the same hour and payee combination, enabling identification of performance trends and competitive gaps in the QR payment ecosystem.
+
+-- tables_involved
+hive.user_paytm_payments.T_vs_T1_Paytm_N_Competition_SR virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to paytm as payer for competitive positioning
+virtual_table.payer_ = 'Paytm' AND
+--- include both third party and paytm qr transactions
+virtual_table.QR_FLAG IN ('3P QR', 'Paytm QR')
+
+--- specific filters
+--- temporal filter applied via superset interface
+--- dt temporal range filter (no filter = all available dates)
+
+--- calculation_logic
+sum(txns) as total_txn,
+sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) as success_txns,
+((sum(txns) FILTER(WHERE status IN('SUCCESS','DEEMED')) * 1.0000) / (sum(txns) * 1.0000)) * 100 as success_rate,
+success_rate - LAG(success_rate) OVER(PARTITION BY hr, payee_ ORDER BY date_trunc('day', CAST(dt AS TIMESTAMP))) as pct_change_sr
+
+
+
+
+## Competition to Paytm QR SR (T & T-1)
+
+This metric monitors Paytm's QR payment success rate performance with day-over-day trend analysis. It tracks total transaction volume, successful transaction count, overall success rate percentage, and percentage point change in success rate compared to the previous day for the same hour. The analysis is filtered specifically for Paytm as the payer and segments data by hour to enable intraday performance monitoring. The success rate calculation provides the ratio of successful transactions to total transactions, while the percentage change metric uses lag functions to compare current day performance against the previous day's performance for the same hour and payer combination, enabling identification of performance improvements or degradations.
+
+-- tables_involved
+hive.user_paytm_payments.t1_vs_t2_competition_to_paytm_sr virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus analysis on Paytm's payment performance
+virtual_table.payer_ = 'Paytm' AND
+--- temporal filtering capability for date range selection
+virtual_table.dt [TEMPORAL_RANGE filter applied]
+
+--- calculation_logic
+sum(Overall_txn) as total_transactions,
+sum(success) as successful_transactions,
+(sum(success) * 1.0000) / (sum(Overall_txn) * 1.0000) * 100 as success_rate,
+success_rate - lag(success_rate) over(partition by hr, payer_ order by date_trunc('day', CAST(dt AS TIMESTAMP))) as sr_change_percentage
+
+
+
+
+## Competition to Paytm QR SR (T & T-1)
+
+This metric tracks Paytm QR transaction success rate performance with day-over-day comparison capabilities for competitive analysis. It measures total transaction volume, successful transaction count, success rate percentage, and the percentage change in success rate compared to the previous day for the same hour and payer combination. The analysis is specifically filtered to focus on Paytm as the payer entity and supports temporal date range filtering. This enables monitoring of Paytm's QR payment performance trends and identifies daily fluctuations in success rates, providing insights into operational efficiency and competitive positioning in the UPI ecosystem.
+
+-- tables_involved
+hive.user_paytm_payments.t1_vs_t2_competition_to_paytm_sr virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus analysis on Paytm performance specifically
+virtual_table.payer_ = 'Paytm' AND
+--- temporal date range filter for time-bounded analysis
+virtual_table.dt TEMPORAL_RANGE (configurable)
+
+--- calculation_logic
+sum(virtual_table.Overall_txn) as total_txn,
+sum(virtual_table.success) as success_txns,
+(sum(virtual_table.success) * 1.0000) / (sum(virtual_table.Overall_txn) * 1.0000) * 100 as success_rate,
+((sum(virtual_table.success) * 1.0000) / (sum(virtual_table.Overall_txn) * 1.0000) * 100) - 
+(lag((sum(virtual_table.success) * 1.0000) / (sum(virtual_table.Overall_txn) * 1.0000) * 100) 
+ over(partition by hr, payer_ order by date_trunc('day', CAST(dt AS TIMESTAMP)))) as pct_change_sr
+
+
+
+
+## Last Hour SR Overall Alert
+
+This metric monitors real-time success rate performance by comparing the current hour's transaction success rate against historical hourly benchmarks from February. It tracks the success rate of UPI transactions (COLLECT and PAY types) within the Paytm ecosystem PSPs (paytm, ptsbi, ptaxis, pthdfc, ptyes) across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. The system calculates success rate as successful/deemed transactions divided by total transactions for the most recently completed hour, then compares it against the historical average for that same hour to generate an alert-worthy difference. This enables proactive monitoring of payment system performance degradation.
+
+-- tables_involved
+hive.upi_txn.upi_activities_data_snapshot_v3 txn
+hive.user_paytm_payments.feb_hourly_sr_benchamrk benchmark
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- UPI transaction types for payment flows
+txn.type IN ('COLLECT','PAY') AND
+--- Paytm ecosystem PSP filtering
+TRY(LOWER(SPLIT(txn.payer_vpa, '@')[2])) IN ('paytm','ptsbi','ptaxis','pthdfc','ptyes') AND
+--- VPA-based transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- Recent data availability filter
+txn.dl_last_updated >= DATE_ADD('day', -1, CURRENT_DATE) AND
+--- Payer-side transaction focus
+txn.participant_type = 'PAYER' AND
+--- Exclude mandate-based transactions
+(LOWER(txn.businesstype) <> 'mandate' OR txn.businesstype IS NULL)
+
+--- specific filters
+--- Dynamic hour selection based on current time (handles midnight edge case)
+--- For 12 AM: looks at 11 PM yesterday, otherwise previous hour of today
+(HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') > 0
+ AND DATE(cast(txn.txn_timestamp as timestamp)) = CURRENT_DATE)
+OR (HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') = 0
+    AND DATE(cast(txn.txn_timestamp as timestamp)) = DATE_ADD('day', -1, CURRENT_DATE)) AND
+--- Hour matching logic for temporal comparison
+HOUR(CAST(txn.txn_timestamp AS TIMESTAMP)) = 
+    CASE 
+        WHEN HOUR(CAST(DATE_FORMAT(current_timestamp AT TIME ZONE 'Asia/Kolkata', '%Y-%m-%d %H:%i:%s.%f Asia/Calcutta') AS TIMESTAMP)) = 0 
+        THEN 23 
+        ELSE HOUR(CAST(DATE_FORMAT(current_timestamp AT TIME ZONE 'Asia/Kolkata', '%Y-%m-%d %H:%i:%s.%f Asia/Calcutta') AS TIMESTAMP)) - 1 
+    END
+
+--- calculation_logic
+CAST(COUNT(DISTINCT CASE WHEN LOWER(txn.status) IN ('success','deemed') THEN txn.txn_id END) AS DOUBLE) / CAST(COUNT(DISTINCT txn.txn_id) AS DOUBLE) as sr_current,
+benchmark.sr_avg,
+cast(sr_current as double) - cast(benchmark.sr_avg as double) AS sr_difference
+
+
+
+
+## T vs T-1 Error Codes Alert
+
+This metric monitors UPI transaction error patterns by comparing today's error code occurrences against yesterday's volumes to detect anomalies and calculate failure growth rates. It tracks transaction failures across different UPI flow categories including P2P, P2M payments, QR transactions, Intent flows, and Mandates, filtered for major PSP ecosystem participants (Paytm, Yes Bank, Axis, HDFC, SBI). The analysis excludes USSD transactions (initiation mode 14) and focuses on PAY and COLLECT transaction types. This day-over-day comparison enables real-time operational monitoring to identify emerging error patterns, system issues, or degraded performance that could impact user experience across different payment channels.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for operational monitoring
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on core UPI transaction types
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude USSD channel transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- filter for major PSP ecosystem participants
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- ensure participant data freshness
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- define participant roles
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- none - this is a comprehensive error monitoring view
+
+--- calculation_logic
+pattern: temporal_daily_comparison
+base_metric: count(txn_id) grouped by error_code
+dimensions: [error_code, date(created_on)]
+additional_logic: coalesce(npci_resp_code, app_resp_code) as error_code classification
+
+
+
+
+## Last Hour SR Overall Alert
+
+This metric monitors real-time UPI transaction success rate performance by comparing the current hour's success rate against historical benchmarks for the same hour. It tracks success rate (percentage of successful/deemed transactions) for the previous completed hour across Paytm ecosystem PSPs (paytm, ptsbi, ptaxis, pthdfc, ptyes) and calculates the deviation from expected performance. The metric serves as an operational alert system to identify performance anomalies, with special logic to handle midnight transitions by referencing the previous day's 23rd hour when current time is midnight.
+
+-- tables_involved
+hive.upi_txn.upi_activities_data_snapshot_v3 txn
+hive.user_paytm_payments.feb_hourly_sr_benchamrk benchmark
+
+--- standard filters to be applied unless specifically requested for different transaction types
+--- limit to collect and pay transaction types for core UPI flows
+txn.type IN ('COLLECT','PAY') AND
+--- focus on Paytm ecosystem PSPs for internal monitoring
+TRY(LOWER(SPLIT(txn.payer_vpa, '@')[2])) IN ('paytm','ptsbi','ptaxis','pthdfc','ptyes') AND
+--- include standard UPI transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- ensure fresh data within last day
+txn.dl_last_updated >= DATE_ADD('day', -1, CURRENT_DATE) AND
+--- exclude mandate transactions from success rate calculation
+(LOWER(txn.businesstype) <> 'mandate' OR txn.businesstype IS NULL) AND
+--- focus on payer perspective for success rate measurement
+txn.participant_type = 'PAYER'
+
+--- specific filters
+--- target previous completed hour with midnight edge case handling
+--- normal case: current date transactions when hour > 0
+(HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') > 0 
+ AND DATE(cast(txn.txn_timestamp as timestamp)) = CURRENT_DATE)
+--- special case: previous day 23rd hour when current time is midnight
+OR (HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') = 0
+    AND DATE(cast(txn.txn_timestamp as timestamp)) = DATE_ADD('day', -1, CURRENT_DATE)) AND
+--- extract transactions from previous completed hour
+HOUR(CAST(txn.txn_timestamp AS TIMESTAMP)) = 
+  CASE 
+    WHEN HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') = 0 THEN 23
+    ELSE HOUR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - 1
+  END
+
+--- calculation_logic
+CAST(COUNT(DISTINCT CASE WHEN LOWER(status) IN ('success','deemed') THEN txn_id END) AS DOUBLE) /
+CAST(COUNT(DISTINCT txn_id) AS DOUBLE) AS sr_current,
+sr_difference = sr_current - benchmark.sr_avg
+
+
+
+
+## T vs T-1 Error Codes Alert
+
+This metric monitors UPI transaction error code distribution and tracks day-over-day growth in failure patterns for alerting purposes. It compares today's failed transaction counts against yesterday's counts by specific error codes to identify emerging failure trends. The analysis is filtered to major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes specific initiation modes like '14'. The metric categorizes transactions into flow types including P2P, P2M Collect, Paytm QR, 3P QR, Intent, Mandate (both onus and online), and others based on transaction type, category, channel code, and business type. This enables proactive monitoring of payment system health by detecting unusual spikes in specific error codes that could indicate system issues or degraded service quality requiring immediate attention.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1
+hive.switch.txn_participants_snapshot_v3 tp2
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data recency filter for performance optimization
+ti.dl_last_updated >= current_date - interval '01' day AND
+--- temporal scope for T vs T-1 comparison
+date(ti.created_on) >= current_date - interval '01' day AND
+--- transaction type scope for UPI payments
+ti.type IN ('PAY','COLLECT') AND
+--- UPI category filtering for relevant transaction types
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude QR mandate transactions based on initiation mode
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- PSP ecosystem focus on major players
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant data recency
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- payer PSP filtering for ecosystem analysis
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant type segregation
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- focus on failed transactions for error code analysis
+ti.status NOT IN ('SUCCESS','DEEMED')
+
+--- calculation_logic
+pattern: temporal_daily_comparison
+base_metric: count(txn_id) by error_code
+dimensions: [error_code, date(created_on)]
+additional_logic: flow categorization based on category, business_type, channel_code, and initiation_mode
+
+
+
+
+## CC 0n UPI Hourly SR Trend (T vs T-1)- 588
+
+CC 0n UPI Hourly Success Rate Trend measures the success rate of UPI transactions specifically for CREDIT account type payers, comparing current day performance against the previous day at hourly intervals. This metric calculates the percentage of successful transactions (including DEEMED status) out of total transaction attempts, providing real-time monitoring capabilities for credit card on UPI transaction performance. The analysis is restricted to major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes specific initiation modes like mobile number transactions. This hourly trending enables identification of performance patterns, operational issues, and comparative analysis between consecutive days for proactive monitoring and quick issue resolution in the UPI credit card ecosystem.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1 (payer)
+hive.switch.txn_participants_snapshot_v3 tp2 (payee)
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transaction data for performance
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- include PAY and COLLECT transaction types
+ti.type in ('PAY','COLLECT') AND
+--- focus on VPA-based UPI transactions
+ti.category in('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude mobile number based transactions
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- restrict to major PSP ecosystem
+lower(ti.psp_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant data currency filter
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- ensure payer is from target PSP handles
+lower(tp1.handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE'
+
+--- specific filters
+--- credit card on UPI transactions only
+tp1.account_type = 'CREDIT'
+
+--- calculation_logic
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS')*1.0000) / (COUNT(txn_id)*1.0000) as success_rate,
+hour(created_on) as hour_dimension,
+dt as date_dimension
+
+
+
+
+## CC 0n UPI Hourly SR Trend (T vs T-1)- 588
+
+This metric tracks UPI transaction success rate (SR) on an hourly basis, enabling comparison between current day and previous day performance. Success rate is calculated as the percentage of transactions with SUCCESS or DEEMED status out of total transaction volume. The analysis focuses specifically on CREDIT account type transactions processed through major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). Transactions are categorized into flow types including P2P, Scan and Pay (SnP), Online, and On-us flows based on complex business rules involving channel codes, initiation modes, and merchant VPA mappings. This enables operators to monitor real-time payment system performance and identify hourly patterns or anomalies in transaction success rates across different payment flows.
+
+-- tables_involved
+hive.switch.txn_info_snapshot_v3 ti
+hive.switch.txn_participants_snapshot_v3 tp1, tp2
+user_paytm_payments.onus_vpa_base c
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance optimization
+ti.dl_last_updated >= current_date - interval '01' day AND
+date(ti.created_on) >= current_date - interval '01' day AND
+--- focus on payment and collect transaction types only
+ti.type IN ('PAY','COLLECT') AND
+ti.category IN ('VPA2VPA','VPA2ACCOUNT','VPA2MERCHANT') AND
+--- exclude specific initiation mode
+JSON_EXTRACT_SCALAR(ti.extended_info, '$.initiationMode') != '14' AND
+--- limit to major PSP ecosystem
+lower(ti.psp_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- participant data recency filter
+tp1.dl_last_updated >= current_date - interval '01' day AND
+tp2.dl_last_updated >= current_date - interval '01' day AND
+--- ensure proper participant role mapping
+tp1.participant_type = 'PAYER' AND
+tp2.participant_type = 'PAYEE' AND
+lower(tp1.handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
+
+--- specific filters
+--- account type restriction for credit transactions
+tp1.account_type = 'CREDIT'
+
+--- calculation_logic
+(COUNT(txn_id) FILTER(WHERE status = 'SUCCESS') * 1.0000) / (COUNT(txn_id) * 1.0000) as success_rate,
+hour(created_on) as hourly_dimension,
+complex_flow_categorization: CASE WHEN category='VPA2MERCHANT' AND business_type='MANDATE' THEN 'MANDATE'...
+
+
+

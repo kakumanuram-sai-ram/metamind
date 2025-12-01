@@ -299,12 +299,38 @@ def process_dspy_extraction_results(
         print("No tables found in DSPy results")
         return pd.DataFrame(columns=['table_name', 'column_name', 'column_datatype', 'extra', 'comment'])
     
-    print(f"Found {len(unique_tables)} unique tables:")
-    for table in sorted(unique_tables):
+    print(f"Found {len(unique_tables)} unique tables (before validation):")
+    for table in sorted(list(unique_tables))[:10]:  # Show first 10
         print(f"  - {table}")
+    if len(unique_tables) > 10:
+        print(f"  ... and {len(unique_tables) - 10} more")
+    
+    # Validate tables against metadata catalog
+    print(f"\n🔍 Validating tables against metadata catalog...")
+    from table_validator import validate_tables
+    
+    valid_tables = validate_tables(list(unique_tables))
+    invalid_tables = unique_tables - set(valid_tables)
+    
+    print(f"✅ Validation complete:")
+    print(f"  - Valid tables: {len(valid_tables)}")
+    print(f"  - Invalid tables: {len(invalid_tables)}")
+    
+    if invalid_tables:
+        print(f"\n⚠️  Invalid tables (will be skipped):")
+        for table in sorted(invalid_tables)[:5]:
+            print(f"  - {table}")
+        if len(invalid_tables) > 5:
+            print(f"  ... and {len(invalid_tables) - 5} more")
+    
+    if not valid_tables:
+        print("❌ No valid tables found after validation")
+        return pd.DataFrame(columns=['table_name', 'column_name', 'column_datatype', 'extra', 'comment'])
+    
+    print(f"\n📊 Proceeding with {len(valid_tables)} validated tables")
     
     # Fetch schemas
-    return fetch_schemas_for_tables(list(unique_tables), user_email, normalize=False)
+    return fetch_schemas_for_tables(valid_tables, user_email, normalize=False)
 
 
 # Example usage

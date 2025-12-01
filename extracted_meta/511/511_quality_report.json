@@ -1,60 +1,55 @@
 {
   "dashboard_id": 511,
-  "timestamp": "2025-11-27T03:22:16.959886",
+  "timestamp": "2025-12-01T13:06:49.324726",
   "summary": {
-    "overall_confidence": 91.2,
-    "status": "EXCELLENT",
+    "overall_confidence": 38.4,
+    "status": "POOR",
     "average_scores": {
-      "completeness": 91.0,
-      "accuracy": 91.4
+      "completeness": 39.0,
+      "accuracy": 38.4
     },
     "total_issues": {
-      "missing_items": 16,
-      "quality_issues": 14,
-      "recommendations": 20
+      "missing_items": 0,
+      "quality_issues": 5,
+      "recommendations": 7
     }
   },
   "detailed_reports": {
     "table_metadata": {
       "metadata_type": "table_metadata",
       "scores": {
-        "completeness": 100.0,
-        "accuracy": 95.0,
-        "confidence": 95.0,
-        "clarity": 90.0
+        "completeness": 0,
+        "accuracy": 0,
+        "clarity": 0,
+        "confidence": 0
       },
       "missing_items": [],
       "quality_issues": [
-        "Description is quite verbose and could be more concise while maintaining the same level of detail",
-        "Relationship context section is repetitive with similar join patterns described multiple times"
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
       ],
       "recommendations": [
-        "Consolidate the relationship context to avoid repetition while maintaining comprehensive coverage of join patterns",
-        "Consider breaking the long description into more structured sections for better readability",
-        "Add specific examples of common success rate thresholds or benchmarks used in business monitoring"
+        "Fix judging error and retry"
       ],
-      "status": "EXCELLENT"
+      "status": "POOR"
     },
     "column_metadata": {
       "metadata_type": "column_metadata",
       "scores": {
-        "completeness": 92.0,
-        "accuracy": 95.0,
+        "completeness": 95.0,
+        "accuracy": 92.0,
         "confidence": 92.0,
         "business_context": 88.0
       },
-      "missing_items": [
-        "fact_upi_transactions_snapshot_v3.Error_code"
-      ],
+      "missing_items": [],
       "quality_issues": [
-        "Missing derived column Error_code which is created by COALESCE(app_resp_code,npci_resp_code) and used in the virtual table",
-        "Some descriptions could be more specific about business rules (e.g., payer_handle classification logic)"
+        "Some descriptions are slightly verbose and could be more concise",
+        "Required flags for core business fields like status and amount could be reconsidered as they are essential for success rate calculations"
       ],
       "recommendations": [
-        "Add metadata for the derived Error_code column explaining it's a coalesced error identifier",
-        "Enhance payer_handle and payee_handle descriptions to mention specific Paytm-related handle values used in PSP classification",
-        "Add more detail about transaction_date_key vs txn_timestamp usage patterns",
-        "Consider adding examples of specific purpose_code values for better business understanding"
+        "Consider making status and amount fields required as they are critical for SR calculations",
+        "Streamline some descriptions to be more concise while maintaining business context",
+        "Add explicit mention of success rate calculation usage in status column description",
+        "Consider adding examples of common values for categorical fields like flow_category and final_category"
       ],
       "status": "EXCELLENT"
     },
@@ -74,72 +69,36 @@
     "filter_conditions": {
       "metadata_type": "filter_conditions",
       "scores": {
-        "completeness": 85.0,
-        "accuracy": 75.0,
-        "confidence": 83.0,
-        "clarity": 90.0
+        "completeness": 0,
+        "accuracy": 0,
+        "clarity": 0,
+        "confidence": 0
       },
-      "missing_items": [
-        "transaction_type in('PAY'",
-        "'COLLECT') from subquery",
-        "category in ('VPA2ACCOUNT'",
-        "'VPA2VPA'",
-        "'VPA2MERCHANT') from subquery"
-      ],
+      "missing_items": [],
       "quality_issues": [
-        "Purpose code filter syntax incorrect - shows purpose_code != '14' but SQL uses purpose_code != '''14'''",
-        "Some chart-level filters marked as 'No filter' but are actually inactive",
-        "Missing explicit mention of subquery-level filters that are embedded in virtual table",
-        "Date interval syntax slightly different between metadata and actual SQL"
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
       ],
       "recommendations": [
-        "Fix purpose code filter syntax to match exact SQL condition",
-        "Add explicit mention of subquery-level transaction_type and category filters",
-        "Clarify that some chart filters are configured but inactive ('No filter' status)",
-        "Align date interval syntax exactly with SQL implementation",
-        "Add explanation of virtual table structure and how embedded filters work"
+        "Fix judging error and retry"
       ],
-      "status": "GOOD"
+      "status": "POOR"
     },
     "definitions": {
       "metadata_type": "definitions",
       "scores": {
-        "completeness": 78.0,
-        "accuracy": 92.0,
-        "confidence": 86.0,
-        "usefulness": 85.0
+        "completeness": 0,
+        "accuracy": 0,
+        "usefulness": 0,
+        "confidence": 0
       },
-      "missing_items": [
-        "txn_id",
-        "amount",
-        "purpose_code",
-        "Error_code",
-        "VPA2ACCOUNT",
-        "VPA2VPA",
-        "VPA2MERCHANT",
-        "transaction_type",
-        "customer_id",
-        "dl_last_updated"
-      ],
+      "missing_items": [],
       "quality_issues": [
-        "Missing definition for transaction identifier (txn_id)",
-        "Missing amount field definition",
-        "Missing purpose_code explanation",
-        "Missing Error_code definition",
-        "Missing specific VPA category explanations",
-        "Some business aliases could be more comprehensive"
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
       ],
       "recommendations": [
-        "Add definition for txn_id as unique transaction identifier",
-        "Add amount field definition for transaction value",
-        "Add purpose_code definition explaining UPI purpose codes",
-        "Add Error_code definition for transaction failure analysis",
-        "Add specific definitions for VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT categories",
-        "Add definition for transaction_type field",
-        "Enhance DEEMED status explanation with more business context",
-        "Add more comprehensive business aliases for technical terms"
+        "Fix judging error and retry"
       ],
-      "status": "GOOD"
+      "status": "POOR"
     }
   }
 }

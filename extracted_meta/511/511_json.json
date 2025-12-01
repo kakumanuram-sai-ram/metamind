@@ -13,19 +13,17 @@
       "dataset_id": 973,
       "dataset_name": "UPI overall SR dataset",
       "database_name": "Trino",
-      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
       "metrics": [
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -36,6 +34,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -77,6 +77,19 @@
           "isNew": false,
           "datasourceWarning": false,
           "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "purpose_code",
+          "operator": "!=",
+          "operatorId": "NOT_EQUALS",
+          "comparator": "14",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_syaagxrvorf_yvr9ge3itss"
         }
       ],
       "time_range": null
@@ -88,19 +101,17 @@
       "dataset_id": 973,
       "dataset_name": "UPI overall SR dataset",
       "database_name": "Trino",
-      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
       "metrics": [
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -111,6 +122,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -152,6 +165,19 @@
           "isNew": false,
           "datasourceWarning": false,
           "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "purpose_code",
+          "operator": "!=",
+          "operatorId": "NOT_EQUALS",
+          "comparator": "14",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_syaagxrvorf_yvr9ge3itss"
         }
       ],
       "time_range": null
@@ -163,19 +189,17 @@
       "dataset_id": 973,
       "dataset_name": "UPI overall SR dataset",
       "database_name": "Trino",
-      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", \"P2P_P2M\" AS \"P2P_P2M\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), \"P2P_P2M\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", \"P2P_P2M\" AS \"P2P_P2M\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), \"P2P_P2M\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
       "metrics": [
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -186,6 +210,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -228,6 +254,19 @@
           "isNew": false,
           "datasourceWarning": false,
           "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "purpose_code",
+          "operator": "!=",
+          "operatorId": "NOT_EQUALS",
+          "comparator": "14",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a4gsbbdbb1_4xbwbtrmtw9"
         }
       ],
       "time_range": null
@@ -239,19 +278,17 @@
       "dataset_id": 973,
       "dataset_name": "UPI overall SR dataset",
       "database_name": "Trino",
-      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", \"P2P_P2M\" AS \"P2P_P2M\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), \"P2P_P2M\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
+      "sql_query": "SELECT Day(day_id) AS \"Day\", date_trunc('month',day_id) AS \"Month\", \"P2P_P2M\" AS \"P2P_P2M\", (count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000)\n/(count(txn_id)*1.0000) AS \"SR\" \nFROM (select\ndl_last_updated,\ntransaction_date_key day_id,\ncustomer_id_payer customer_id,\ntxn_timestamp created_on,\ntxn_id,\namount,\nstatus,\npurpose_code,\ncoalesce(app_resp_code,npci_resp_code) Error_code,\npayer_handle,\npayee_handle,\npayer_bank_name,\ncase when lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi') then 'Payer as Paytm' else 'Payer as Others' end as payer_psp,\ncase when lower(payee_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi','ptybl','ptys','pty') then 'Payee as Paytm' else 'Payee as Others' end as payee_psp,\nflow_category,\nCASE                        \n        WHEN flow_category IN ('P2P') THEN 'P2P'\n        WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'\n        WHEN flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'\n        WHEN flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'\n        ELSE 'Others' \nEND AS final_category,\nCASE                        \n        WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'\n        WHEN category IN ('VPA2MERCHANT') THEN 'P2M'\n        ELSE NULL \nEND AS P2P_P2M\nfrom   cdo.fact_upi_transactions_snapshot_v3\nwhere dl_last_updated >= date_trunc('month',current_Date - interval  '01' day - interval '01' month)\nand transaction_type in('PAY','COLLECT')\nand category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')\n-- and status = 'SUCCESS'\nand lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')\n) AS virtual_table \nWHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), \"P2P_P2M\" ORDER BY \"SR\" DESC\nLIMIT 10000;\n\n",
       "metrics": [
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -262,6 +299,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -304,6 +343,19 @@
           "isNew": false,
           "datasourceWarning": false,
           "filterOptionName": "filter_a62gi894vo4_83illc8axku"
+        },
+        {
+          "expressionType": "SIMPLE",
+          "subject": "purpose_code",
+          "operator": "!=",
+          "operatorId": "NOT_EQUALS",
+          "comparator": "14",
+          "clause": "WHERE",
+          "sqlExpression": null,
+          "isExtra": false,
+          "isNew": false,
+          "datasourceWarning": false,
+          "filterOptionName": "filter_a4gsbbdbb1_4xbwbtrmtw9"
         }
       ],
       "time_range": null
@@ -320,14 +372,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -338,6 +388,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -412,14 +464,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -430,6 +480,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -504,14 +556,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -522,6 +572,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -597,14 +649,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -615,6 +665,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -690,14 +742,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -708,6 +758,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [
@@ -778,14 +830,12 @@
         "SR"
       ],
       "columns": [
+        "day_id",
         "payer_psp",
         "payee_psp",
         "flow_category",
         "final_category",
         "P2P_P2M",
-        "dl_last_updated",
-        "day_id",
-        "Month",
         "customer_id",
         "created_on",
         "txn_id",
@@ -796,6 +846,8 @@
         "payer_handle",
         "payee_handle",
         "payer_bank_name",
+        "dl_last_updated",
+        "Month",
         "Day"
       ],
       "groupby_columns": [

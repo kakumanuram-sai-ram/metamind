@@ -2,7 +2,7 @@
   {
     "term": "SR",
     "type": "Metric / Calculated Field",
-    "definition": "Success Rate calculated as the percentage of successful UPI transactions out of total transactions. Implementation varies: (1) Count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, or (2) Success transactions multiplied by 100 divided by overall transactions. Both approaches represent the percentage of successful UPI transactions.",
+    "definition": "Success Rate calculated as the percentage of successful UPI transactions out of total transactions. Specifically calculated as the ratio of successful transactions (with 'SUCCESS' or 'DEEMED' status) to total overall transactions (including success, deemed, failure, and pending status). The calculation is performed as the count of transactions with DEEMED or SUCCESS status divided by total transaction count. Implementation approaches include: (1) Count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, or (2) Success transactions multiplied by 100 divided by overall transactions. Both approaches represent the percentage of successful UPI transactions across all transaction statuses.",
     "business_alias": "Success Rate"
   },
   {
@@ -14,13 +14,13 @@
   {
     "term": "P2P",
     "type": "Category",
-    "definition": "Person-to-Person transactions - UPI payments made between individual users, including VPA2ACCOUNT and VPA2VPA transaction categories",
+    "definition": "Person-to-Person transactions - UPI payments made between individual users, including VPA2ACCOUNT and VPA2VPA transaction categories. These transactions represent payments made directly between individual users through the UPI system where individuals transfer money to other individuals using VPA to VPA or VPA to Account.",
     "business_alias": "Person-to-Person, Person to Person, Peer-to-Peer"
   },
   {
     "term": "P2M",
     "type": "Category",
-    "definition": "Person-to-Merchant transactions - payments made from users to merchants/businesses. Specifically includes VPA2MERCHANT transaction types. This category encompasses all payment flows from individual users to business entities or merchants across different dashboard contexts.",
+    "definition": "Person-to-Merchant transactions - payments made from users to merchants/businesses. Specifically includes VPA2MERCHANT transaction types in UPI payment systems where individuals make payments to merchants using VPA to Merchant flow. This category encompasses all payment flows from individual users to business entities or merchants across different dashboard contexts, with particular focus on UPI payments made from individuals to merchants.",
     "business_alias": "Person-to-Merchant, Person to Merchant"
   },
   {
@@ -56,25 +56,25 @@
   {
     "term": "Onus",
     "type": "Category",
-    "definition": "On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system or bank. These transactions occur when both parties involved are served by the same financial institution. This encompasses flows within the same bank as well as broader payment system contexts.",
+    "definition": "On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system or bank. These transactions occur when both parties involved are served by the same financial institution. This encompasses flows within the same bank as well as broader payment system contexts, covering both bank-level and payment system-level on-us transactions.",
     "business_alias": "On-us"
   },
   {
     "term": "P2P_P2M",
     "type": "Category",
-    "definition": "Transaction categorization field that classifies UPI transactions as either P2P or P2M based on transaction category",
+    "definition": "Transaction categorization field that classifies transactions (including UPI transactions) as either Person-to-Person (P2P) or Person-to-Merchant (P2M) based on transaction category and type classification grouping",
     "business_alias": NaN
   },
   {
     "term": "Day",
     "type": "Metric",
-    "definition": "The day of the month extracted from the transaction date, used for daily trend analysis.",
+    "definition": "The day of the month extracted from the transaction date, used for daily trend analysis and daily analysis of transaction patterns.",
     "business_alias": NaN
   },
   {
     "term": "Month",
     "type": "Metric",
-    "definition": "Month truncated date from transaction date for monthly analysis",
+    "definition": "Month component extracted from transaction date using date_trunc function for monthly analysis and aggregation. This metric truncates the transaction date to the month level, enabling monthly trend analysis and reporting.",
     "business_alias": NaN
   },
   {
@@ -147,7 +147,7 @@
     "term": "use_case_mtd",
     "type": "Metric",
     "definition": "Month-to-date use case activity indicator showing whether a user has performed UPI transactions in distinct use cases during the current month",
-    "business_alias": "Monthly Use Case Activity, Use Cases Month-to-Date"
+    "business_alias": "Use Cases Month-to-Date, Monthly Use Case Activity"
   },
   {
     "term": "accounts",
@@ -195,13 +195,13 @@
     "term": "Lifecycle",
     "type": "Category",
     "definition": "User classification system that categorizes users based on their engagement patterns and behavioral stages. Includes specific categories such as new users ('a:new') and reactivated users ('c:react') based on their UPI usage patterns.",
-    "business_alias": "Lifecycle CM, Customer Lifecycle, User Lifecycle Stage, User Type, User Profile, User_type, user_type"
+    "business_alias": "Lifecycle CM, Customer Lifecycle, User Lifecycle Stage, User Type, User Profile, User_type, user_type, Customer Lifecycle Stage"
   },
   {
     "term": "DAU",
     "type": "Metric",
     "definition": "Daily Active Users - the number of unique users who perform at least one UPI transaction on a given day",
-    "business_alias": "Dau, Daily Active Users, Daily Active Users"
+    "business_alias": "Dau, Daily Active Users"
   },
   {
     "term": "TXNs (synonyms: txns, Txns)",
@@ -278,38 +278,38 @@
   {
     "term": "Overall",
     "type": "Metric",
-    "definition": "Total count of all UPI transactions including success, deemed, failure, and pending statuses",
-    "business_alias": "Overall_txn"
+    "definition": "Total count of all UPI transactions including success, deemed, failure, and pending statuses across all transaction types",
+    "business_alias": "Overall_txn, Total transactions"
   },
   {
     "term": "Flow_category",
     "type": "Category",
-    "definition": "Classification of UPI transaction types including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT",
-    "business_alias": NaN
+    "definition": "Classification of UPI transaction types/flows based on transaction categories including VPA2MERCHANT (VPA to Merchant), VPA2VPA (VPA to VPA), and VPA2ACCOUNT (VPA to Account)",
+    "business_alias": "Flow Category, Transaction Flow Category"
   },
   {
     "term": "VPA2MERCHANT",
     "type": "Category",
-    "definition": "UPI transaction category representing Virtual Payment Address to Merchant transactions",
-    "business_alias": NaN
+    "definition": "UPI transaction category representing Virtual Payment Address to Merchant transactions. These are UPI transactions from Virtual Payment Address to merchant accounts.",
+    "business_alias": "VPA to Merchant"
   },
   {
     "term": "VPA2VPA",
     "type": "Category",
-    "definition": "UPI transaction category representing Virtual Payment Address to Virtual Payment Address transactions",
-    "business_alias": NaN
+    "definition": "UPI transaction category representing Virtual Payment Address to Virtual Payment Address transactions (peer-to-peer transfers between Virtual Payment Addresses)",
+    "business_alias": "VPA to VPA"
   },
   {
     "term": "VPA2ACCOUNT",
     "type": "Category",
-    "definition": "UPI transaction category representing Virtual Payment Address to Account transactions",
-    "business_alias": NaN
+    "definition": "UPI transaction category representing Virtual Payment Address to Account transactions. These are UPI transactions from Virtual Payment Address to bank account.",
+    "business_alias": "VPA to Account"
   },
   {
     "term": "DoD",
     "type": "Category",
-    "definition": "Day over Day comparison showing trends and changes between consecutive days",
-    "business_alias": "Day over Day"
+    "definition": "Day over Day comparison/analysis comparing metrics between consecutive days to identify trends and changes",
+    "business_alias": "Day over Day, Day-over-Day"
   },
   {
     "term": "% Growth",
@@ -356,7 +356,7 @@
   {
     "term": "Retention Month",
     "type": "Metric",
-    "definition": "The subsequent month being compared to the base month to measure user retention",
+    "definition": "The subsequent month being compared to the base month to measure user retention and for retention analysis",
     "business_alias": "retention_month"
   },
   {
@@ -392,31 +392,31 @@
   {
     "term": "Amount",
     "type": "Metric",
-    "definition": "Total monetary value of transactions processed. Specifically refers to the total monetary value of all UPI transactions in the specified period.",
+    "definition": "Total monetary value of transactions processed. Specifically refers to the total monetary value of all UPI transactions in the specified period and currency.",
     "business_alias": "Transaction Amount"
   },
   {
     "term": "GMV",
-    "type": "Synonym",
-    "definition": "Gross Merchandise Value - total monetary value of transactions processed",
-    "business_alias": "Gross Merchandise Value"
+    "type": "Metric",
+    "definition": "Gross Merchandise Value - total monetary value of transactions processed. Specifically refers to the total transaction amount/value processed through UPI payments.",
+    "business_alias": "Gross Merchandise Value, Amount"
   },
   {
     "term": "Ratio DAU P2p/p2m",
     "type": "Metric / Calculated Field",
-    "definition": "Ratio of P2P Daily Active Users divided by P2M Daily Active Users, calculated as sum of P2P DAU divided by sum of P2M DAU",
+    "definition": "Ratio of P2P Daily Active Users divided by P2M Daily Active Users. Implementation varies by dashboard: (1) Direct ratio calculated as sum of P2P DAU divided by sum of P2M DAU, and (2) Time-based comparison using LAG function to compare previous period DAU values.",
     "business_alias": NaN
   },
   {
     "term": "Ratio txns P2p/p2m",
     "type": "Metric / Calculated Field",
-    "definition": "Ratio of P2P transactions divided by P2M transactions, calculated as sum of P2P transaction count divided by sum of P2M transaction count",
+    "definition": "Ratio of P2P transactions divided by P2M transactions. This metric compares P2P transaction count to P2M transaction count and can be calculated as: (1) sum of P2P transaction count divided by sum of P2M transaction count, or (2) using LAG function to compare previous period transaction values for temporal analysis.",
     "business_alias": NaN
   },
   {
     "term": "Ratio gmv P2p/p2m",
     "type": "Metric / Calculated Field",
-    "definition": "Ratio of P2P gross merchandise value divided by P2M gross merchandise value, calculated as sum of P2P amount divided by sum of P2M amount",
+    "definition": "Ratio of P2P gross merchandise value divided by P2M gross merchandise value. Calculated as sum of P2P amount divided by sum of P2M amount. Implementation may use LAG function to compare previous period GMV values for time-based analysis.",
     "business_alias": NaN
   },
   {
@@ -446,8 +446,8 @@
   {
     "term": "State",
     "type": "Category",
-    "definition": "Geographical state dimension for analyzing UPI transaction distribution across different Indian states",
-    "business_alias": "Popular State"
+    "definition": "Geographical state dimension representing the state where UPI users are located and transactions occur, used for analyzing UPI transaction distribution and regional analysis across different Indian states",
+    "business_alias": "Popular State, Geographic State"
   },
   {
     "term": "UPI Handles",
@@ -465,7 +465,7 @@
     "term": "MAU Users",
     "type": "Metric",
     "definition": "Monthly Active Users - the count of unique users who were active within a specific month period",
-    "business_alias": "MAU, Monthly Active Users, Monthly Active Users"
+    "business_alias": "MAU, Monthly Active Users"
   },
   {
     "term": "Retention In %",
@@ -476,13 +476,13 @@
   {
     "term": "users_viewed_banner",
     "type": "Metric",
-    "definition": "Count of unique users who viewed the PTS Banner 2.0 across different UPI features",
+    "definition": "Count of unique users who viewed the PTS Banner 2.0 across different UPI features. This metric tracks users who viewed the banner for various UPI features.",
     "business_alias": NaN
   },
   {
     "term": "converted_post_viewing",
     "type": "Metric",
-    "definition": "Count of users who completed a conversion action after viewing the banner",
+    "definition": "Count of users who completed a conversion action (target action) after viewing the banner",
     "business_alias": NaN
   },
   {
@@ -494,7 +494,7 @@
   {
     "term": "converted_post_clicking",
     "type": "Metric",
-    "definition": "Count of users who completed a conversion action after clicking the banner",
+    "definition": "Count of users who completed a conversion action (target action) after clicking the banner",
     "business_alias": NaN
   },
   {
@@ -518,19 +518,19 @@
   {
     "term": "Bank Linking",
     "type": "Category",
-    "definition": "UPI feature that allows users to link their bank accounts to the payment platform",
+    "definition": "UPI feature that allows users to link their bank accounts to the payment platform for payments",
     "business_alias": NaN
   },
   {
     "term": "RuPay CC Linking",
     "type": "Category",
-    "definition": "UPI feature that allows users to link their RuPay Credit Cards to the platform",
+    "definition": "UPI feature that allows users to link their RuPay Credit Cards to the platform for UPI payments",
     "business_alias": "RuPay Credit Card Linking"
   },
   {
     "term": "UPI Lite Activation",
     "type": "Category",
-    "definition": "Feature activation for UPI Lite service, enabling small-value transactions without PIN",
+    "definition": "Feature activation for UPI Lite service, enabling small-value transactions without PIN. This service allows users to activate UPI Lite small value payment functionality.",
     "business_alias": "Lite Activation"
   },
   {
@@ -584,8 +584,8 @@
   {
     "term": "Success",
     "type": "Metric",
-    "definition": "A transaction status indicating the transaction was completed successfully. Count of UPI transactions with status 'success' or 'deemed'. Used both as a categorical status value and as a metric for counting successful transactions across dashboards.",
-    "business_alias": "Success_txn"
+    "definition": "Total count of successful UPI transactions, including transactions with 'success' and 'deemed' status. A transaction status indicating the transaction was completed successfully. Used both as a categorical status value and as a metric for counting successful transactions across dashboards.",
+    "business_alias": "Success_txn, Successful transactions"
   },
   {
     "term": "TXNs (also: txns, Txns)",
@@ -718,5 +718,47 @@
     "type": "Category",
     "definition": "Type of SuperCash redemption method including coins, goldcoins, UPI, and other payment methods",
     "business_alias": "Redemption Method"
+  },
+  {
+    "term": "TXNs (Txns)",
+    "type": "Metric",
+    "definition": "Total number/count of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status",
+    "business_alias": "Transactions"
+  },
+  {
+    "term": "Success_txn",
+    "type": "Metric",
+    "definition": "Count of transactions with status 'success' or 'deemed' indicating completed successful payments",
+    "business_alias": "Successful Transactions, Success Transactions"
+  },
+  {
+    "term": "Overall_txn",
+    "type": "Metric",
+    "definition": "Total count of all transactions including success, deemed, failure, and pending status transactions",
+    "business_alias": "Overall Transactions, Total Transactions"
+  },
+  {
+    "term": "p2m_p2p_flag",
+    "type": "Metric / Calculated Field",
+    "definition": "Calculated field that categorizes transactions as either P2P or P2M based on is_p2p and is_p2m boolean flags",
+    "business_alias": NaN
+  },
+  {
+    "term": "txn_id",
+    "type": "Metric",
+    "definition": "Unique transaction identifier used to count total number of UPI transactions",
+    "business_alias": "Transaction ID"
+  },
+  {
+    "term": "payer_handle",
+    "type": "Metric",
+    "definition": "UPI handle of the person or entity initiating the payment transaction",
+    "business_alias": "Payer Handle"
+  },
+  {
+    "term": "payee_handle",
+    "type": "Metric",
+    "definition": "UPI handle of the person or entity receiving the payment transaction",
+    "business_alias": "Payee Handle"
   }
 ]

@@ -1062,6 +1062,27 @@ def extract_table_metadata_llm(
     # Extract unique tables
     unique_tables = tables_columns_df['tables_involved'].unique().tolist()
     
+    # Validate tables before generating metadata
+    print(f"\n🔍 Validating {len(unique_tables)} unique tables before LLM metadata generation...")
+    from table_validator import validate_tables
+    valid_tables = validate_tables(unique_tables)
+    invalid_tables = set(unique_tables) - set(valid_tables)
+    
+    if invalid_tables:
+        print(f"  ⚠️  Skipping {len(invalid_tables)} invalid tables (will not generate metadata):")
+        for table in sorted(invalid_tables)[:3]:
+            print(f"     - {table}")
+        if len(invalid_tables) > 3:
+            print(f"     ... and {len(invalid_tables) - 3} more")
+    
+    # Use only valid tables
+    unique_tables = valid_tables
+    print(f"  ✅ Proceeding with {len(unique_tables)} validated tables")
+    
+    if len(unique_tables) == 0:
+        print("  ❌ No valid tables found. Skipping metadata generation.")
+        return []
+    
     # Prepare dashboard context
     dashboard_title = dashboard_info.get('dashboard_title', 'Unknown Dashboard')
     charts = dashboard_info.get('charts', [])

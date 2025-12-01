@@ -1465,7 +1465,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' GROUP BY "Date" ORDER BY "Success" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30' GROUP BY "Date" ORDER BY "Success" DESC
 LIMIT 100;
 
 
@@ -1496,7 +1496,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' GROUP BY "Date" ORDER BY "Success" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30' GROUP BY "Date" ORDER BY "Success" DESC
 LIMIT 100;
 
 
@@ -1527,7 +1527,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
 LIMIT 10000;
 
 
@@ -1558,7 +1558,7 @@ and transaction_type in ('PAY','COLLECT')
 and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1 ,2
 ) AS virtual_table 
-WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-25' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
+WHERE "Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30' AND ("Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M')) GROUP BY "Date", "Flow_category" ORDER BY "SR" DESC
 LIMIT 10000;
 
 
@@ -2123,31 +2123,29 @@ LIMIT 1000;
 
 -- Chart 37: [Upi Profile wise] P2P P2M Ratio (ID: 3058)
 -- Chart Type: pivot_table_v2
--- Dataset: State n catg wise dod dump
+-- Dataset: [User Growth] p2p p2m NNR catg wise dod
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT cast(month(day_id) as VARCHAR) AS day_id, p2m_p2p_flag AS p2m_p2p_flag, sum("Dau") AS "SUM(Dau)", (sum(if(p2m_p2p_flag='P2P',Dau,0))*1.0000)
-/
-sum(if(p2m_p2p_flag='P2M',Dau,1)) AS "Ratio DAU P2p/p2m", sum(txns) AS "SUM(txns)", sum(if(p2m_p2p_flag='P2P',txns,0))*1.0000/
-sum(if(p2m_p2p_flag='P2M',txns,1)) AS "Ratio txns P2p/p2m", sum(amount) AS "SUM(amount)", sum(if(p2m_p2p_flag='P2P',amount,0))*1.0000/
-sum(if(p2m_p2p_flag='P2M',amount,1)) AS "Ratio gmv P2p/p2m" 
+SELECT mt_flag AS mt_flag, p2m_p2p_flag AS p2m_p2p_flag, "Lifecycle" AS "Lifecycle", sum("DAU") AS "DAU__",  lAG(sum(Dau))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Dau) AS "Ratio DAU P2p/p2m", sum("Txns") AS "Txns",  lAG(sum(Txns))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Txns) AS "Ratio txns P2p/p2m", sum("Amount") AS "GMV",  lAG(sum(Amount))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Amount) AS "Ratio gmv P2p/p2m" 
 FROM (-- Users (DAU,MAU), Txns split by states  
 -- Retention & TPU split by NRR
-with top20 as(select
-        customer_id,
-        max( upper(popular_city))  as popular_city,
-        max(popular_state)state
-        from hive.midgar.engage_data_snapshot_v3 
-        where customer_id is not NULL 
-        group by 1
-),
-upi as( --select * from hive.user_paytm_payments.temp_upi_test2
--- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
---     select day_id, payer_cust_id, count(distinct txn_id)txns
---         from hive.user_paytm_payments.upi_abhay
---     where day_id>=current_date+interval'-5' day
--- and  day_id<current_date
--- group by 1,2
+with 
+upi as( 
 
 select transaction_date_key day_id,customer_id_payer payer_cust_id,
   case when is_p2p=True then 'P2P'
@@ -2167,24 +2165,38 @@ and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1,2,3,4
 
 ), 
-out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
+out as(  select  a.day_id, a.payer_cust_id,
              p2m_p2p_flag,Flow_category,
               sum(txns) Txns,
               sum(amount) Amount
-            from upi a
-            left join top20 b on a.payer_cust_id=b.customer_id 
-            group by 1,2,3,4,5   
-)           
+            from upi a 
+            group by 1,2,3,4
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid,
+              date_trunc('month',ft_date) mt  
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) >= date_trunc('month',(current_Date - interval '01' day )) - interval '01' month 
+  )
 
-select Day_id, State,p2m_p2p_flag,Flow_category,
+select Lifecycle,
+                CASE
+                  WHEN day_id >= date_trunc('month', current_date)
+                       AND day_id < current_date
+                  THEN 'CMTD'
+                  WHEN day_id >= date_trunc('month', current_date)+interval '-1' month
+                       AND day_id <=current_date+interval '-1' month +interval '-1' day 
+                  THEN 'LMTD'
+                  ELSE NULL
+                END AS mt_flag,
+                p2m_p2p_flag,
                 count(Distinct  payer_cust_id ) DAU, 
                 sum(txns) Txns,
                 sum(amount) Amount
-from out 
-group by 1,2,3,4
-order by 1
-) AS virtual_table 
-WHERE ((day(day_id)<day(current_date))) GROUP BY cast(month(day_id) as VARCHAR), p2m_p2p_flag ORDER BY "SUM(Dau)" DESC
+from out
+left join nrr on out.payer_cust_id=nrr.custid and  nrr.mt=date_trunc('month',day_id)
+where day(day_id)<day(current_date) and lifecycle is not null
+group by 1,2,3
+) AS virtual_table GROUP BY mt_flag, p2m_p2p_flag, "Lifecycle" ORDER BY sum("DAU") DESC
 LIMIT 5000;
 
 
@@ -2193,31 +2205,29 @@ LIMIT 5000;
 
 -- Chart 38: [Upi Profile wise] P2P P2M Ratio (ID: 3058)
 -- Chart Type: pivot_table_v2
--- Dataset: State n catg wise dod dump
+-- Dataset: [User Growth] p2p p2m NNR catg wise dod
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT cast(month(day_id) as VARCHAR) AS day_id, p2m_p2p_flag AS p2m_p2p_flag, sum("Dau") AS "SUM(Dau)", (sum(if(p2m_p2p_flag='P2P',Dau,0))*1.0000)
-/
-sum(if(p2m_p2p_flag='P2M',Dau,1)) AS "Ratio DAU P2p/p2m", sum(txns) AS "SUM(txns)", sum(if(p2m_p2p_flag='P2P',txns,0))*1.0000/
-sum(if(p2m_p2p_flag='P2M',txns,1)) AS "Ratio txns P2p/p2m", sum(amount) AS "SUM(amount)", sum(if(p2m_p2p_flag='P2P',amount,0))*1.0000/
-sum(if(p2m_p2p_flag='P2M',amount,1)) AS "Ratio gmv P2p/p2m" 
+SELECT mt_flag AS mt_flag, p2m_p2p_flag AS p2m_p2p_flag, "Lifecycle" AS "Lifecycle", sum("DAU") AS "DAU__",  lAG(sum(Dau))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Dau) AS "Ratio DAU P2p/p2m", sum("Txns") AS "Txns",  lAG(sum(Txns))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Txns) AS "Ratio txns P2p/p2m", sum("Amount") AS "GMV",  lAG(sum(Amount))
+OVER(
+PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag
+)*1.000000
+/ 
+sum(Amount) AS "Ratio gmv P2p/p2m" 
 FROM (-- Users (DAU,MAU), Txns split by states  
 -- Retention & TPU split by NRR
-with top20 as(select
-        customer_id,
-        max( upper(popular_city))  as popular_city,
-        max(popular_state)state
-        from hive.midgar.engage_data_snapshot_v3 
-        where customer_id is not NULL 
-        group by 1
-),
-upi as( --select * from hive.user_paytm_payments.temp_upi_test2
--- CREATE TABLE hive.user_paytm_payments.temp_upi_test2 as  
---     select day_id, payer_cust_id, count(distinct txn_id)txns
---         from hive.user_paytm_payments.upi_abhay
---     where day_id>=current_date+interval'-5' day
--- and  day_id<current_date
--- group by 1,2
+with 
+upi as( 
 
 select transaction_date_key day_id,customer_id_payer payer_cust_id,
   case when is_p2p=True then 'P2P'
@@ -2237,24 +2247,38 @@ and a.category in('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
 group by 1,2,3,4
 
 ), 
-out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
+out as(  select  a.day_id, a.payer_cust_id,
              p2m_p2p_flag,Flow_category,
               sum(txns) Txns,
               sum(amount) Amount
-            from upi a
-            left join top20 b on a.payer_cust_id=b.customer_id 
-            group by 1,2,3,4,5   
-)           
+            from upi a 
+            group by 1,2,3,4
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid,
+              date_trunc('month',ft_date) mt  
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) >= date_trunc('month',(current_Date - interval '01' day )) - interval '01' month 
+  )
 
-select Day_id, State,p2m_p2p_flag,Flow_category,
+select Lifecycle,
+                CASE
+                  WHEN day_id >= date_trunc('month', current_date)
+                       AND day_id < current_date
+                  THEN 'CMTD'
+                  WHEN day_id >= date_trunc('month', current_date)+interval '-1' month
+                       AND day_id <=current_date+interval '-1' month +interval '-1' day 
+                  THEN 'LMTD'
+                  ELSE NULL
+                END AS mt_flag,
+                p2m_p2p_flag,
                 count(Distinct  payer_cust_id ) DAU, 
                 sum(txns) Txns,
                 sum(amount) Amount
-from out 
-group by 1,2,3,4
-order by 1
-) AS virtual_table 
-WHERE ((day(day_id)<day(current_date))) GROUP BY cast(month(day_id) as VARCHAR), p2m_p2p_flag ORDER BY "SUM(Dau)" DESC
+from out
+left join nrr on out.payer_cust_id=nrr.custid and  nrr.mt=date_trunc('month',day_id)
+where day(day_id)<day(current_date) and lifecycle is not null
+group by 1,2,3
+) AS virtual_table GROUP BY mt_flag, p2m_p2p_flag, "Lifecycle" ORDER BY sum("DAU") DESC
 LIMIT 5000;
 
 
@@ -2759,7 +2783,7 @@ SELECT lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -2787,7 +2811,7 @@ SELECT 'd. Overall' lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -2864,7 +2888,7 @@ SELECT lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -2892,7 +2916,7 @@ SELECT 'd. Overall' lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -2970,7 +2994,7 @@ SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -2996,7 +3020,7 @@ SELECT 'd. Overall' Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3074,7 +3098,7 @@ SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3100,7 +3124,7 @@ SELECT 'd. Overall' Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3120,7 +3144,7 @@ LIMIT 1000;
 -- Dataset: State n catg wise dod dump
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, "Dau" AS "Dau", txns AS txns, amount AS amount 
+SELECT "Lifecycle" AS "Lifecycle", "Day_id" AS day_id, "State" AS state, "Flow_category" AS flow_category, p2m_p2p_flag AS p2m_p2p_flag, "DAU" AS "DAU", "Txns" AS "Txns", "Amount" AS "Amount" 
 FROM (-- Users (DAU,MAU), Txns split by states  
 -- Retention & TPU split by NRR
 with top20 as(select
@@ -3164,17 +3188,22 @@ out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id 
             group by 1,2,3,4,5   
-)           
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid,
+              date_trunc('month',ft_date) mt  
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) >= date_trunc('month',(current_Date - interval '01' day )) - interval '01' month 
+  )
 
-select Day_id, State,p2m_p2p_flag,Flow_category,
+select Lifecycle,Day_id, State,p2m_p2p_flag,Flow_category,
                 count(Distinct  payer_cust_id ) DAU, 
                 sum(txns) Txns,
                 sum(amount) Amount
-from out 
-group by 1,2,3,4
-order by 1
+from out
+left join nrr on out.payer_cust_id=nrr.custid and  nrr.mt=date_trunc('month',day_id)
+group by 1,2,3,4,5
 ) AS virtual_table 
-WHERE (( day_id>=current_date-interval '4' day)) ORDER BY day_id DESC
+WHERE (( day_id>=current_date-interval '3' day))
 LIMIT 5000;
 
 
@@ -3186,7 +3215,7 @@ LIMIT 5000;
 -- Dataset: State n catg wise dod dump
 -- Database: Trino
 --------------------------------------------------------------------------------
-SELECT day_id AS day_id, state AS state, p2m_p2p_flag AS p2m_p2p_flag, flow_category AS flow_category, "Dau" AS "Dau", txns AS txns, amount AS amount 
+SELECT "Lifecycle" AS "Lifecycle", "Day_id" AS day_id, "State" AS state, "Flow_category" AS flow_category, p2m_p2p_flag AS p2m_p2p_flag, "DAU" AS "DAU", "Txns" AS "Txns", "Amount" AS "Amount" 
 FROM (-- Users (DAU,MAU), Txns split by states  
 -- Retention & TPU split by NRR
 with top20 as(select
@@ -3230,17 +3259,22 @@ out as(  select  a.day_id,coalesce(state,'Other')state, a.payer_cust_id,
             from upi a
             left join top20 b on a.payer_cust_id=b.customer_id 
             group by 1,2,3,4,5   
-)           
+),
+nrr as( select lifecycle, cast(customer_id as varchar) custid,
+              date_trunc('month',ft_date) mt  
+          from hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 
+          where  date(ft_date) >= date_trunc('month',(current_Date - interval '01' day )) - interval '01' month 
+  )
 
-select Day_id, State,p2m_p2p_flag,Flow_category,
+select Lifecycle,Day_id, State,p2m_p2p_flag,Flow_category,
                 count(Distinct  payer_cust_id ) DAU, 
                 sum(txns) Txns,
                 sum(amount) Amount
-from out 
-group by 1,2,3,4
-order by 1
+from out
+left join nrr on out.payer_cust_id=nrr.custid and  nrr.mt=date_trunc('month',day_id)
+group by 1,2,3,4,5
 ) AS virtual_table 
-WHERE (( day_id>=current_date-interval '4' day)) ORDER BY day_id DESC
+WHERE (( day_id>=current_date-interval '3' day))
 LIMIT 5000;
 
 
@@ -3309,7 +3343,7 @@ SELECT lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3337,7 +3371,7 @@ SELECT 'd. Overall' lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3414,7 +3448,7 @@ SELECT lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3442,7 +3476,7 @@ SELECT 'd. Overall' lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3520,7 +3554,7 @@ SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3546,7 +3580,7 @@ SELECT 'd. Overall' Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3624,7 +3658,7 @@ SELECT if(lifecycle is null, 'd. Fresh users (CM)', lifecycle) Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users
@@ -3650,7 +3684,7 @@ SELECT 'd. Overall' Lifecycle,
     WHEN gmv >= 5000   AND gmv < 10000  THEN 'D: 5k–10k'
     WHEN gmv >= 10000  AND gmv < 20000  THEN 'E: 10k–20k'
     WHEN gmv >= 20000                    THEN 'F: 20k+'
-    ELSE 'UNKNOWN'
+    ELSE 'F: 20k+'
 END AS gmv_bkt,
     COUNT(DISTINCT a.scope_cust_id) AS Base_users,
     COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END) AS Retained_users

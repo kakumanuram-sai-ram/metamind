@@ -1,0 +1,32 @@
+{
+  "status": "extracting",
+  "current_operation": "extraction",
+  "total_dashboards": 1,
+  "completed_dashboards": 0,
+  "failed_dashboards": 0,
+  "dashboards": {
+    "511": {
+      "dashboard_id": 511,
+      "status": "pending",
+      "current_phase": null,
+      "current_file": null,
+      "completed_files": [],
+      "total_files": 11,
+      "completed_files_count": 0,
+      "error": null,
+      "start_time": null,
+      "end_time": null
+    }
+  },
+  "merge_status": {
+    "status": "pending",
+    "current_step": null,
+    "completed_steps": []
+  },
+  "kb_build_status": {
+    "status": "pending",
+    "current_step": null
+  },
+  "start_time": "2025-12-01T10:57:24.105185",
+  "last_update": "2025-12-01T10:57:24.105202"
+}

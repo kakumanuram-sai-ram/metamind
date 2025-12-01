@@ -1,65 +1,141 @@
-## FT/RT DoD Merchant Level (Apply Merchant filter on top for any specific merchant)
+## 3P Online - Overall MTD LMTD FT RT Summary
 
-This metric tracks first-time and reactivated user acquisition performance at the merchant level for 3P online payments, comparing current month-to-date against last month same period. It measures new user onboarding and user reactivation (users returning after 2+ months of inactivity) while excluding specific channel types like FMCG, MASU, and FSE-related transactions to focus on organic merchant-driven growth. The analysis provides both absolute user counts and growth percentages for new users, reactivated users, and combined totals. This enables merchant performance evaluation and identification of top-performing merchants in user acquisition and retention strategies.
+This metric tracks comprehensive performance of 3P Online merchants by comparing Month-to-Date (MTD) against Last Month-to-Date (LMTD) periods across key business indicators including active users, transaction volumes, Gross Merchandise Value (GMV), and Transactions Per User (TPU). The analysis segments users by Paytm user type categorization (New users vs React_2M+ returning users) and calculates month-over-month growth rates for users, transactions, and GMV. The metric excludes offline channels and focuses specifically on online UPI transactions, filtering out various offline merchant acquisition channels like FMCG, MASU offline, FSE-driven transactions, and merchant-driven offline activities to provide a clean view of digital payment performance.
 
 -- tables_involved
 user_paytm_payments.rolling_nrr_v1 nrr
-user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm exc_mtd
-user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online exc_lmtd
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic ft_mtd
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic ft_lmtd
+user_paytm_payments.upi_abhay upi
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- exclude FT/RT channel-driven transactions to focus on organic merchant growth
+--- exclude offline channels to focus on online transactions only
 nrr.customer_id NOT IN (
-    SELECT cust_id FROM exc_mtd 
-    WHERE lower(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+  SELECT cust_id FROM ft_mtd 
+  WHERE lower(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
 ) AND
 --- focus on new and reactivated users only
 nrr.user_type IN ('New', 'React_2M+')
 
---- specific filters  
---- temporal comparison: current month vs last month same period
---- MTD period: from month start to yesterday
-nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE)
---- LMTD period: from last month start to last month same day
+--- specific filters
+--- mtd period filtering
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE) AND
+--- lmtd period filtering  
 nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AND DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))
 
 --- calculation_logic
-pattern: temporal_mtd_comparison
-base_metrics: [MTD_New_Users, MTD_React2Mplus_Users, LMTD_New_Users, LMTD_React2Mplus_Users]
-growth_formulas: (current_value * 1.0000) / (previous_value * 1.0000) - 1
+pattern: mtd_lmtd_comparison
+base_metrics: [users_mtd, txns_mtd, gmv_mtd, users_lmtd, txns_lmtd, gmv_lmtd]
+derived_metrics: [tpu, growth_rates]
+segmentation: paytm_user_type
 
 
 
 
-## MTU_Live_Non_Live_Top_15_
+## 3P Online - Overall MTD LMTD FT RT Summary
 
-MTU Live Non-Live Top 15 tracks monthly transacting users segmented across merchant categories to analyze online payment ecosystem performance. The metric measures unique customer engagement with different merchant tiers: overall MTU captures all online transactions, Live Merchants focuses on major established brands (60+ merchants including Flipkart, Zomato, Swiggy, Myntra), Non-Live excludes established merchants to show emerging/smaller merchant adoption, and Top 15 Merchants represents the highest-volume subset within Live merchants. Each segment counts distinct payer customer IDs with month-to-date transactions, providing insights into user distribution across merchant categories and helping identify growth opportunities in different market segments for strategic business decisions.
+This metric tracks comprehensive performance of 3P Online merchants by comparing Month-to-Date (MTD) against Last Month-to-Date (LMTD) periods across key business indicators including active users, transaction volumes, Gross Merchandise Value (GMV), and Transactions Per User (TPU). The analysis segments users by Paytm user type categorization (New users vs React_2M+ returning users) and calculates month-over-month growth rates for users, transactions, and GMV. The metric excludes offline channels and focuses specifically on online UPI transactions, filtering out various offline merchant acquisition channels like FMCG, MASU offline, FSE-driven transactions, and merchant-driven offline activities to provide a clean view of digital payment performance.
 
 -- tables_involved
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic ft_mtd
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic ft_lmtd
 user_paytm_payments.upi_abhay upi
-user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1 mapping
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- month-to-date temporal filtering for current performance tracking
-upi.day_id >= date_trunc('month', (current_date - interval '1' day - interval '1' month)) AND
-upi.day(day_id) <= day(current_date - interval '1' day) AND
---- online transaction category filtering
-upi.final_category = 'Online'
+--- exclude offline channels to focus on online transactions only
+nrr.customer_id NOT IN (
+  SELECT cust_id FROM ft_mtd 
+  WHERE lower(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+) AND
+--- focus on new and reactivated users only
+nrr.user_type IN ('New', 'React_2M+')
 
 --- specific filters
---- merchant categorization based on predefined lists
---- live merchants: major established brands (flipkart, zomato, swiggy, myntra, etc.)
-lower(mapping.online_merchant_name) IN ('flipkart','reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone', [58 more merchants]) AND
---- top 15 merchants: highest volume subset of live merchants
-lower(mapping.online_merchant_name) IN ('meesho','flipkart','zomato','reliance','myntra','bharti','gokwik','swiggy','rapido','blinkit','zepto','bookmyshow','mpokket','jar','vodafone') AND
---- non-live merchants: exclusion of live merchant list
-lower(mapping.online_merchant_name) NOT IN ([live merchant list])
+--- mtd period filtering
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE) AND
+--- lmtd period filtering  
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AND DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))
 
 --- calculation_logic
-count(distinct payer_cust_id) as overall_mtu,
-count(distinct payer_cust_id) filter(where live_mtu >= 1) as live_merchants,
-count(distinct payer_cust_id) filter(where live_mtu = 0 and non_live_mtu >= 1) as non_live_excl_live,
-count(distinct payer_cust_id) filter(where top_15_mtu >= 1) as top_15_merch
+pattern: mtd_lmtd_comparison
+base_metrics: [users_mtd, txns_mtd, gmv_mtd, users_lmtd, txns_lmtd, gmv_lmtd]
+derived_metrics: [tpu, growth_rates]
+segmentation: paytm_user_type
+
+
+
+
+## FT/RT DoD Merchant Level (Apply Merchant filter on top for any specific merchant)
+
+This chart tracks first-time and reactivated user acquisition metrics at the merchant level, enabling day-over-day performance analysis for the top 1000 online merchants. It measures new user onboarding and user reactivation patterns by comparing current month-to-date (MTD) performance against last month-to-date (LMTD) baselines. The analysis excludes specific distribution channels including FMCG, MASU online/offline variants, FSE-related activities, and various merchant acquisition methods to focus on organic user growth. Users are categorized into New (first-time) and React_2M+ (reactivated after 2+ months) segments, with growth calculations showing percentage changes between periods. The merchant-level filtering capability allows stakeholders to drill down into specific merchant performance for targeted user acquisition insights.
+
+-- tables_involved
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic excl_lmtd
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic excl_mtd
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_map
+user_paytm_payments.upi_abhay upi_data
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude distribution channel transactions for organic user analysis
+nrr.customer_id NOT IN (
+  SELECT cust_id FROM excl_mtd 
+  WHERE dt BETWEEN mtd_start AND mtd_end
+  AND LOWER(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+) AND
+--- focus on new and reactivated users only
+nrr.user_type IN ('New', 'React_2M+') AND
+--- apply merchant-level filtering when specified
+merchant_map.merchant_id = {merchant_filter} -- optional merchant drill-down
+
+--- specific filters
+--- temporal comparison windows for MTD vs LMTD analysis
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE) -- MTD period
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AND DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)) -- LMTD period
+
+--- calculation_logic
+pattern: mtd_lmtd_user_growth_comparison
+base_metrics: SUM(MTD_New_Users), SUM(MTD_React2Mplus_Users), SUM(LMTD_New_Users), SUM(LMTD_React2Mplus_Users)
+derived_metrics: combined_totals, growth_percentages
+user_categorization: CASE WHEN user_type = 'New' THEN 'New' WHEN user_type = 'Repeat' THEN 'Repeat' ELSE 'React_2M+' END
+
+
+
+
+## FT/RT DoD Merchant Level (Apply Merchant filter on top for any specific merchant)
+
+This chart tracks first-time and reactivated user acquisition metrics at the merchant level, enabling day-over-day performance analysis for the top 1000 online merchants. It measures new user onboarding and user reactivation patterns by comparing current month-to-date (MTD) performance against last month-to-date (LMTD) baselines. The analysis excludes specific distribution channels including FMCG, MASU online/offline variants, FSE-related activities, and various merchant acquisition methods to focus on organic user growth. Users are categorized into New (first-time) and React_2M+ (reactivated after 2+ months) segments, with growth calculations showing percentage changes between periods. The merchant-level filtering capability allows stakeholders to drill down into specific merchant performance for targeted user acquisition insights.
+
+-- tables_involved
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic excl_lmtd
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic excl_mtd
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_map
+user_paytm_payments.upi_abhay upi_data
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude distribution channel transactions for organic user analysis
+nrr.customer_id NOT IN (
+  SELECT cust_id FROM excl_mtd 
+  WHERE dt BETWEEN mtd_start AND mtd_end
+  AND LOWER(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+) AND
+--- focus on new and reactivated users only
+nrr.user_type IN ('New', 'React_2M+') AND
+--- apply merchant-level filtering when specified
+merchant_map.merchant_id = {merchant_filter} -- optional merchant drill-down
+
+--- specific filters
+--- temporal comparison windows for MTD vs LMTD analysis
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('day', -1, CURRENT_DATE)) AND DATE_ADD('day', -1, CURRENT_DATE) -- MTD period
+nrr.txn_date BETWEEN DATE_TRUNC('MONTH', DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE))) AND DATE_ADD('month', -1, DATE_ADD('day', -1, CURRENT_DATE)) -- LMTD period
+
+--- calculation_logic
+pattern: mtd_lmtd_user_growth_comparison
+base_metrics: SUM(MTD_New_Users), SUM(MTD_React2Mplus_Users), SUM(LMTD_New_Users), SUM(LMTD_React2Mplus_Users)
+derived_metrics: combined_totals, growth_percentages
+user_categorization: CASE WHEN user_type = 'New' THEN 'New' WHEN user_type = 'Repeat' THEN 'Repeat' ELSE 'React_2M+' END
 
 
 
@@ -92,104 +168,267 @@ ORDER BY n_txns DESC
 
 
 
-## 3P online top 1k Daily Summary
+## online_category_missingvpa_mapping
 
-This metric provides a comprehensive daily performance summary for 3P online top 1000 merchants, tracking key business indicators including Daily Active Users (DAU), Monthly Active Users (MAU), transaction volumes, Gross Merchandise Value (GMV), and New/React user counts. The dashboard compares yesterday's performance against 7-day averages and month-to-date performance against last month-to-date across all metrics, calculating growth rates for trend analysis. Data is filtered to top 1000 merchants by performance and limited to specific payment service provider handles including Paytm ecosystem partners. The metrics enable merchant performance monitoring, identifying growth trends, and comparing current performance against historical benchmarks for strategic decision-making in the 3P online merchant segment.
+This metric identifies online merchant VPAs that are missing from the merchant mapping table, focusing on high-volume unmapped transactions to prioritize data completeness efforts. It tracks VPAs receiving online payments that lack proper merchant categorization, filtering for current month transactions with more than 100 occurrences to highlight significant mapping gaps. The analysis helps data teams identify which merchant VPAs need to be added to the mapping table to improve transaction categorization accuracy and ensure comprehensive merchant analytics coverage.
 
 -- tables_involved
-cdo.fact_upi_transactions_snapshot_v3 txn
-user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_mapping
-user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.upi_flow_wise_base_cm a
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping b
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- current month data for recent mapping gap analysis
+a.dl_last_updated >= date_trunc('month', current_date - interval '1' day) AND
+--- online transaction category focus
+a.final_category = 'Online' AND
+--- unmapped VPAs identification
+b.online_merchant_name IS NULL
+
+--- specific filters
+--- high-volume threshold for prioritization
+HAVING count(*) > 100
+
+--- calculation_logic
+count(a.txn_id) as n_txns
+GROUP BY lower(a.payee_vpa), a.online_merchant_name
+ORDER BY n_txns DESC
+
+
+
+
+## MTU_Live_Non_Live_Top_15_
+
+This metric tracks Monthly Transacting Users (MTU) segmented across different merchant categories in the online payment ecosystem. It measures customer engagement by counting distinct users who transacted with various merchant tiers including overall MTU, live merchants (major brands like Flipkart, Zomato, Swiggy), non-live merchants (excluding the live merchant list), top 15 merchants, and top 1K merchants. The segmentation helps analyze customer distribution across merchant categories, enabling business teams to understand user behavior patterns, merchant performance impact, and ecosystem health. This provides insights into which merchant categories drive user engagement and helps identify opportunities for merchant acquisition and retention strategies.
+
+-- tables_involved
+user_paytm_payments.upi_abhay upi
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1 vpa_map
 user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss top1k
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- transaction scope and success criteria
-txn.transaction_type IN ('PAY','COLLECT') AND
-txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
-txn.status = 'SUCCESS' AND
---- PSP ecosystem limitation to major players
-LOWER(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
---- data freshness boundary for monthly comparisons
-txn.dl_last_updated >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1' day - INTERVAL '1' month)
-
---- specific filters
---- 3P online merchant categorization based on flow type
-CASE                        
-    WHEN txn.flow_category IN ('P2P') THEN 'P2P'
-    WHEN txn.flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
-    WHEN txn.flow_category IN ('Intent', 'P2M Collect','Mandate_Online') THEN 'Online'
-    WHEN txn.flow_category IN ('Onus_ExcMandates','Mandate_Onus') THEN 'Onus'
-    ELSE 'Others' 
-END = 'Online' AND
---- top merchant performance tier
-merchant_mapping.online_merchant_name IN (SELECT merchant_name FROM top1k) AND
---- new/react user classification excluding repeat users
-nrr.user_type NOT IN ('Repeat')
-
---- calculation_logic
-pattern: temporal_comparative_analysis
-base_metrics: [dau, mau, n_txns, gmv, nr]
-time_periods: [yday vs 7d_avg, mtd vs lmtd]
-growth_formula: AVG(current_period)/AVG(comparison_period) - 1
-
-
-
-
-## 3P Online - Overall MTD LMTD FT RT Summary
-
-This metric provides a comprehensive month-to-date performance summary for 3P online transactions, comparing current MTD against last MTD across key business dimensions. It tracks active users, transaction volumes, GMV, and TPU (Transactions Per User) for both periods, along with growth rates. The analysis focuses specifically on New and React_2M+ user segments while excluding offline channels like FMCG, MASU, and merchant acquisition channels. The metric enables stakeholders to monitor online payment ecosystem performance trends, identify growth patterns in user engagement, and assess the effectiveness of digital transaction strategies by comparing current month progress against the same period in the previous month.
-
--- tables_involved
-hive.user_paytm_payments.rolling_nrr_v1 nrr
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm cm_exclusion
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online lmtd_exclusion
-hive.user_paytm_payments.upi_abhay upi
-
---- standard filters to be applied unless specifically requested for different user segments
---- focus on new and reactivated users only, excluding repeat users
-nrr.user_type IN ('New', 'React_2M+') AND
-
---- specific filters
---- exclude offline and merchant acquisition channels from MTD analysis
-cm_exclusion.dt BETWEEN mtd_start AND mtd_end AND
-LOWER(cm_exclusion.channel) NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- exclude offline and merchant acquisition channels from LMTD analysis  
-lmtd_exclusion.dt BETWEEN lmtd_start AND lmtd_end AND
-LOWER(lmtd_exclusion.channel) NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- filter for online transactions in first-time user analysis
+--- restrict to current month and previous month for MTU calculation
+upi.day_id >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- ensure day comparison is within current month days
+day(upi.day_id) <= day(current_date - interval '1' day) AND
+--- focus on online transactions only
 upi.final_category = 'Online'
 
+--- specific filters
+--- merchant categorization filters applied in aggregation logic
+--- live merchants: predefined list of major online merchants
+lower(vpa_map.online_merchant_name) IN ('flipkart','reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone','mpokket','bookmyshow','gokwik','jar','district','kreditbee','bigbasket','jiomart','cashfree','urban company','fancode','paytm pg','tataplay','hungerbox','nykaa','ola cabs','burger king','stage','magicpin','zee5','dmrc momentum','1mg','apollo','ajio','firstcry','chartr','eatclub','kfc','pharmeasy','zivame','pvr','snapdeal','gaana com','bbdaily','ketto online ventures pvt','ferns n petal','gullak','rentomojo','dish tv','chaupal tv','healthians','tata play binge','rail yatri','igp','aha media','bakingo','nearbuy','netmeds','intrcity','d2h','freeup','floweraura','bix42','walmart')
+--- top 15 merchants: subset of live merchants for focused analysis
+lower(vpa_map.online_merchant_name) IN ('meesho','flipkart','zomato','reliance','myntra','bharti','gokwik','swiggy','rapido','blinkit','zepto','bookmyshow','mpokket','jar','vodafone')
+
 --- calculation_logic
-pattern: mtd_lmtd_comparison
-base_metrics: [users, txns, gmv]
-derived_metrics: TPU = sum(txns)/sum(users), Growth = (current/previous) - 1
+count(distinct payer_cust_id) as overall_mtu,
+count(distinct payer_cust_id) filter(where live_mtu >= 1) as live_merchants,
+count(distinct payer_cust_id) filter(where live_mtu = 0 and non_live_mtu >= 1) as non_live_exc_live,
+count(distinct payer_cust_id) filter(where top_15_mtu >= 1) as top_15_merc,
+count(distinct payer_cust_id) filter(where top_1k_mtu >= 1) as top_1k_mtu
+
+
+
+
+## MTU_Live_Non_Live_Top_15_
+
+This metric tracks Monthly Transacting Users (MTU) segmented across different merchant categories in the online payment ecosystem. It measures customer engagement by counting distinct users who transacted with various merchant tiers including overall MTU, live merchants (major brands like Flipkart, Zomato, Swiggy), non-live merchants (excluding the live merchant list), top 15 merchants, and top 1K merchants. The segmentation helps analyze customer distribution across merchant categories, enabling business teams to understand user behavior patterns, merchant performance impact, and ecosystem health. This provides insights into which merchant categories drive user engagement and helps identify opportunities for merchant acquisition and retention strategies.
+
+-- tables_involved
+user_paytm_payments.upi_abhay upi
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1 vpa_map
+user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss top1k
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to current month and previous month for MTU calculation
+upi.day_id >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- ensure day comparison is within current month days
+day(upi.day_id) <= day(current_date - interval '1' day) AND
+--- focus on online transactions only
+upi.final_category = 'Online'
+
+--- specific filters
+--- merchant categorization filters applied in aggregation logic
+--- live merchants: predefined list of major online merchants
+lower(vpa_map.online_merchant_name) IN ('flipkart','reliance','blinkit','zomato','swiggy','meesho','bharti','zepto','rapido','myntra','vodafone','mpokket','bookmyshow','gokwik','jar','district','kreditbee','bigbasket','jiomart','cashfree','urban company','fancode','paytm pg','tataplay','hungerbox','nykaa','ola cabs','burger king','stage','magicpin','zee5','dmrc momentum','1mg','apollo','ajio','firstcry','chartr','eatclub','kfc','pharmeasy','zivame','pvr','snapdeal','gaana com','bbdaily','ketto online ventures pvt','ferns n petal','gullak','rentomojo','dish tv','chaupal tv','healthians','tata play binge','rail yatri','igp','aha media','bakingo','nearbuy','netmeds','intrcity','d2h','freeup','floweraura','bix42','walmart')
+--- top 15 merchants: subset of live merchants for focused analysis
+lower(vpa_map.online_merchant_name) IN ('meesho','flipkart','zomato','reliance','myntra','bharti','gokwik','swiggy','rapido','blinkit','zepto','bookmyshow','mpokket','jar','vodafone')
+
+--- calculation_logic
+count(distinct payer_cust_id) as overall_mtu,
+count(distinct payer_cust_id) filter(where live_mtu >= 1) as live_merchants,
+count(distinct payer_cust_id) filter(where live_mtu = 0 and non_live_mtu >= 1) as non_live_exc_live,
+count(distinct payer_cust_id) filter(where top_15_mtu >= 1) as top_15_merc,
+count(distinct payer_cust_id) filter(where top_1k_mtu >= 1) as top_1k_mtu
 
 
 
 
 ## FT/RT DoD Merchant Level (Top 15)
 
-This metric tracks merchant-level user acquisition performance for top online merchants, comparing current month-to-date performance against the same period in the previous month. It measures new user acquisition, user reactivation (users returning after 2+ months of inactivity), and combined acquisition metrics. The analysis focuses on the top 15 merchants from major e-commerce and service platforms including Meesho, Flipkart, Zomato, Myntra, Swiggy, Blinkit, and others. Growth rates are calculated using safe division to handle zero denominators. The metrics exclude users involved in offline merchant channels to focus purely on online merchant performance. This enables comparison of merchant acquisition effectiveness and identifies top-performing partnerships.
+This metric tracks merchant-level user acquisition performance for top online merchants, measuring new user acquisition and user reactivation (users returning after 2+ months of inactivity) on a month-to-date basis compared to the same period last month. The analysis focuses on 15 key merchants including meesho, flipkart, zomato, reliance, myntra, bharti, gokwik, swiggy, rapido, blinkit, zepto, bookmyshow, mpokket, jar, and vodafone. It excludes users from specific channels like FMCG and MASU to focus on organic online merchant growth. The metrics include individual counts for new and reactivated users, combined totals, and corresponding growth rates to assess merchant partnership effectiveness and user acquisition trends in the online payments ecosystem.
 
 -- tables_involved
-hive.user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online ftb
-hive.user_paytm_payments.rolling_nrr_v1 rnrr
-hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_map
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic base_online
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic base_cm
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_mapping
+user_paytm_payments.upi_abhay abhay
 
 --- standard filters to be applied unless specifically requested for a different categorical value
---- exclude offline merchant channels to focus on online merchant performance
-ftb.channel NOT IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong') AND
---- focus on new and reactivated users only
-rnrr.user_type IN ('New', 'React_2M+')
+--- exclude internal channels to focus on organic merchant growth
+nrr.customer_id NOT IN (
+  SELECT cust_id 
+  FROM base_online 
+  WHERE LOWER(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+) AND
+--- focus on new and reactivated user segments only
+nrr.user_type IN ('New', 'React_2M+')
 
 --- specific filters
---- top 15 merchant analysis for major e-commerce and service platforms
+--- top 15 high-value online merchants for partnership performance analysis
 online_merchant_name IN ('meesho', 'flipkart', 'zomato', 'reliance', 'myntra', 'bharti', 'gokwik', 'swiggy', 'rapido', 'blinkit', 'zepto', 'bookmyshow', 'mpokket', 'jar', 'vodafone')
 
 --- calculation_logic
-pattern: mtd_vs_lmtd_comparison
+pattern: temporal_mtd_comparison
 base_metrics: SUM(MTD_New_Users), SUM(MTD_React2Mplus_Users), SUM(LMTD_New_Users), SUM(LMTD_React2Mplus_Users)
-growth_calculations: safe_division_growth_rate
+growth_formulas: 
+- MTD vs LMTD growth with zero division handling
+- Combined user totals (New + React)
+- Individual and combined growth rates
+
+
+
+
+## FT/RT DoD Merchant Level (Top 15)
+
+This metric tracks merchant-level user acquisition performance for top online merchants, measuring new user acquisition and user reactivation (users returning after 2+ months of inactivity) on a month-to-date basis compared to the same period last month. The analysis focuses on 15 key merchants including meesho, flipkart, zomato, reliance, myntra, bharti, gokwik, swiggy, rapido, blinkit, zepto, bookmyshow, mpokket, jar, and vodafone. It excludes users from specific channels like FMCG and MASU to focus on organic online merchant growth. The metrics include individual counts for new and reactivated users, combined totals, and corresponding growth rates to assess merchant partnership effectiveness and user acquisition trends in the online payments ecosystem.
+
+-- tables_involved
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic base_online
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic base_cm
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_mapping
+user_paytm_payments.upi_abhay abhay
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude internal channels to focus on organic merchant growth
+nrr.customer_id NOT IN (
+  SELECT cust_id 
+  FROM base_online 
+  WHERE LOWER(channel) IN ('fmcg','masu online','masu offline','1. masu offline via fse','2. masu via p4b app','3. masu via paytm app','4. merchant gets user offline via qr code','5. merchant gets user via soundbox','6. merchant gets user via referral (p4b app)','7. fse as payer','1.a. fse gets merchants as user','1.b. fse gets merchants as other','1.c.ong')
+) AND
+--- focus on new and reactivated user segments only
+nrr.user_type IN ('New', 'React_2M+')
+
+--- specific filters
+--- top 15 high-value online merchants for partnership performance analysis
+online_merchant_name IN ('meesho', 'flipkart', 'zomato', 'reliance', 'myntra', 'bharti', 'gokwik', 'swiggy', 'rapido', 'blinkit', 'zepto', 'bookmyshow', 'mpokket', 'jar', 'vodafone')
+
+--- calculation_logic
+pattern: temporal_mtd_comparison
+base_metrics: SUM(MTD_New_Users), SUM(MTD_React2Mplus_Users), SUM(LMTD_New_Users), SUM(LMTD_React2Mplus_Users)
+growth_formulas: 
+- MTD vs LMTD growth with zero division handling
+- Combined user totals (New + React)
+- Individual and combined growth rates
+
+
+
+
+## 3P online top 1k Daily Summary
+
+This metric provides a comprehensive daily performance summary for the top 1000 3P online merchants, tracking five key business dimensions: Daily Active Users, Monthly Active Users, transaction volume, Gross Merchandise Value, and Net Revenue. Each dimension includes yesterday's performance, 7-day rolling averages, month-to-date and last-month-to-date values, along with corresponding growth rates comparing current performance to historical benchmarks. The analysis focuses on successful UPI transactions from major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes transactions from specific merchant acquisition channels like FMCG and MASU to maintain focus on organic 3P online merchant activity.
+
+-- tables_involved
+cdo.fact_upi_transactions_snapshot_v3 txn
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant_map
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic exclusion1
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic exclusion2
+user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss top1k
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus on successful payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- include major transaction categories for comprehensive coverage
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- successful transactions only for accurate performance metrics
+txn.status = 'SUCCESS' AND
+--- paytm ecosystem PSP handles for consistent attribution
+LOWER(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- temporal scope for month-to-date and last-month comparisons
+txn.dl_last_updated >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1' day - INTERVAL '1' month)
+
+--- specific filters
+--- exclude merchant acquisition channel transactions to focus on organic 3P activity
+txn.customer_id_payer NOT IN (
+    SELECT cust_id FROM exclusion1 WHERE channel IN ('fmcg', 'masu online', 'masu offline', '1. masu offline via fse', '2. masu via p4b app', '3. masu via paytm app', '4. merchant gets user offline via qr code', '5. merchant gets user via soundbox', '6. merchant gets user via referral (p4b app)', '7. fse as payer', '1.a. fse gets merchants as user', '1.b. fse gets merchants as other', '1.c.ong')
+    UNION ALL
+    SELECT cust_id FROM exclusion2
+) AND
+--- 3P online merchant mapping via payee VPA
+LOWER(txn.payee_vpa) = LOWER(merchant_map.payee_vpa) AND
+--- top 1000 merchant focus for strategic performance tracking
+merchant_map.online_merchant_name IN (SELECT merchant_name FROM top1k)
+
+--- calculation_logic
+pattern: temporal_performance_summary
+base_metrics: [dau, mau, transaction_count, gmv, net_revenue]
+time_dimensions: [yesterday, 7d_avg, mtd, lmtd]
+growth_calculations: [dod_vs_7d_avg, mom_vs_lmtd]
+
+
+
+
+## 3P online top 1k Daily Summary
+
+This metric provides a comprehensive daily performance summary for the top 1000 third-party online merchants, tracking five key business metrics: Daily Active Users (DAU), Monthly Active Users (MAU), transaction counts, Gross Merchandise Value (GMV), and new registrations (NR). Each metric includes yesterday's actual values, 7-day averages for baseline comparison, and growth calculations comparing yesterday vs 7-day average and month-to-date vs last-month-to-date performance. The data focuses on successful UPI transactions within the Paytm ecosystem (paytm, ptyes, ptaxis, pthdfc, ptsbi handles) across online payment categories including Intent, P2M Collect, and Mandate_Online flows, providing merchant-level performance insights for business monitoring and optimization decisions.
+
+-- tables_involved
+cdo.fact_upi_transactions_snapshot_v3 txn
+user_paytm_payments.upi_3p_online_merchant_vpa_mapping merchant
+user_paytm_payments.rolling_nrr_v1 nrr
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_10_logic excl1
+user_paytm_payments.ft_base_with_mapping_raw_rolling_nrr_with_online_cm_10_logic excl2
+user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss top1k
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- upi transaction scope and data freshness
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- successful payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+txn.status = 'SUCCESS' AND
+--- paytm ecosystem psp handles
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- online merchant transaction categorization
+CASE 
+  WHEN txn.flow_category IN ('P2P') THEN 'P2P'
+  WHEN txn.flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+  WHEN txn.flow_category IN ('Intent', 'P2M Collect', 'Mandate_Online') THEN 'Online'
+  WHEN txn.flow_category IN ('Onus_ExcMandates', 'Mandate_Onus') THEN 'Onus'
+  ELSE 'Others'
+END = 'Online'
+
+--- specific filters
+--- top 1000 merchant focus with nrr data availability
+nrr.txn_date >= date '2025-08-01' AND
+nrr.user_type NOT IN ('Repeat') AND
+--- exclude specific channel customers
+nrr.customer_id NOT IN (
+  SELECT cust_id FROM excl1 
+  WHERE dt >= date_trunc('month', current_date - interval '1' day - interval '1' month)
+    AND channel IN ('fmcg', 'masu online', 'masu offline', 'merchant acquisition channels')
+  UNION ALL
+  SELECT cust_id FROM excl2
+)
+
+--- calculation_logic
+pattern: temporal_comparison_metrics
+base_metrics: [dau, mau, n_txns, gmv, nr]
+dimensions: [online_merchant_name]
+temporal_windows: [yday, 7d_avg, mtd, lmtd]
 
 
 

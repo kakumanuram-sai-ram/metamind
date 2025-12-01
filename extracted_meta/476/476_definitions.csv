@@ -1,10 +1,10 @@
 term,type,definition,business_alias
 MAU,Metric / Calculated Field,"Monthly Active Users calculated as sum of users who have use_case_mtd greater than 0, indicating users who performed at least one UPI transaction use case in the current month",Monthly Active Users
 #Users,Metric,"Total count of users in the system, representing the sum of all users across different lifecycle stages and account profiles.",Total Users
-%,Metric / Calculated Field,"Percentage distribution calculated as (MAU for each handle group / Total MAU within lifecycle partition) * 100, showing the proportion of monthly active users across different handle counts","MAU Distribution Percentage, Retention Rate, Percentage Distribution"
+%,Metric / Calculated Field,"Percentage distribution calculated as (MAU for each handle group / Total MAU within lifecycle partition) * 100, showing the proportion of monthly active users across different handle counts","Retention Rate, Percentage Distribution, MAU Distribution Percentage"
 Handles,Metric,"Count of distinct UPI accounts/handles per user, representing the number of active UPI accounts a user maintains","UPI Handles, UPI Accounts"
 Lifecycle CM,Category,"User lifecycle categorization in the current month, including stages like Active, Dormant, and other user states based on transaction activity.","User Lifecycle, Customer Lifecycle, Lifecycle Current Month"
-use_case_mtd,Metric,Month-to-date use case activity indicator showing whether a user has performed UPI transactions in distinct use cases during the current month,"Monthly Use Case Activity, Use Cases Month-to-Date"
+use_case_mtd,Metric,Month-to-date use case activity indicator showing whether a user has performed UPI transactions in distinct use cases during the current month,"Use Cases Month-to-Date, Monthly Use Case Activity"
 accounts,Metric,"Count of distinct bank accounts associated with users, representing the number of linked payment accounts.",Bank Accounts
 Dormant,Category,User lifecycle status indicating inactive users who have not performed transactions within the specified period.,Inactive Users
 LMTD - MAU,Metric / Calculated Field,"Last Month To Date Monthly Active Users - sum of users filtered for the LMTD period, representing active users from the same day range in the previous month",Last Month To Date MAU
@@ -13,29 +13,32 @@ LMTD,Category,Last Month To Date - time period representing the same day range i
 MTD,Category,"Month To Date time period, representing data from the beginning of the current month to the current date","Month To Date, Month to Date"
 UPI,Category,Unified Payments Interface - India's instant real-time payment system that facilitates inter-bank transactions through mobile platforms,Unified Payments Interface
 Usecase,Category,Different categories or types of UPI transactions and payment flows that users engage with,Use Case
-Lifecycle,Category,User classification categories including new users ('a:new') and reactivated users ('c:react') based on their UPI usage patterns,"Lifecycle CM, Customer Lifecycle, User Lifecycle Stage, User Type, User Profile, User_type"
-DAU,Metric,Daily Active Users - the number of unique users who perform at least one UPI transaction on a given day,"Dau, Daily Active Users, Daily Active Users"
+Lifecycle,Category,User classification categories including new users ('a:new') and reactivated users ('c:react') based on their UPI usage patterns,"User Lifecycle Stage, Lifecycle CM, Customer Lifecycle, Customer Lifecycle Stage, User_type, User Type, User Profile"
+DAU,Metric,Daily Active Users - the number of unique users who perform at least one UPI transaction on a given day,Daily Active Users
 TXNs,Metric,Total number of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status,Transactions
 TPU,Metric / Calculated Field,Transactions Per User - calculated as total transactions divided by Daily Active Users (sum(txns)/sum(DAU)),Transactions Per User
 T20 Cities,Category,"Top 20 cities in India including New Delhi, Bangalore, Hyderabad, Jaipur, Mumbai, Chennai, Noida, Gurgaon, and others where UPI transactions are analyzed",Top 20 Cities
 Retention,Metric / Calculated Field,"The percentage of users who continue to use UPI services in subsequent months, calculated as users divided by the maximum users in the same lifecycle and base month partition","Retention Rate, NRR_retention, User Retention Analysis, User Retention Rate"
-Base Month,Metric,"The initial month when a user first becomes active, used as reference point for retention calculations","base_month, Reference Month, Base_month"
+Profile wise,Category,"Segmentation approach that groups users based on their behavioral patterns, lifecycle stages, or user types",
+c:react,Category,Customer reactive segment that includes users with reaction patterns categorized as 'c:react 1-3' and 'c:react 3+' user types,"reactive users, Customer Reactive, Reactivated Customers"
+base_month,Metric,The starting month used as reference point for calculating retention cohorts and measuring user activity progression,
+lifecycle,Category,User classification system that categorizes users based on their engagement patterns and behavioral stages,user_type
+Base Month,Metric,"The initial month when a user first becomes active, used as reference point for retention calculations","Reference Month, Base_month, base_month"
 New Users,Metric,"Users classified as 'a:new' in their lifecycle stage, representing first-time UPI users in a given period",a:new
 Diff,Metric / Calculated Field,"The difference in months between the base month and retention month, used to measure retention periods",
 Users,Metric,Count of distinct customers (scope_cust_id) within a specific lifecycle and time period,scope_cust_id
+Success,Metric,"Total count of successful UPI transactions, including transactions with 'success' and 'deemed' status","Success_txn, Successful transactions"
+Overall,Metric,"Total count of all UPI transactions across all statuses (success, deemed, failure, pending)","Overall_txn, Total transactions"
+SR,Metric / Calculated Field,Success Rate calculated as the ratio of successful transactions (success + deemed status) to total overall transactions (success + deemed + failure + pending status),Success Rate
+Flow_category,Category,"Classification of UPI transaction flows based on transaction categories like VPA2MERCHANT, VPA2VPA, VPA2ACCOUNT","Flow Category, Transaction Flow Category"
+VPA2MERCHANT,Category,UPI transactions from Virtual Payment Address to merchant accounts,VPA to Merchant
+VPA2VPA,Category,UPI transactions between Virtual Payment Addresses (peer-to-peer transfers),VPA to VPA
+VPA2ACCOUNT,Category,UPI transactions from Virtual Payment Address to bank account,VPA to Account
 Base_month,Metric,The starting month used as a reference point for calculating retention and user lifecycle analysis,
 diff,Metric / Calculated Field,"The difference in months between the base month and retention month, calculated using date_diff function",
 b:repeat,Category,User lifecycle category representing repeat users who have made multiple UPI transactions,repeat users
-c:react,Category,Customer reactive segment that includes users with reaction patterns categorized as 'c:react 1-3' and 'c:react 3+' user types,"Reactivated Customers, reactive users, Customer Reactive"
 scope_cust_id,Metric,Unique customer identifier used to track individual users across different time periods for retention analysis,customer ID
-Success,Metric,Count of UPI transactions with status 'success' or 'deemed',Success_txn
-Overall,Metric,"Total count of all UPI transactions including success, deemed, failure, and pending statuses",Overall_txn
-SR,Metric / Calculated Field,"Success Rate calculated as (Success transactions * 100) divided by Overall transactions, representing the percentage of successful UPI transactions",Success Rate
-Flow_category,Category,"Classification of UPI transaction types including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT",
-VPA2MERCHANT,Category,UPI transaction category representing Virtual Payment Address to Merchant transactions,
-VPA2VPA,Category,UPI transaction category representing Virtual Payment Address to Virtual Payment Address transactions,
-VPA2ACCOUNT,Category,UPI transaction category representing Virtual Payment Address to Account transactions,
-DoD,Category,Day over Day comparison showing trends and changes between consecutive days,Day over Day
+Retention Month,Metric,The subsequent month being compared to the base month for retention analysis,retention_month
 % Growth,Metric / Calculated Field,Month-over-month growth percentage calculated as sum of month-over-month growth divided by sum of users (SUM(mom_growth)/SUM(users)),MoM Growth
 M0,Category,"Current month or month zero in retention analysis, indicating users in their base month of activity","Month 0, Base Month"
 NRR,Metric / Calculated Field,Net Retention Rate - calculated as current month users divided by the maximum users in the same lifecycle and base month cohort,Net Retention Rate
@@ -43,54 +46,42 @@ LM Users,Metric,Total count of distinct users who were active in the last month 
 Retained Users,Metric,Count of users who were active in both the base period and the subsequent retention period,Retained Users
 Base Users,Metric,Count of distinct users from the previous month across different lifecycle stages who form the baseline for retention calculation,
 Retention Users,Metric,Count of distinct users who were active in the previous month and also performed transactions in the current month-to-date period,Retained Users
-Retention Month,Metric,The subsequent month being compared to the base month to measure user retention,retention_month
-User Profile,Category,Classification or segmentation of users based on their UPI usage patterns and characteristics,Profile
-Distribution,Category,Breakdown or allocation of MAU across different user profiles or segments,
-Reactivated,Category,Users who have returned to using UPI services after a period of inactivity (c:react lifecycle),c:react
-User Lifecycle,Category,"Classification of users based on their engagement patterns (c:react, c:react 1-3, c:react 3+)",lifecycle
-Profile wise Distribution,Category,Analysis of user metrics segmented by different user profile characteristics or lifecycle stages,
-txns,Metric,Total count of transactions processed,Transactions
-amount,Metric,Total monetary value of transactions processed,Transaction Amount
-GMV,Synonym,Gross Merchandise Value - total monetary value of transactions processed,Gross Merchandise Value
-Ratio DAU P2p/p2m,Metric / Calculated Field,"Ratio of P2P Daily Active Users divided by P2M Daily Active Users, calculated as sum of P2P DAU divided by sum of P2M DAU",
-Ratio txns P2p/p2m,Metric / Calculated Field,"Ratio of P2P transactions divided by P2M transactions, calculated as sum of P2P transaction count divided by sum of P2M transaction count",
-Ratio gmv P2p/p2m,Metric / Calculated Field,"Ratio of P2P gross merchandise value divided by P2M gross merchandise value, calculated as sum of P2P amount divided by sum of P2M amount",
-P2P,Category,Person-to-Person transactions - UPI payments made between individual users,Person-to-Person
-P2M,Category,Person-to-Merchant transactions - payments made from users to merchants/businesses,Person-to-Merchant
+MAU Users,Metric,Monthly Active Users - the count of unique users who were active within a specific month period,"MAU, Monthly Active Users"
+Retained users,Metric,"Count of users from the base period who continued to be active in the current period, used to measure user retention.",Retained Users
+Retention In %,Metric / Calculated Field,"Percentage of users retained from previous period, calculated as (Retained users × 100) / Total users","Retention Rate, Retention Percentage"
+RMG,Category,Real Money Gaming - category referring to gaming merchants and related user engagement metrics,Real Money Gaming
+DoD,Category,Day over Day analysis comparing metrics between consecutive days to identify trends,"Day-over-Day, Day over Day"
+Success_txn,Metric,Count of transactions with status 'success' or 'deemed' indicating completed successful payments,"Successful Transactions, Success Transactions"
+Overall_txn,Metric,"Total count of all transactions including success, deemed, failure, and pending status transactions","Overall Transactions, Total Transactions"
 Gaming_flag,Category,Binary classification indicating whether a user is involved in gaming transactions ('Gaming') or not ('Non_gaming'),
 use_case,Metric / Calculated Field,"Count of distinct transaction categories (P2P, SnP, Online, Onus) that a user has engaged in during the month",
+P2P,Category,Person-to-Person transactions - UPI payments made between individual users (VPA2VPA category).,Person-to-Person
 SnP,Category,Scan and Pay transactions including 3P QR and Paytm QR payments,
 Online,Category,"Online UPI transactions including Intent, P2M Collect, and Mandate_Online flows",
 Onus,Category,On-us transactions including Onus_ExcMandates and Mandate_Onus flows within the same bank,
-RMG,Category,Real Money Gaming - category referring to gaming merchants and related user engagement metrics,Real Money Gaming
-Profile wise,Category,"Segmentation approach that groups users based on their behavioral patterns, lifecycle stages, or user types",
-base_month,Metric,The starting month used as reference point for calculating retention cohorts and measuring user activity progression,
-lifecycle,Category,User classification system that categorizes users based on their engagement patterns and behavioral stages,user_type
-Base users,Metric,"Total count of users in the base period used for retention analysis, typically representing users active in the previous month.",
-Retained users,Metric,"Count of users from the base period who continued to be active in the current period, used to measure user retention.",Retained Users
-Txns,Metric,Total count of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status,Transactions
-Amount,Metric,Total monetary value of all UPI transactions in the specified period,Transaction Amount
-Flow Category,Category,"Classification of UPI transaction flows including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories",Transaction Flow Type
-State,Category,Geographical state dimension for analyzing UPI transaction distribution across different Indian states,Popular State
-UPI Handles,Category,"Payment service provider identifiers including paytm, ptyes, ptaxis, pthdfc, ptsbi for transaction routing",Payer Handle
-GPU,Category,"Grouping dimension used for segmenting UPI retention analysis, likely referring to GMV Per User or similar user profiling metric.",GMV Per User
-MAU Users,Metric,Monthly Active Users - the count of unique users who were active within a specific month period,"MAU, Monthly Active Users, Monthly Active Users"
-Retention In %,Metric / Calculated Field,"Percentage of users retained from previous period, calculated as (Retained users × 100) / Total users","Retention Rate, Retention Percentage"
-users_viewed_banner,Metric,Count of unique users who viewed the PTS Banner 2.0 across different UPI features,
-converted_post_viewing,Metric,Count of users who completed a conversion action after viewing the banner,
-users_clicked_banner,Metric,Count of users who clicked on the banner for UPI features,
-converted_post_clicking,Metric,Count of users who completed a conversion action after clicking the banner,
-TG,Category,Target Group - users who are exposed to the experimental feature or banner,Target Group
-CG,Category,"Control Group - users who are not exposed to the experimental feature, used as baseline for comparison",Control Group
-PTS Banner 2.0,Category,New version of the Payment Transaction Success banner used for promoting UPI features,
-Bank Linking,Category,UPI feature that allows users to link their bank accounts to the payment platform,
-RuPay CC Linking,Category,UPI feature that allows users to link their RuPay Credit Cards to the platform,RuPay Credit Card Linking
-UPI Lite Activation,Category,"Feature activation for UPI Lite service, enabling small-value transactions without PIN",Lite Activation
-UPI Statement,Category,Feature allowing users to download their UPI transaction statements,Download UPI Statement
-UPI Lite Auto Top UP,Category,Feature for automatically topping up UPI Lite balance when it falls below threshold,"UPI Lite Auto Top-up, Lite auto top-up"
+users_viewed_banner,Metric,Count of users who viewed the banner for various UPI features,
 SUM(users_viewed_banner),Metric / Calculated Field,Total aggregated count of all users who viewed banners across all UPI features,
+converted_post_viewing,Metric,Count of users who completed the target action after viewing the banner,
+users_clicked_banner,Metric,Count of users who clicked on the banner for UPI features,
+converted_post_clicking,Metric,Count of users who completed the target action after clicking the banner,
 TG CG tracking,Category,Target Group and Control Group tracking methodology for measuring banner effectiveness,Target Group Control Group tracking
+Bank Linking,Category,UPI feature allowing users to link their bank accounts for payments,
+RuPay CC Linking,Category,UPI feature for linking RuPay credit cards to UPI payments,RuPay Credit Card Linking
+UPI Lite Activation,Category,Feature activation for UPI Lite small value payment service,
 Download UPI Statement,Category,Feature allowing users to download their UPI transaction statements,UPI Statement
 Receive Money widget,Category,Widget feature for receiving money through UPI interface,
 Scan & Pay widget,Category,Widget feature for scanning QR codes and making UPI payments,Scan and Pay widget
 Spends Analytics,Category,Feature providing users with analytics and insights on their spending patterns,
+UPI Lite Auto Top UP,Category,Feature for automatically topping up UPI Lite balance when it falls below threshold,UPI Lite Auto Top-up
+Base users,Metric,"Total count of users in the base period used for retention analysis, typically representing users active in the previous month.",
+GMV,Metric,Gross Merchandise Value - the total transaction amount/value processed through UPI payments.,"Gross Merchandise Value, Amount, Gross Merchandise Value"
+GPU,Category,"Grouping dimension used for segmenting UPI retention analysis, likely referring to GMV Per User or similar user profiling metric.",GMV Per User
+Txns,Metric,Total count of UPI transactions including PAY and COLLECT transaction types with SUCCESS or DEEMED status,Transactions
+P2M,Category,Person-to-Merchant transactions - UPI payments made from individuals to merchants (VPA2MERCHANT category).,Person-to-Merchant
+Ratio DAU P2p/p2m,Metric / Calculated Field,"Ratio comparing P2P Daily Active Users to P2M Daily Active Users, calculated using LAG function to compare previous period DAU values.",
+Ratio txns P2p/p2m,Metric / Calculated Field,"Ratio comparing P2P transaction count to P2M transaction count, calculated using LAG function to compare previous period transaction values.",
+Ratio gmv P2p/p2m,Metric / Calculated Field,"Ratio comparing P2P transaction amounts to P2M transaction amounts, calculated using LAG function to compare previous period GMV values.",
+Amount,Metric,Total monetary value of all UPI transactions in the specified currency,Transaction Amount
+State,Category,"Geographic dimension representing the state where UPI users are located, used for regional analysis",Geographic State
+p2m_p2p_flag,Metric / Calculated Field,Calculated field that categorizes transactions as either P2P or P2M based on is_p2p and is_p2m boolean flags,
+Flow Category,Category,"Classification of UPI transaction types including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT",Transaction Flow Type

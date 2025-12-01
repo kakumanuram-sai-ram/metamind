@@ -45,7 +45,7 @@ and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
 -- and status = 'SUCCESS'
 and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
 ) AS virtual_table 
-WHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY "SR" DESC
+WHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY "SR" DESC
 LIMIT 10000;
 
 
@@ -94,7 +94,7 @@ and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
 -- and status = 'SUCCESS'
 and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
 ) AS virtual_table 
-WHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY "SR" DESC
+WHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day ))) GROUP BY Day(day_id), date_trunc('month',day_id) ORDER BY "SR" DESC
 LIMIT 10000;
 
 
@@ -143,7 +143,7 @@ and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
 -- and status = 'SUCCESS'
 and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
 ) AS virtual_table 
-WHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), "P2P_P2M" ORDER BY "SR" DESC
+WHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), "P2P_P2M" ORDER BY "SR" DESC
 LIMIT 10000;
 
 
@@ -192,7 +192,7 @@ and category in ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
 -- and status = 'SUCCESS'
 and lower(payer_handle) in ('paytm','ptyes','ptaxis','pthdfc','ptsbi')
 ) AS virtual_table 
-WHERE ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), "P2P_P2M" ORDER BY "SR" DESC
+WHERE purpose_code != '14' AND ((day_id>= date_Trunc('month',current_Date - interval '01' day))) GROUP BY Day(day_id), date_trunc('month',day_id), "P2P_P2M" ORDER BY "SR" DESC
 LIMIT 10000;
 
 

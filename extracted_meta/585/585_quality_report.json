@@ -1,0 +1,149 @@
+{
+  "dashboard_id": 585,
+  "timestamp": "2025-11-30T09:59:20.168671",
+  "summary": {
+    "overall_confidence": 32.2,
+    "status": "POOR",
+    "average_scores": {
+      "completeness": 32.0,
+      "accuracy": 34.0
+    },
+    "total_issues": {
+      "missing_items": 12,
+      "quality_issues": 17,
+      "recommendations": 23
+    }
+  },
+  "detailed_reports": {
+    "table_metadata": {
+      "metadata_type": "table_metadata",
+      "scores": {
+        "completeness": 75.0,
+        "accuracy": 82.0,
+        "confidence": 78.0,
+        "clarity": 78.0
+      },
+      "missing_items": [
+        "virtual_table",
+        "dataset_970",
+        "Date_",
+        "date_a",
+        "A"
+      ],
+      "quality_issues": [
+        "Several tables from SQL queries missing from metadata (virtual_table, dataset_970, Date_, date_a, A)",
+        "Some table names are too generic (a, date_, base_) making identification difficult",
+        "Partition column information missing for some tables (date_ranges, paytm_nrr, final_base)",
+        "Some descriptions are overly verbose and could be more concise",
+        "Table hive.user_paytm_payments.upi_3p_online_merchant_vpa_mapping has inconsistent descriptions across different contexts"
+      ],
+      "recommendations": [
+        "Add metadata for missing tables referenced in SQL queries, especially CTE tables like Date_, date_a, and A",
+        "Standardize table naming conventions to avoid generic names like 'a', 'base_', 'date_'",
+        "Complete partition column information for all tables",
+        "Consolidate duplicate or inconsistent table entries",
+        "Make descriptions more concise while maintaining business context",
+        "Add refresh frequency details for derived/aggregated tables",
+        "Include data lineage information showing relationships between base tables and derived tables",
+        "Add column-level metadata for key business fields like customer_id, merchant_name, transaction_date"
+      ],
+      "status": "GOOD"
+    },
+    "column_metadata": {
+      "metadata_type": "column_metadata",
+      "scores": {
+        "completeness": 0,
+        "accuracy": 0,
+        "business_context": 0,
+        "confidence": 0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
+      ],
+      "recommendations": [
+        "Fix judging error and retry"
+      ],
+      "status": "POOR"
+    },
+    "joining_conditions": {
+      "metadata_type": "joining_conditions",
+      "scores": {
+        "completeness": 0.0,
+        "accuracy": 0.0,
+        "confidence": 0.0,
+        "context": 0.0
+      },
+      "missing_items": [
+        "cdo.fact_upi_transactions_snapshot_v3 LEFT JOIN user_paytm_payments.upi_3p_online_merchant_vpa_mapping ON LOWER(a.payee_vpa) = LOWER(b.payee_vpa)",
+        "paytm_nrr INNER JOIN upi_online_ft ON a.payer_cust_id = b.payer_cust_id AND a.day_id = b.day_id",
+        "upi_online_ft LEFT JOIN upi_online_txns ON b.payer_cust_id = c.payer_cust_id AND b.day_id = c.day_id",
+        "user_paytm_payments.upi_flow_wise_base_cm LEFT JOIN user_paytm_payments.upi_3p_online_merchant_vpa_mapping ON LOWER(a.payee_vpa) = LOWER(b.payee_vpa)",
+        "user_paytm_payments.upi_abhay LEFT JOIN user_paytm_payments.upi_3p_online_merchant_vpa_mapping_V1 ON LOWER(a.payee_vpa) = lower(b.payee_vpa)",
+        "base_table LEFT JOIN user_paytm_payments.top1000_merchnats_nov_dec_and_offeractive_ss ON lower(b.online_merchant_name) = lower(tp.online_merchant_name)"
+      ],
+      "quality_issues": [
+        "Complete absence of join metadata",
+        "No documentation of critical VPA-based merchant mapping joins",
+        "Missing customer and date-based relationship mappings",
+        "No capture of table relationships essential for 3P online merchant analytics",
+        "Lack of join type specifications (INNER vs LEFT JOIN)",
+        "Missing business context for merchant categorization joins"
+      ],
+      "recommendations": [
+        "Document all VPA-based joins between transaction tables and merchant mapping tables",
+        "Add customer ID and date-based join conditions for user behavior analysis",
+        "Include join types (INNER/LEFT) and their business rationale",
+        "Document merchant categorization joins with top1000 merchants table",
+        "Add remarks explaining VPA matching logic and case sensitivity handling",
+        "Create comprehensive mapping of all table relationships used in 3P online merchant analytics",
+        "Include business context for each join explaining its role in merchant summary calculations"
+      ],
+      "status": "POOR"
+    },
+    "filter_conditions": {
+      "metadata_type": "filter_conditions",
+      "scores": {
+        "completeness": 85.0,
+        "accuracy": 88.0,
+        "confidence": 83.0,
+        "clarity": 75.0
+      },
+      "missing_items": [
+        "Temporal range filter for mnt column in MTU chart; specific merchant filter syntax for chart 6680; some HAVING clause conditions not fully captured"
+      ],
+      "quality_issues": [
+        "Two charts show extraction errors due to token limits",
+        "complex CASE statement logic for flow categorization could be better explained",
+        "some filter purposes lack clear business justification",
+        "merchant filter lists are long but not clearly explained in business context"
+      ],
+      "recommendations": [
+        "Add extraction for missing temporal filters on mnt column",
+        "resolve token limit issues for complete coverage",
+        "provide clearer business explanations for complex exclusion logic",
+        "simplify long merchant filter lists with business rationale",
+        "add more context on how filters impact key business metrics",
+        "improve explanation of CASE statement categorization logic"
+      ],
+      "status": "GOOD"
+    },
+    "definitions": {
+      "metadata_type": "definitions",
+      "scores": {
+        "completeness": 0,
+        "accuracy": 0,
+        "usefulness": 0,
+        "confidence": 0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
+      ],
+      "recommendations": [
+        "Fix judging error and retry"
+      ],
+      "status": "POOR"
+    }
+  }
+}

@@ -120,6 +120,13 @@
   },
   {
     "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_names":"flow_category",
+    "alias_column_name":"flow_category",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_names":"ft_date",
     "alias_column_name":"ft_date",
     "source_or_derived":"source",
@@ -136,6 +143,20 @@
     "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_names":"id",
     "alias_column_name":"id",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_names":"is_p2m",
+    "alias_column_name":"is_p2m",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_names":"is_p2p",
+    "alias_column_name":"is_p2p",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -165,7 +186,7 @@
     "column_names":"lifecycle",
     "alias_column_name":"Lifecycle__",
     "source_or_derived":"derived",
-    "derived_column_logic":"\"Lifecycle\" AS \"Lifecycle__\""
+    "derived_column_logic":"if(lifecycle is null, 'd. Fresh users (CM)', lifecycle)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
@@ -192,6 +213,20 @@
     "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_names":"payer_handle",
     "alias_column_name":"payer_handle",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_names":"popular_city",
+    "alias_column_name":"popular_city",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_names":"popular_state",
+    "alias_column_name":"popular_state",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
   },
@@ -291,7 +326,7 @@
     "column_names":"Amount",
     "alias_column_name":"gmv_bkt",
     "source_or_derived":"derived",
-    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'UNKNOWN' END"
+    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'F: 20k+' END"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -302,24 +337,24 @@
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Base_users",
+    "alias_column_name":"Base Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Base_users\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Base_users",
+    "alias_column_name":"Base users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Base_users\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"Dau",
     "alias_column_name":"Dau",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"Dau",
-    "alias_column_name":"Ratio DAU P2p\/p2m",
-    "source_or_derived":"derived",
-    "derived_column_logic":"(sum(if(p2m_p2p_flag='P2P',Dau,0))*1.0000)\/sum(if(p2m_p2p_flag='P2M',Dau,1))"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"Dau",
-    "alias_column_name":"SUM(Dau)",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Dau\")"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -334,6 +369,41 @@
     "alias_column_name":"Mau",
     "source_or_derived":"source",
     "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Retained_users",
+    "alias_column_name":"%",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(Retained_users*1.0000)\/SUM(Base_users)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Retained_users",
+    "alias_column_name":"Retained Users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Retained_users\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Retained_users",
+    "alias_column_name":"Retained users",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Retained_users\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"Retained_users",
+    "alias_column_name":"Retention",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(Retained_users*1.0000)\/SUM(Base_users)"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"amount",
+    "alias_column_name":"Amount",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(amount)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -354,14 +424,7 @@
     "column_names":"amount",
     "alias_column_name":"Ratio gmv P2p\/p2m",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(if(p2m_p2p_flag='P2P',amount,0))*1.0000\/sum(if(p2m_p2p_flag='P2M',amount,1))"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"amount",
-    "alias_column_name":"SUM(amount)",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(amount)"
+    "derived_column_logic":"lAG(sum(Amount)) OVER( PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag )*1.000000 \/ sum(Amount)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -382,14 +445,14 @@
     "column_names":"amount",
     "alias_column_name":"gmv_bkt",
     "source_or_derived":"derived",
-    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'UNKNOWN' END"
+    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'F: 20k+' END"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"amount",
     "alias_column_name":"gmv_bkt__",
     "source_or_derived":"derived",
-    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'UNKNOWN' END"
+    "derived_column_logic":"CASE WHEN gmv >= 1 AND gmv < 1000 THEN 'A: 1\u20131k' WHEN gmv >= 1000 AND gmv < 3000 THEN 'B: 1k\u20133k' WHEN gmv >= 3000 AND gmv < 5000 THEN 'C: 3k\u20135k' WHEN gmv >= 5000 AND gmv < 10000 THEN 'D: 5k\u201310k' WHEN gmv >= 10000 AND gmv < 20000 THEN 'E: 10k\u201320k' WHEN gmv >= 20000 THEN 'F: 20k+' ELSE 'F: 20k+' END"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -431,7 +494,7 @@
     "column_names":"customer_id_payer",
     "alias_column_name":"Base users",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Base_users\")"
+    "derived_column_logic":"sum(COUNT(DISTINCT a.scope_cust_id))"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -457,16 +520,16 @@
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"customer_id_payer",
-    "alias_column_name":"Dau",
+    "alias_column_name":"MAU",
     "source_or_derived":"derived",
-    "derived_column_logic":"count(Distinct payer_cust_id)"
+    "derived_column_logic":"sum(\"Mau\")"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"customer_id_payer",
-    "alias_column_name":"MAU",
+    "alias_column_name":"Ratio DAU P2p\/p2m",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Mau\")"
+    "derived_column_logic":"lAG(sum(Dau)) OVER( PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag )*1.000000 \/ sum(Dau)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -487,7 +550,7 @@
     "column_names":"customer_id_payer",
     "alias_column_name":"Retained users",
     "source_or_derived":"derived",
-    "derived_column_logic":"sum(\"Retained_users\")"
+    "derived_column_logic":"sum(COUNT(DISTINCT CASE WHEN b.scope_cust_id IS NOT NULL THEN a.scope_cust_id END))"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -543,7 +606,7 @@
     "column_names":"customer_id_payer",
     "alias_column_name":"scope_cust_id",
     "source_or_derived":"derived",
-    "derived_column_logic":"customer_id_payer"
+    "derived_column_logic":"customer_id_payer AS scope_cust_id"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -593,6 +656,13 @@
     "alias_column_name":"use_case",
     "source_or_derived":"derived",
     "derived_column_logic":"if(use_case=1,'1','2+') use_case"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"flow_category",
+    "alias_column_name":"Flow_category",
+    "source_or_derived":"derived",
+    "derived_column_logic":"flow_category"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -750,17 +820,17 @@
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"tpu",
-    "alias_column_name":"tpu_bucket__",
-    "source_or_derived":"derived",
-    "derived_column_logic":"CASE WHEN a.tpu = 1 THEN 'a.1' WHEN a.tpu = 2 THEN 'b.2' WHEN a.tpu = 3 THEN 'c.3' WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10' WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20' WHEN a.tpu > 20 THEN 'f.20+' END AS tpu_bucket"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"transaction_date_key",
     "alias_column_name":"Date",
     "source_or_derived":"derived",
     "derived_column_logic":"date_trunc('day', CAST(\"Date\" AS TIMESTAMP))"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"transaction_date_key",
+    "alias_column_name":"Day_id",
+    "source_or_derived":"derived",
+    "derived_column_logic":"transaction_date_key"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -775,6 +845,13 @@
     "alias_column_name":"day_id",
     "source_or_derived":"derived",
     "derived_column_logic":"date_trunc('day', CAST(day_id AS TIMESTAMP))"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"transaction_date_key",
+    "alias_column_name":"mt_flag",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN day_id >= date_trunc('month', current_date) AND day_id < current_date THEN 'CMTD' WHEN day_id >= date_trunc('month', current_date)+interval '-1' month AND day_id <=current_date+interval '-1' month +interval '-1' day THEN 'LMTD' ELSE NULL END"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -803,6 +880,13 @@
     "alias_column_name":"Overall_txn",
     "source_or_derived":"derived",
     "derived_column_logic":"COUNT(  CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END )"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"txn_id",
+    "alias_column_name":"Ratio txns P2p\/p2m",
+    "source_or_derived":"derived",
+    "derived_column_logic":"lAG(sum(Txns)) OVER( PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag )*1.000000 \/ sum(Txns)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -849,6 +933,13 @@
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"txn_id",
+    "alias_column_name":"Txns",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(\"Txns\")"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"txn_id",
     "alias_column_name":"tpu",
     "source_or_derived":"derived",
     "derived_column_logic":"COUNT(DISTINCT txn_id)"
@@ -857,6 +948,13 @@
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_names":"txn_id",
     "alias_column_name":"tpu_bucket",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN a.tpu = 1 THEN 'a.1' WHEN a.tpu = 2 THEN 'b.2' WHEN a.tpu = 3 THEN 'c.3' WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10' WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20' WHEN a.tpu > 20 THEN 'f.20+' END"
+  },
+  {
+    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_names":"txn_id",
+    "alias_column_name":"tpu_bucket__",
     "source_or_derived":"derived",
     "derived_column_logic":"CASE WHEN a.tpu = 1 THEN 'a.1' WHEN a.tpu = 2 THEN 'b.2' WHEN a.tpu = 3 THEN 'c.3' WHEN a.tpu BETWEEN 4 AND 10 THEN 'd.4-10' WHEN a.tpu BETWEEN 11 AND 20 THEN 'e.11-20' WHEN a.tpu > 20 THEN 'f.20+' END"
   },
@@ -873,20 +971,6 @@
     "alias_column_name":"txns",
     "source_or_derived":"derived",
     "derived_column_logic":"count(distinct txn_id)"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"txns",
-    "alias_column_name":"Ratio txns P2p\/p2m",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(if(p2m_p2p_flag='P2P',txns,0))*1.0000\/sum(if(p2m_p2p_flag='P2M',txns,1))"
-  },
-  {
-    "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
-    "column_names":"txns",
-    "alias_column_name":"SUM(txns)",
-    "source_or_derived":"derived",
-    "derived_column_logic":"sum(txns)"
   },
   {
     "tables_involved":"hive.cdo.fact_upi_transactions_snapshot_v3",
@@ -1086,6 +1170,13 @@
   },
   {
     "tables_involved":"hive.midgar.engage_data_snapshot_v3",
+    "column_names":"ft_date",
+    "alias_column_name":"ft_date",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.midgar.engage_data_snapshot_v3",
     "column_names":"gmv",
     "alias_column_name":"gmv",
     "source_or_derived":"source",
@@ -1139,6 +1230,13 @@
     "alias_column_name":"t20city",
     "source_or_derived":"derived",
     "derived_column_logic":"max(case when upper(popular_city) in ('NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI','NOIDA','GURGAON','GHAZIABAD','AHMEDABAD','PUNE','FARIDABAD','INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','THANE','PATNA','LUDHIANA') then popular_city else 'Other' end)"
+  },
+  {
+    "tables_involved":"hive.midgar.engage_data_snapshot_v3",
+    "column_names":"popular_state",
+    "alias_column_name":"State",
+    "source_or_derived":"derived",
+    "derived_column_logic":"coalesce(state,'Other')"
   },
   {
     "tables_involved":"hive.midgar.engage_data_snapshot_v3",

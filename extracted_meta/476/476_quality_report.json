@@ -1,41 +1,44 @@
 {
   "dashboard_id": 476,
-  "timestamp": "2025-11-25T20:50:21.608359",
+  "timestamp": "2025-11-30T16:01:05.773484",
   "summary": {
-    "overall_confidence": 48.2,
-    "status": "NEEDS_IMPROVEMENT",
+    "overall_confidence": 33.0,
+    "status": "POOR",
     "average_scores": {
-      "completeness": 51.0,
-      "accuracy": 51.6
+      "completeness": 32.0,
+      "accuracy": 33.6
     },
     "total_issues": {
-      "missing_items": 16,
-      "quality_issues": 19,
-      "recommendations": 24
+      "missing_items": 19,
+      "quality_issues": 15,
+      "recommendations": 20
     }
   },
   "detailed_reports": {
     "table_metadata": {
       "metadata_type": "table_metadata",
       "scores": {
-        "completeness": 95.0,
+        "completeness": 85.0,
         "accuracy": 88.0,
-        "confidence": 89.0,
-        "clarity": 85.0
+        "confidence": 85.0,
+        "clarity": 82.0
       },
-      "missing_items": [],
+      "missing_items": [
+        "hive.user_paytm_payments.paytm_upi_mau_final"
+      ],
       "quality_issues": [
-        "Several derived tables (out, users, all_accounts, cc, reten, lm, etc.) have empty or minimal column information",
-        "Some temporary tables like temp_upi_test2 and upi_abhay may not need extensive metadata as they appear to be analytical workspaces",
-        "The metadata includes many CTE-derived tables which may be over-documented for temporary query constructs"
+        "Some CTEs documented as physical tables which may confuse users",
+        "Missing table hive.user_paytm_payments.paytm_upi_mau_final referenced in SQL queries",
+        "Several tables have empty table_columns field limiting structural understanding",
+        "Some relationship descriptions are overly verbose and could be more concise"
       ],
       "recommendations": [
-        "Focus metadata documentation on physical base tables rather than CTEs and derived query results",
-        "Add more specific technical details about partition strategies for high-volume tables like fact_upi_transactions_snapshot_v3",
-        "Clarify which tables are permanent vs temporary/analytical",
-        "Add refresh frequency details for key analytical tables",
-        "Include data retention policies for transaction tables",
-        "Specify primary keys and indexing strategies for performance optimization"
+        "Add metadata for missing table hive.user_paytm_payments.paytm_upi_mau_final",
+        "Clearly distinguish between physical tables and CTEs in descriptions",
+        "Populate empty table_columns fields where possible",
+        "Simplify some relationship context descriptions to focus on key join patterns",
+        "Add refresh schedule details beyond just 'Daily' where applicable",
+        "Include data lineage information for derived tables"
       ],
       "status": "GOOD"
     },
@@ -44,32 +47,35 @@
       "scores": {
         "completeness": 75.0,
         "accuracy": 80.0,
-        "confidence": 68.0,
-        "business_context": 45.0
+        "confidence": 80.0,
+        "business_context": 85.0
       },
       "missing_items": [
-        "virtual_table.%",
-        "virtual_table.TPU",
-        "virtual_table.GPU",
-        "virtual_table.SR",
-        "virtual_table.Retention"
+        "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3.p2m_p2p_flag",
+        "hive.cdo.fact_upi_transactions_snapshot_v3.Flow_category",
+        "hive.cdo.fact_upi_transactions_snapshot_v3.Success_txn",
+        "hive.cdo.fact_upi_transactions_snapshot_v3.Overall_txn",
+        "hive.default.virtual_table.TPU_bucket",
+        "hive.default.virtual_table.gmv_bkt",
+        "hive.default.virtual_table.Base_month",
+        "hive.default.virtual_table.diff",
+        "hive.default.virtual_table.NRR_retention"
       ],
       "quality_issues": [
-        "Many columns lack explicit data type specifications",
-        "Business descriptions are too technical (e.g., lifecycle, handles, accounts columns)",
-        "Generic descriptions like 'identifier' or 'timestamp' don't explain business purpose",
-        "Some key computed metrics from SQL queries missing from metadata",
-        "Required flags are inconsistently specified across similar column types"
+        "Several columns have inconsistent data type specifications (many showing empty variable_type)",
+        "Some calculated metrics like TPU and retention rates are missing from metadata",
+        "Column descriptions for date fields could be more specific about their role in UPI lifecycle analysis",
+        "Some columns show data type mismatches between metadata and SQL usage patterns"
       ],
       "recommendations": [
-        "Add business context explanations for lifecycle stages and what they mean for customer retention",
-        "Include data types for all columns currently marked as empty",
-        "Add metadata for key derived columns like TPU, GPU, SR that appear in dashboard calculations",
-        "Expand descriptions to explain business impact rather than just technical function",
-        "Standardize required field flagging across similar tables",
-        "Add examples of categorical values where relevant (e.g., lifecycle values, flow_category options)"
+        "Add missing critical columns used in retention and lifecycle analysis queries",
+        "Standardize data type specifications for all columns",
+        "Enhance descriptions for calculated business metrics like TPU, retention rates, and P2P/P2M ratios",
+        "Add more specific UPI business context for lifecycle stages and customer journey phases",
+        "Include composite key descriptions for account_key and similar derived fields",
+        "Clarify the relationship between different date columns used in temporal analysis"
       ],
-      "status": "ACCEPTABLE"
+      "status": "GOOD"
     },
     "joining_conditions": {
       "metadata_type": "joining_conditions",
@@ -80,60 +86,49 @@
         "context": 0.0
       },
       "missing_items": [
-        "users u JOIN all_accounts a ON u.id = a.user_id",
-        "upi a LEFT JOIN top20 b ON a.payer_cust_id = b.customer_id",
-        "upi a LEFT JOIN nrr c ON a.payer_cust_id = c.custid",
-        "lm a LEFT JOIN nrr x ON a.customer_id = x.custid",
-        "upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id",
-        "lm a LEFT JOIN cmtd b ON b.scope_cust_id = a.scope_cust_id",
-        "banner b LEFT JOIN ftr f ON b.customer_id = f.custid"
+        "all_accounts JOIN users ON users.id = all_accounts.user_id",
+        "upi LEFT JOIN top20 ON upi.payer_cust_id = top20.customer_id",
+        "upi LEFT JOIN nrr ON upi.payer_cust_id = nrr.custid",
+        "outt LEFT JOIN nrr ON outt.payer_cust_id = nrr.custid",
+        "upi LEFT JOIN upi ON upi.scope_cust_id = upi.scope_cust_id",
+        "lm LEFT JOIN cmtd ON lm.scope_cust_id = cmtd.scope_cust_id",
+        "category LEFT JOIN paytm_upi_mau_final_nrr_1 ON category.customer_id = paytm_upi_mau_final_nrr_1.cust_id",
+        "banner LEFT JOIN ftr ON banner.customer_id = ftr.custid",
+        "out LEFT JOIN nrr ON out.payer_cust_id = nrr.custid"
       ],
       "quality_issues": [
-        "Complete failure to extract any joining conditions from SQL queries",
-        "Empty CSV with no data despite presence of multiple JOIN operations in source queries",
-        "No identification of table relationships or join types",
-        "Missing all business context and relationship explanations",
-        "No documentation of join keys or conditions"
+        "Complete absence of join condition documentation",
+        "No table relationships captured in metadata",
+        "Missing all JOIN clauses from SQL queries",
+        "No business context for any table relationships",
+        "Empty joining conditions metadata despite complex multi-table queries"
       ],
       "recommendations": [
-        "Implement JOIN extraction functionality to parse SQL queries and identify JOIN clauses",
-        "Add logic to extract table names, join conditions, and join types from complex SQL statements",
-        "Include CTE and subquery JOIN detection capabilities",
-        "Provide business context and relationship type documentation for each extracted join",
-        "Add validation to ensure extraction completeness before outputting results"
+        "Extract and document all JOIN conditions from the SQL queries",
+        "Create comprehensive table relationship mapping",
+        "Add business context explaining why tables are joined",
+        "Document join types (INNER, LEFT, etc.) for each relationship",
+        "Include column mappings and join keys for all table pairs",
+        "Add remarks explaining the business purpose of each join relationship"
       ],
       "status": "POOR"
     },
     "filter_conditions": {
       "metadata_type": "filter_conditions",
       "scores": {
-        "completeness": 85.0,
-        "accuracy": 90.0,
-        "confidence": 84.0,
-        "clarity": 75.0
+        "completeness": 0,
+        "accuracy": 0,
+        "clarity": 0,
+        "confidence": 0
       },
-      "missing_items": [
-        "Flow_category NOT IN ('Mandate_Onus'",
-        "'Onus_ExcMandates'",
-        "'Mandate_Online'",
-        "'Other P2M'); banner_id IN specific filter sets for growth tracking; day(transaction_date_key) constraints in several retention metrics; TEMPORAL_RANGE filters with specific date boundaries"
-      ],
+      "missing_items": [],
       "quality_issues": [
-        "Missing explanation for mandate flow exclusions",
-        "Banner ID filter sets not documented in growth metrics",
-        "Some temporal filter boundaries unclear",
-        "Filter interdependencies not explained",
-        "Technical jargon in some filter descriptions"
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
       ],
       "recommendations": [
-        "Add missing flow category exclusion filters with business rationale",
-        "Document banner ID filter sets for growth tracking features",
-        "Explain temporal filter boundary logic more clearly",
-        "Add section explaining filter interdependencies",
-        "Simplify technical language for business user understanding",
-        "Include filter impact on metric calculations"
+        "Fix judging error and retry"
       ],
-      "status": "GOOD"
+      "status": "POOR"
     },
     "definitions": {
       "metadata_type": "definitions",

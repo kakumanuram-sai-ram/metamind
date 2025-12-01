@@ -1,7 +1,6 @@
 {
   "dashboard_ids": [
-    511,
-    729
+    511
   ],
   "incremental_merge": true,
   "merged_files": {
@@ -14,10 +13,10 @@
   },
   "statistics": {
     "total_tables": 41,
-    "total_columns": 370,
+    "total_columns": 378,
     "total_joins": 0,
-    "total_terms": 120,
-    "total_conflicts": 40
+    "total_terms": 127,
+    "total_conflicts": 14
   },
   "conflict_resolution_rules": {
     "most_common_wins": "For categorical fields (refresh_frequency, vertical, variable_type), use the most common value across dashboards",

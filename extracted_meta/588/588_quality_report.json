@@ -1,0 +1,171 @@
+{
+  "dashboard_id": 588,
+  "timestamp": "2025-11-30T10:20:39.091168",
+  "summary": {
+    "overall_confidence": 51.2,
+    "status": "NEEDS_IMPROVEMENT",
+    "average_scores": {
+      "completeness": 50.4,
+      "accuracy": 51.6
+    },
+    "total_issues": {
+      "missing_items": 25,
+      "quality_issues": 21,
+      "recommendations": 28
+    }
+  },
+  "detailed_reports": {
+    "table_metadata": {
+      "metadata_type": "table_metadata",
+      "scores": {
+        "completeness": 92.0,
+        "accuracy": 88.0,
+        "confidence": 89.0,
+        "clarity": 85.0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Some table descriptions are repetitive across similar UPI transaction tables",
+        "Limited specificity about unique business value of each table vs others",
+        "Some derived tables (CTEs) may not need full metadata treatment",
+        "Table name 'a' appears generic and could benefit from more context",
+        "Few tables have incomplete column information which limits accuracy assessment"
+      ],
+      "recommendations": [
+        "Add more specific business differentiation between similar UPI transaction tables",
+        "Include specific KPIs and metrics each table supports",
+        "Clarify which tables are physical vs derived/views",
+        "Add more details about data quality expectations and SLAs",
+        "Include information about data governance and access patterns",
+        "Specify alert thresholds and monitoring use cases more precisely"
+      ],
+      "status": "GOOD"
+    },
+    "column_metadata": {
+      "metadata_type": "column_metadata",
+      "scores": {
+        "completeness": 82.0,
+        "accuracy": 88.0,
+        "confidence": 85.0,
+        "business_context": 85.0
+      },
+      "missing_items": [
+        "hive.switch.txn_info_snapshot_v3.final_Category",
+        "hive.switch.txn_info_snapshot_v3.flow_cat",
+        "hive.switch.txn_info_snapshot_v3.current_time_",
+        "hive.switch.txn_participants_snapshot_v3.final_Category",
+        "hive.switch.txn_participants_snapshot_v3.flow_cat",
+        "hive.switch.txn_participants_snapshot_v3.current_time_"
+      ],
+      "quality_issues": [
+        "Some data type specifications are incomplete (missing precision for decimal fields)",
+        "Descriptions for calculated/derived columns like SR and growth metrics could be more detailed",
+        "Some column descriptions are overly technical without sufficient business context",
+        "Inconsistent level of detail across similar columns in different tables"
+      ],
+      "recommendations": [
+        "Add metadata for missing derived columns (final_Category, flow_cat, current_time_) that are frequently used in dashboard calculations",
+        "Enhance descriptions for success rate (SR) calculations to explain the business significance of 95%+ success rates",
+        "Include more specific business context about UPI payment flows and their operational importance",
+        "Standardize description detail levels across all tables",
+        "Add precision specifications for decimal/numeric columns",
+        "Include information about typical value ranges for key metrics columns"
+      ],
+      "status": "GOOD"
+    },
+    "joining_conditions": {
+      "metadata_type": "joining_conditions",
+      "scores": {
+        "completeness": 0.0,
+        "accuracy": 0.0,
+        "confidence": 0.0,
+        "context": 0.0
+      },
+      "missing_items": [
+        "ti JOIN tp1 ON ti.txn_id = tp1.txn_id",
+        "ti JOIN tp2 ON ti.txn_id = tp2.txn_id",
+        "LEFT JOIN on_us_vpa c ON lower(tp2.payee_vpa) = lower(c.onus_vpa)",
+        "BankFailures bf JOIN TopBanks tb ON bf.payer_bank = tb.payer_bank",
+        "BankFailures bf JOIN TopBankCodes tbc ON bf.payer_bank = tbc.payer_bank",
+        "current_sr cs LEFT JOIN feb_hourly_sr_benchamrk sb ON cs.hour = sb.hour"
+      ],
+      "quality_issues": [
+        "Complete absence of joining condition metadata",
+        "no JOIN relationships captured from complex SQL queries",
+        "missing documentation of transaction table relationships",
+        "missing CTE and subquery join relationships",
+        "no join type specifications documented",
+        "missing business context for table relationships"
+      ],
+      "recommendations": [
+        "Extract all JOIN conditions from SQL queries including main query and subqueries",
+        "Document join types (INNER, LEFT, etc.)",
+        "Capture txn_id based relationships between transaction tables",
+        "Document participant type filtering joins",
+        "Add business context explaining transaction flow relationships",
+        "Include CTE and window function joins",
+        "Document lookup table relationships like on_us_vpa",
+        "Capture benchmark table joins for comparison metrics"
+      ],
+      "status": "POOR"
+    },
+    "filter_conditions": {
+      "metadata_type": "filter_conditions",
+      "scores": {
+        "completeness": 0,
+        "accuracy": 0,
+        "clarity": 0,
+        "confidence": 0
+      },
+      "missing_items": [],
+      "quality_issues": [
+        "Error during judging: litellm.RateLimitError: AnthropicException - {\"error\":{\"message\":\"{\\\"message\\\":\\\"Too many tokens, please wait before trying again.\\\"}\",\"type\":\"None\",\"param\":\"None\",\"code\":\"429\"}}"
+      ],
+      "recommendations": [
+        "Fix judging error and retry"
+      ],
+      "status": "POOR"
+    },
+    "definitions": {
+      "metadata_type": "definitions",
+      "scores": {
+        "completeness": 78.0,
+        "accuracy": 82.0,
+        "confidence": 82.0,
+        "usefulness": 85.0
+      },
+      "missing_items": [
+        "dl_last_updated",
+        "current_time_",
+        "flow_cat",
+        "business_type",
+        "channel_code",
+        "JSON_EXTRACT_SCALAR",
+        "extended_info",
+        "initiationMode",
+        "app_resp_code",
+        "scope_cust_id",
+        "participant_type",
+        "onus_vpa",
+        "date_trunc"
+      ],
+      "quality_issues": [
+        "Failure Growth definition incomplete - missing specific calculation formula",
+        "Excessive synonym repetition in some entries like \"T-1\" and \"Yesterday's Failure\"",
+        "Some technical terms like \"coalesce\" function not explained",
+        "Business_type field definition missing which is crucial for mandate identification",
+        "Channel_code categories not defined despite being key transaction classifiers"
+      ],
+      "recommendations": [
+        "Add definitions for missing technical fields like dl_last_updated, current_time_, flow_cat, business_type, and channel_code",
+        "Complete the Failure Growth calculation formula to include the specific mathematical expression",
+        "Reduce redundant synonyms and consolidate similar terms",
+        "Add definitions for SQL functions like JSON_EXTRACT_SCALAR and COALESCE used in calculations",
+        "Include business context for mandate-related fields and initiation modes",
+        "Add explanations for database schema elements like participant_type and onus_vpa",
+        "Simplify technical language in definitions to be more accessible to business users"
+      ],
+      "status": "GOOD"
+    }
+  }
+}

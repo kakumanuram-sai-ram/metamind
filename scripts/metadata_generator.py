@@ -108,6 +108,32 @@ def generate_tables_metadata(
         except:
             pass
     
+    # Validate tables before generating metadata
+    print(f"\n🔍 Validating {len(unique_tables)} unique tables before generating metadata...")
+    from table_validator import validate_tables
+    valid_tables_list = validate_tables(list(unique_tables))
+    valid_tables = set(valid_tables_list)
+    invalid_tables = unique_tables - valid_tables
+    
+    if invalid_tables:
+        print(f"  ⚠️  Skipping {len(invalid_tables)} invalid tables:")
+        for table in sorted(invalid_tables)[:3]:
+            print(f"     - {table}")
+        if len(invalid_tables) > 3:
+            print(f"     ... and {len(invalid_tables) - 3} more")
+        
+        # Remove invalid tables from unique_tables and table_context
+        unique_tables = valid_tables
+        for invalid_table in invalid_tables:
+            if invalid_table in table_context:
+                del table_context[invalid_table]
+    
+    print(f"  ✅ Proceeding with {len(unique_tables)} validated tables")
+    
+    if len(unique_tables) == 0:
+        print("  ❌ No valid tables found. Cannot generate metadata.")
+        return pd.DataFrame()
+    
     # Get column data types and partition info from Trino
     print("Fetching table schemas and partition information from Trino...")
     trino_columns = get_column_datatypes_from_trino(dashboard_info, base_url, headers)

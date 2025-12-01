@@ -3,7 +3,7 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "amount",
     "variable_type": "double",
-    "column_description": "The monetary value of individual UPI payment transactions, stored as a double precision decimal number to accommodate various currency denominations and fractional amounts. This field represents the core transaction amount and serves multiple analytical purposes: calculating total transaction amounts, analyzing payment volumes, supporting user engagement metrics in business intelligence dashboards, and enabling comprehensive financial analysis across different reporting contexts. The amount field is fundamental for UPI transaction analytics, allowing aggregation and comparison of payment values across various dimensions in transaction reporting and business intelligence systems.",
+    "column_description": "The monetary value of individual UPI payment transactions, stored as a double precision decimal number to accommodate various currency denominations and fractional amounts. This field represents the core transaction amount and serves multiple analytical purposes: calculating total transaction amounts, analyzing payment volumes, supporting user engagement metrics in business intelligence dashboards, and enabling comprehensive financial analysis across different reporting contexts. Specifically, the amount contributes to Gross Merchandise Value (GMV) calculations and is used for analyzing payment volume ratios between P2P (peer-to-peer) and P2M (peer-to-merchant) transaction flows. The amount field is fundamental for UPI transaction analytics, allowing aggregation and comparison of payment values across various dimensions in transaction reporting and business intelligence systems.",
     "required_flag": "no"
   },
   {
@@ -17,28 +17,28 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "category",
     "variable_type": "varchar",
-    "column_description": "Categorizes UPI transactions by payment flow type, containing values like 'VPA2ACCOUNT' (account transfers), 'VPA2VPA' (peer-to-peer transfers), and 'VPA2MERCHANT' (merchant payments). This field is used to classify transactions as either Person-to-Person (P2P) or Person-to-Merchant (P2M) for business analysis, success rate calculations, transaction segmentation analysis, and user retention metrics across UPI dashboards.",
+    "column_description": "Categorizes UPI transactions by payment flow type, containing values like 'VPA2ACCOUNT' (account transfers), 'VPA2VPA' (peer-to-peer transfers), and 'VPA2MERCHANT' (merchant payments). This field is used to classify transactions as either Person-to-Person (P2P) or Person-to-Merchant (P2M) for business analysis, success rate calculations, transaction segmentation analysis, and user retention metrics across UPI dashboards. The categorization enables comprehensive analysis of transaction patterns, user behavior, and payment flow performance across different transaction types.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "customer_id_payer",
     "variable_type": "varchar",
-    "column_description": "Unique identifier for the customer who initiates or makes the payment (payer) in UPI transactions. This field links each transaction to the specific customer account that initiated the payment, enabling comprehensive customer-level analytics including: payer-level success rate tracking, transaction counts and amounts, daily active users analysis, performance monitoring across different payment flows and geographic regions, and calculation of various customer-level metrics. Used across multiple dashboards for tracking payment activity and analyzing payer behavior patterns in UPI transaction processing.",
+    "column_description": "Unique identifier for the customer who initiates or makes the payment (payer) in UPI transactions. This field links each transaction to the specific customer account that initiated the payment, enabling comprehensive customer-level analytics including: payer-level success rate tracking, transaction counts and amounts, daily active users analysis, performance monitoring across different payment flows and geographic regions, and calculation of various customer-level metrics. Additionally used to track payer behavior, calculate monthly active users (MAU), and analyze customer retention patterns across gaming merchants and other business segments. Used across multiple dashboards for tracking payment activity and analyzing payer behavior patterns in UPI transaction processing.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "dl_last_updated",
     "variable_type": "date",
-    "column_description": "A system date column that tracks when each UPI transaction record was last updated in the data warehouse/data lake environment. This column is primarily used for filtering recent data and managing incremental data processing in ETL operations, ensuring analysis includes only records refreshed within specific time periods. Key use cases include month-to-date reporting, retention calculations, data freshness validation, and supporting incremental data loading processes across both data warehouse and data lake systems. The column serves as a critical component for data lineage tracking and ensures data quality by enabling filtering of records based on their refresh timestamps.",
+    "column_description": "A system date column that tracks when each UPI transaction record was last updated or loaded into the data warehouse/data lake environment. This column is primarily used for filtering recent data and managing incremental data processing in ETL operations, ensuring analysis includes only records refreshed within specific time periods. Key use cases include month-to-date reporting, retention calculations, data freshness validation, and supporting incremental data loading processes across both data warehouse and data lake systems. The column serves as a critical component for data lineage tracking and ensures data quality by enabling filtering of records based on their refresh timestamps. Across dashboards, this field is consistently used for temporal filtering to ensure analyses work with the most current data updates and ETL processing workflows.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "flow_category",
     "variable_type": "varchar",
-    "column_description": "Categorizes UPI transactions by their payment flow type (e.g., P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, Mandate_Onus). This column serves as a fallback classification when specific P2P (peer-to-peer) and P2M (peer-to-merchant) boolean flags are not applicable. Used across dashboards to group transactions into broader business categories for success rate analysis, payment flow performance tracking, and transaction pattern segmentation in analytics. The categorization enables comprehensive analysis of UPI transaction flows across different payment methods and business contexts, supporting both operational performance monitoring and strategic business insights.",
+    "column_description": "Categorizes UPI transactions by their payment flow type (e.g., P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, Mandate_Onus). This column serves as a fallback classification when specific P2P (peer-to-peer) and P2M (peer-to-merchant) boolean flags are not applicable. Used across dashboards to group transactions into broader business categories including peer-to-peer transfers, scan-and-pay, online payments, and on-us transactions for success rate analysis, payment flow performance tracking, transaction pattern segmentation, and user behavior analysis. The categorization enables comprehensive analysis of UPI transaction flows across different payment methods and business contexts, supporting both operational performance monitoring and strategic business insights.",
     "required_flag": "N"
   },
   {
@@ -87,21 +87,21 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "transaction_date_key",
     "variable_type": "date",
-    "column_description": "A date key that represents the transaction date for UPI transactions, serving as the primary temporal dimension across multiple analytical use cases. This key enables time-based filtering and grouping for: (1) success rate calculations and time-based metrics analysis, (2) retention analysis and user engagement pattern measurement, (3) month-to-date reporting and monthly period segmentation, and (4) date range filtering for temporal analysis. Used consistently across dashboards for temporal analysis of transaction data, measuring user engagement patterns across monthly periods, and enabling comprehensive time-based segmentation of UPI transaction data.",
+    "column_description": "A date key that represents the transaction date for UPI transactions, serving as the primary temporal dimension across multiple analytical use cases. This key enables comprehensive time-based filtering and grouping for: (1) success rate calculations and time-based metrics analysis, (2) retention analysis and user engagement pattern measurement, (3) month-to-date reporting and monthly period segmentation, (4) date range filtering for temporal analysis, and (5) data grouping for temporal analysis workflows. The column is consistently used across dashboards for measuring user engagement patterns across monthly periods, enabling precise temporal boundaries critical for measuring user behavior over monthly periods, and supporting comprehensive time-based segmentation of UPI transaction data in both retention analysis workflows and month-to-date reporting scenarios.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "transaction_type",
     "variable_type": "varchar",
-    "column_description": "Categorizes UPI transactions using multiple classification schemes across different business contexts: (1) Transaction Operation Type - distinguishing between PAY transactions (money transfer initiated by payer) and COLLECT transactions (payment requests initiated by payee), used for analyzing UPI transaction flows in the payment ecosystem; (2) Payment Flow Type - distinguishing between P2P (Person-to-Person) and P2M (Person-to-Merchant) transactions, used for business analytics to compare transaction patterns, user engagement, and monetary values across different payment categories. This field is crucial for categorizing and analyzing different UPI transaction flows and serves multiple analytical purposes across dashboards. Note: The column appears to serve different categorization purposes across dashboards, indicating potential data model inconsistency that should be reviewed for clarity and standardization.",
+    "column_description": "Categorizes UPI transactions using multiple classification schemes across different business contexts: (1) Transaction Operation Type - distinguishing between PAY transactions (money transfer initiated by payer) and COLLECT transactions (payment requests initiated by payee), used for analyzing UPI transaction flows in the payment ecosystem and transaction success rates; (2) Payment Flow Type - distinguishing between P2P (Person-to-Person) and P2M (Person-to-Merchant) transactions, used for business analytics to compare transaction patterns, user engagement, and monetary values across different payment categories. This field is crucial for categorizing and analyzing different UPI transaction flows, serving multiple analytical purposes across dashboards including flow pattern analysis and success rate monitoring. Note: The column appears to serve different categorization purposes across dashboards, indicating potential data model inconsistency that should be reviewed for clarity and standardization.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "txn_id",
     "variable_type": "varchar",
-    "column_description": "A unique varchar identifier for each UPI transaction record, serving as the primary key for transaction analysis across multiple business functions. Used for counting distinct transactions and aggregating transaction volumes to calculate success rates, performance metrics, and business analytics across different transaction categories and statuses. Essential for measuring user activity metrics, transactions per user ratios, and supporting cross-functional UPI transaction analytics and reporting. Applied across dashboards for transaction counting, volume aggregation, success rate calculations, user behavior analysis, and comprehensive performance monitoring of UPI transaction ecosystem.",
+    "column_description": "A unique varchar identifier for each UPI transaction record, serving as the primary key for transaction analysis across multiple business functions. Used for counting distinct transactions and aggregating transaction volumes to calculate success rates, performance metrics, and business analytics across different transaction categories and statuses (success, deemed, failure, pending). Essential for measuring user activity metrics, transactions per user ratios, and supporting cross-functional UPI transaction analytics and reporting. Applied across dashboards for transaction counting, volume aggregation, success rate calculations, user behavior analysis, and comprehensive performance monitoring of UPI transaction ecosystem.",
     "required_flag": "Y"
   },
   {
@@ -136,7 +136,7 @@
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "day_id",
     "variable_type": "Not specified",
-    "column_description": "A date identifier column that stores the transaction or activity date, used for time-based filtering and monthly active user (MAU) calculations to support month-over-month and last-month-to-date comparisons in UPI customer lifecycle analysis.",
+    "column_description": "A date identifier column that stores the transaction or activity date, serving as the primary time dimension for UPI customer lifecycle analysis. Used for time-based filtering, monthly active user (MAU) calculations, month-over-month and last-month-to-date comparisons, tracking daily active users, transaction volumes, and analyzing P2P/P2M payment ratios over time. This column functions as the key temporal reference for all lifecycle metrics and transaction pattern analysis.",
     "required_flag": "Y"
   },
   {
@@ -157,7 +157,7 @@
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "id",
     "variable_type": NaN,
-    "column_description": "Unique identifier for customers in the UPI customer lifecycle tracking system, used to measure user retention and engagement metrics across different time periods and TPU (Transactions Per User) segments.",
+    "column_description": "Unique customer identifier used across UPI customer lifecycle tracking system for comprehensive user analytics. This ID enables measurement of user retention and engagement metrics across different time periods and TPU (Transactions Per User) segments. Additionally supports calculation of Daily Active Users (DAU) and customer segmentation across P2P (peer-to-peer) and P2M (peer-to-merchant) transaction flows for ratio analysis and lifecycle metrics. Critical for tracking unique users throughout their transaction lifecycle journey.",
     "required_flag": "Y"
   },
   {
@@ -171,7 +171,7 @@
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "payer_cust_id",
     "variable_type": NaN,
-    "column_description": "Unique identifier for customers who initiate UPI payments, used primarily for calculating Monthly Active Users (MAU) and analyzing user engagement across different payment use cases and time periods.",
+    "column_description": "Unique identifier for customers who initiate/pay in UPI transactions. Used for calculating key customer engagement metrics including Monthly Active Users (MAU), Daily Active Users (DAU), transaction counts, and gross merchandise value (GMV). Supports analysis of user engagement across different payment use cases and time periods, with specific focus on P2P vs P2M payment pattern analysis and customer-level aggregations.",
     "required_flag": "Y"
   },
   {
@@ -458,14 +458,14 @@
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "status",
     "variable_type": "unknown",
-    "column_description": "Status field indicating the current state of records in the customer lifecycle snapshot, used to filter for active accounts and classify user activity levels in MAU calculations and lifecycle analysis.",
+    "column_description": "Status field indicating the current lifecycle state of UPI customers in the snapshot. Used to: (1) filter for active accounts and classify user activity levels in MAU calculations and lifecycle analysis, and (2) track customer progression and segmentation in transaction flow analysis across different geographical states and payment categories (P2P/P2M). Represents the current state of records for filtering active accounts and analyzing customer lifecycle progression.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "type",
     "variable_type": NaN,
-    "column_description": "A categorical field that classifies UPI users into different lifecycle segments (such as fresh users, retained users, etc.) used for calculating user retention metrics and analyzing customer behavior patterns across different time periods.",
+    "column_description": "A categorical field that serves dual classification purposes in UPI customer analytics: (1) Classifies UPI users into different lifecycle segments (such as fresh users, retained users, etc.) used for calculating user retention metrics and analyzing customer behavior patterns across different time periods, and (2) Represents transaction flow categories or types used to classify transactions into different business flows (such as P2P, P2M, etc.) for state-wise and flow-wise analysis of user activity, transaction volume, and amounts.",
     "required_flag": "N"
   },
   {
@@ -1053,14 +1053,14 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "customer_id",
     "variable_type": "Not specified",
-    "column_description": "Unique identifier for the customer who initiated the UPI transaction as the payer. This column is primarily used for customer retention analysis and cohort tracking to measure user engagement patterns across monthly periods.",
+    "column_description": "Unique identifier for the customer who initiated the UPI transaction as the payer. This column serves multiple analytical purposes: (1) Customer retention analysis and cohort tracking to measure user engagement patterns across monthly periods, (2) Daily active users (DAU) tracking and aggregation of transaction metrics, and (3) Analysis of customer payment behavior across different states and flow categories. Essential for both operational reporting and strategic customer analytics.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "day_id",
     "variable_type": "Not specified",
-    "column_description": "A date identifier representing the transaction date for UPI transactions, used as the primary temporal dimension for calculating time-based metrics like DAU, MAU, and transaction volumes across different time periods.",
+    "column_description": "A date identifier representing the transaction date for UPI transactions, used as the primary temporal dimension for analyzing transaction patterns and calculating time-based metrics. This field supports daily UPI transaction pattern analysis, user activity metrics (DAU, MAU), transaction volume calculations across different time periods, and P2P vs P2M payment ratio analysis over monthly periods.",
     "required_flag": "Y"
   },
   {
@@ -1088,14 +1088,14 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "payer_cust_id",
     "variable_type": NaN,
-    "column_description": "Unique identifier for the customer who initiates or pays in UPI transactions, used to track user behavior and calculate metrics like Daily Active Users (DAU) and transaction patterns across P2P and P2M payment flows.",
+    "column_description": "Unique identifier for the customer who initiates, pays, or makes UPI payment transactions. This column is used to calculate Daily Active Users (DAU), track user behavior patterns, and analyze customer payment behavior across P2P (peer-to-peer) and P2M (peer-to-merchant) transaction types and payment flows.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "popular_city",
     "variable_type": NaN,
-    "column_description": "Represents the most popular or frequently associated city for a customer, used for geographic segmentation in UPI transaction analysis. The column categorizes customers into top 20 major Indian cities or 'Other' for geographic performance tracking of daily/monthly active users and transaction patterns.",
+    "column_description": "Represents the most popular or frequently associated city for a customer, used for geographic segmentation and analysis in UPI transaction patterns. This column categorizes customers into India's top 20 major metropolitan cities or 'Other' locations for geographic performance tracking, enabling analysis of daily/monthly active users, transaction patterns, and user engagement metrics across different city segments.",
     "required_flag": "N"
   },
   {
@@ -1109,7 +1109,7 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "state",
     "variable_type": NaN,
-    "column_description": "The state column represents the geographic state location associated with UPI transactions, used for segmenting and analyzing user engagement metrics (DAU, MAU, transactions) by state-level geography in business intelligence dashboards.",
+    "column_description": "The state column represents the geographic state location associated with UPI transactions, specifically derived from customers' popular/most frequent state of activity. This column is used for geographical analysis and segmentation of transaction volumes, user activity, and payment flows across different Indian states, as well as for analyzing user engagement metrics (DAU, MAU, transactions) by state-level geography in business intelligence dashboards.",
     "required_flag": "N"
   },
   {
@@ -1151,7 +1151,7 @@
     "table_name": "hive.default.virtual_table",
     "column_name": "txns",
     "variable_type": "undefined",
-    "column_description": "The txns column represents the count of distinct transactions, calculated as the number of unique transaction IDs within specific groupings such as state, flow category, and payment type (P2P/P2M). This metric is used to measure transaction volume alongside user activity and transaction amounts in business analytics. This definition is consistently applied across multiple dashboards.",
+    "column_description": "The txns column represents the count of distinct transactions, calculated as the number of unique transaction IDs. This metric serves as a key business indicator to measure transaction volume across various analytical contexts. The column is used for groupings such as state, flow category, and payment type (P2P/P2M) in business analytics, and is commonly combined with user activity data to calculate derived metrics like Transactions Per User (TPU). This definition maintains consistency across multiple dashboard implementations for transaction volume analysis.",
     "required_flag": "N"
   },
   {
@@ -1165,14 +1165,14 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "Mau",
     "variable_type": NaN,
-    "column_description": "Monthly Active Users (MAU) metric representing the count of unique users who were active within a monthly period, used in engagement analytics and dashboard visualizations to track user activity patterns alongside daily active users and transaction metrics.",
+    "column_description": "Monthly Active Users (MAU) metric representing the count of unique users who were active within a monthly period. This metric is used across multiple contexts including engagement analytics, dashboard visualizations, user engagement analysis, and geographic performance tracking. It tracks user activity patterns alongside daily active users and transaction metrics to provide comprehensive insights into user engagement and platform performance.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "amount",
     "variable_type": NaN,
-    "column_description": "The monetary value or transaction amount for individual UPI transactions, used in financial analytics to calculate total transaction volumes alongside user engagement metrics like DAU, MAU, and transactions per user (TPU).",
+    "column_description": "The monetary value of UPI transactions, used across multiple analytical contexts: (1) Individual transaction amounts for calculating user engagement metrics like DAU, MAU, and transactions per user (TPU), and (2) Aggregated transaction volumes for financial analytics dashboards tracking payment flows across P2P and P2M transactions, different states, and customer lifecycle stages. This field enables both granular transaction-level analysis and high-level financial performance monitoring.",
     "required_flag": "N"
   },
   {
@@ -1193,7 +1193,7 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "customer_id",
     "variable_type": "varchar",
-    "column_description": "A unique identifier for customers in varchar format, used to track and aggregate user engagement metrics across UPI payment transactions, enabling analysis of customer behavior patterns in P2P and P2M payment flows.",
+    "column_description": "A unique identifier for customers in varchar format, used to track and aggregate user engagement metrics across UPI payment transactions and general customer activity. This field enables analysis of customer behavior patterns in P2P and P2M payment flows, links transaction data, and supports aggregation of metrics like Daily Active Users (DAU), transaction counts, and amounts across different business flows and geographical regions.",
     "required_flag": "Y"
   },
   {
@@ -1214,7 +1214,7 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "dl_last_updated",
     "variable_type": NaN,
-    "column_description": "A timestamp column that tracks when each record in the engage data snapshot was last updated in the data lake, commonly used for filtering data by freshness and supporting incremental data processing workflows.",
+    "column_description": "A timestamp column that tracks when each record in the engage data snapshot was last updated or loaded into the data lake. This column is commonly used for filtering data by freshness within specific date ranges, supporting incremental data processing workflows, and ensuring data freshness in analytics queries.",
     "required_flag": "Y"
   },
   {
@@ -1228,14 +1228,14 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "gmv",
     "variable_type": "undefined",
-    "column_description": "GMV (Gross Merchandise Value) represents the total monetary value of transactions processed through the UPI payment system. This column is used to calculate business metrics and ratios comparing transaction volumes between peer-to-peer (P2P) and peer-to-merchant (P2M) payment flows.",
+    "column_description": "This column has conflicting interpretations across dashboards: (1) Dashboard 'merged' describes it as GMV (Gross Merchandise Value) representing total monetary value of UPI payment system transactions, used for calculating business metrics and P2P vs P2M payment flow ratios. (2) Dashboard 476 indicates this column is misnamed as 'gmv' but actually contains user engagement metrics including DAU (Daily Active Users), MAU (Monthly Active Users), transaction counts, and transactions per user calculations from the engagement data snapshot. This naming/content discrepancy requires data validation to determine the actual column contents.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "lifecycle",
     "variable_type": NaN,
-    "column_description": "The lifecycle column represents user segmentation categories or stages used to analyze engagement metrics like DAU, MAU, and transaction patterns across different user groups in the context of retention and revenue analysis.",
+    "column_description": "The lifecycle column represents user segmentation categories or stages in a user's engagement journey on the platform. This column is used to categorize users across different phases of their lifecycle for analyzing engagement metrics (DAU, MAU), retention analysis, transaction behavior tracking, and revenue analysis across various user groups, states, and flow categories.",
     "required_flag": "N"
   },
   {
@@ -1249,21 +1249,21 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "payer_handle",
     "variable_type": NaN,
-    "column_description": "The UPI handle or identifier of the customer who initiated a payment transaction, used to link payment activity with user engagement metrics and analyze transaction patterns across different customer segments and cities.",
+    "column_description": "A unique UPI handle or identifier representing customers/users who make payments through the UPI system. This field is used to: (1) link payment transaction activity with user engagement metrics, (2) track and analyze transaction patterns across different customer segments and cities, and (3) calculate key user engagement metrics such as DAU (Daily Active Users), MAU (Monthly Active Users), and transactions per user. The handle serves as a bridge between payment data and user behavior analytics.",
     "required_flag": "no"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "popular_city",
     "variable_type": "varchar",
-    "column_description": "A varchar field that stores the name of the most popular or primary city associated with a customer, used for geographic segmentation in business analytics to track user engagement and transaction metrics across India's top 20 cities versus other locations.",
+    "column_description": "A varchar field that stores the name of the most popular or primary city associated with a customer or user activity. Used for geographic segmentation in business analytics to track user engagement (DAU, MAU), transaction metrics, and other business patterns across India's top 20 most popular cities, with non-top-20 cities typically categorized as 'Other' for comprehensive geographic analysis.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "popular_state",
     "variable_type": "varchar",
-    "column_description": "This column stores the state most frequently associated with each customer based on their activity patterns, used for geographic analysis of user engagement metrics like DAU, MAU, and transaction volumes across different states.",
+    "column_description": "The state identifier representing the most frequently associated or primary state for each customer based on their activity patterns. This column is used for geographic analysis and segmentation of user engagement metrics including daily active users (DAU), monthly active users (MAU), and transaction volumes across different states and regions.",
     "required_flag": "N"
   },
   {
@@ -1277,7 +1277,7 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "status",
     "variable_type": "Not specified",
-    "column_description": "A categorical field that indicates the status or classification of records in the engagement data snapshot table, likely used to differentiate between different user or transaction states for analytical purposes in UPI transaction analysis and P2P/P2M ratio calculations.",
+    "column_description": "A categorical field that indicates the status, state, or classification of records in the engagement data snapshot table. This column is used to differentiate between different user states, transaction processing states, and engagement activity levels. It serves analytical purposes including UPI transaction analysis, P2P/P2M ratio calculations, and tracking user engagement conditions for business analytics.",
     "required_flag": "N"
   },
   {
@@ -1291,28 +1291,28 @@
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "transaction_date_key",
     "variable_type": NaN,
-    "column_description": "A date key column that represents the transaction date used for temporal filtering and grouping of UPI transaction data. This column serves as the primary date dimension for analyzing daily transaction patterns, user activity, and financial metrics across different time periods. Consistently used across dashboards for temporal analysis and date-based filtering of transaction data.",
+    "column_description": "A date key column that represents the transaction date used for temporal filtering and grouping across multiple analytical contexts. This column serves as the primary date dimension for analyzing daily transaction patterns, user activity, financial metrics, and engagement metrics across different time periods. It enables time-based grouping for calculating daily/monthly active users, transaction volumes, and UPI transaction data analysis. Consistently used across dashboards for temporal analysis and date-based filtering of both transaction and engagement data.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "transaction_type",
-    "variable_type": NaN,
-    "column_description": "Categorizes the type of financial transaction, likely distinguishing between different transaction flows such as peer-to-peer (P2P), peer-to-merchant (P2M), or other payment categories used for analyzing transaction patterns and calculating business ratios.",
+    "variable_type": "undefined",
+    "column_description": "Categorizes the type of transaction or user engagement activity recorded in the engagement data snapshot. This field distinguishes between different financial transaction flows such as peer-to-peer (P2P), peer-to-merchant (P2M), or other payment categories, while also capturing broader user engagement activities within the Paytm platform. Used for segmenting user behavior analysis, analyzing transaction patterns, calculating business ratios, and measuring transaction metrics across different interaction types.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "txn_id",
     "variable_type": NaN,
-    "column_description": "Unique identifier for each transaction record in the engagement data, used to count distinct transactions for calculating transaction volumes and transactions per user metrics across different cities and time periods.",
+    "column_description": "Unique identifier for each transaction record in the engagement data, used to count distinct transactions for calculating transaction volumes and transactions per user metrics. This identifier is primarily aggregated to measure transaction volume across different dimensions including cities, time periods, customer segments, states, and payment flow categories in engagement analytics.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "txns",
     "variable_type": "Unknown",
-    "column_description": "The txns column stores the count of transactions performed by users, used primarily for calculating engagement metrics like TPU (Transactions Per User) and analyzing transaction volume across different geographic regions and time periods.",
+    "column_description": "The txns column stores the count of transactions performed by users, specifically calculated as the number of unique transaction IDs or distinct transactions. This metric is used primarily for calculating engagement metrics like TPU (Transactions Per User), analyzing transaction volume across different geographic regions and time periods, and measuring transaction volume across different payment flows in business analytics.",
     "required_flag": "N"
   },
   {
@@ -1326,7 +1326,7 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "Dau",
     "variable_type": NaN,
-    "column_description": "Daily Active Users (DAU) metric representing the count of unique users who performed transactions or engaged with Paytm UPI services on a given day. This metric is used to measure user engagement and calculate derived metrics like Transactions Per User (TPU) across different geographic segments.",
+    "column_description": "Daily Active Users (DAU) represents the count of unique users who performed UPI transactions or engaged with Paytm UPI services on a specific day. This metric is used in payment analytics to measure daily user engagement, assess transaction intensity, and calculate derived metrics like Transactions Per User (TPU) across different geographic segments and payment analytics contexts.",
     "required_flag": "N"
   },
   {
@@ -1340,35 +1340,35 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "amount",
     "variable_type": NaN,
-    "column_description": "Represents the monetary value or transaction amount for UPI payments, used to calculate total transaction volume alongside transaction counts in the payments analytics dashboard for measuring financial performance by geographic regions.",
+    "column_description": "Represents the monetary value or transaction amount for individual UPI transactions in the Paytm payments system. Used for calculating total transaction amounts and volume alongside user engagement metrics (DAU, MAU, transaction counts) and for measuring financial performance by geographic regions in payments analytics dashboards.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "category",
     "variable_type": NaN,
-    "column_description": "Categorizes UPI users into lifecycle segments based on their transaction engagement patterns, used primarily for calculating retention rates and analyzing user behavior across different engagement levels in the UPI payment ecosystem.",
+    "column_description": "A categorical field with conflicting usage interpretations: (1) Categorizes UPI users into lifecycle segments based on transaction engagement patterns for retention rate calculations and user behavior analysis across engagement levels, OR (2) Classifies geographic locations distinguishing between top 20 major cities and other locations for analyzing UPI transaction patterns across market segments. This column appears to serve different categorization purposes across dashboards in the UPI payment ecosystem.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "cust_id",
     "variable_type": "varchar",
-    "column_description": "Unique customer identifier used to track individual users across months for UPI payment retention analysis and MAU calculations. This column serves as the primary key for linking customer activity across different time periods to measure retention rates and month-over-month growth.",
+    "column_description": "Unique customer identifier used to track individual users/customers across months for UPI payment retention analysis and MAU calculations. This varchar field serves as the primary key for linking customer activity across different time periods to measure retention rates, month-over-month growth, retention metrics, and user lifecycle patterns. Essential for connecting customer behavior data across multiple time periods in the UPI payment ecosystem.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "customer_id",
     "variable_type": "Not specified",
-    "column_description": "Unique identifier for customers in the Paytm UPI Monthly Active Users retention analysis table, used to track individual customer behavior and calculate retention metrics across different time periods for Real Money Gaming (RMG) analysis.",
+    "column_description": "Unique identifier for customers in the Paytm UPI Monthly Active Users dataset, used for tracking individual customer behavior, retention metrics, and lifecycle analysis across different time periods and monthly cohorts. This identifier enables linking to transaction-level UPI payment data and supports Real Money Gaming (RMG) analysis and retention calculations.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "customer_id_payer",
     "variable_type": NaN,
-    "column_description": "Unique identifier for the customer who initiates or pays for UPI transactions, used to track payment behavior and calculate user engagement metrics like transactions per user across different geographic segments.",
+    "column_description": "Unique identifier for the customer who initiates or makes UPI payment transactions. This column is used to track user engagement metrics, payment behavior, and transaction patterns across different geographical regions and segments, enabling calculation of metrics like transactions per user.",
     "required_flag": "Y"
   },
   {
@@ -1382,14 +1382,14 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "dl_last_updated",
     "variable_type": "undefined",
-    "column_description": "A timestamp column that tracks when each record was last updated in the data pipeline, commonly used for incremental data processing and filtering records based on their update recency in UPI transaction analysis.",
+    "column_description": "A timestamp column that tracks when each record was last updated in the data pipeline. This column records when each record in the UPI MAU analysis table was last updated or loaded into the data system. It is commonly used for incremental data processing, filtering records based on their update recency in UPI transaction analysis, data lineage tracking, and incremental ETL processing.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "dt",
     "variable_type": "date",
-    "column_description": "Date field representing the daily transaction or activity date used for temporal analysis in MAU calculations and retention tracking. This column serves as the primary time dimension for filtering and aggregating user activity data by specific date ranges in retention analysis.",
+    "column_description": "Date field representing the daily transaction or activity date used for temporal analysis in MAU calculations and retention tracking. This column serves as the primary time dimension for filtering and aggregating user activity data by specific date ranges, enabling month-over-month retention calculations and categorizing records into specific time periods for UPI user retention analysis.",
     "required_flag": "Y"
   },
   {
@@ -1417,7 +1417,7 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "payer_handle",
     "variable_type": "string",
-    "column_description": "Identifies the UPI payment handle or wallet provider (such as 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') used by customers for transactions. This column is used to filter and analyze user retention metrics specifically for Paytm-related payment channels in UPI transaction analysis.",
+    "column_description": "Identifies the UPI payment handle or wallet provider (such as 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') used by customers for UPI transactions. This column represents different Paytm-associated payment handles in the UPI ecosystem and is used to filter and analyze user retention metrics specifically for Paytm-related payment channels in UPI transaction analysis.",
     "required_flag": "N"
   },
   {
@@ -1438,7 +1438,7 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "state",
     "variable_type": NaN,
-    "column_description": "Represents the state associated with each customer based on their popular/most frequent state from engagement data, used to analyze UPI payment metrics (DAU, MAU, transactions) at the state level for geographic business insights.",
+    "column_description": "Geographic state identifier representing the popular/primary state location associated with Paytm UPI users. This field captures the most frequent or primary state from customer engagement data and is used for regional analysis of UPI payment metrics including DAU (Daily Active Users), MAU (Monthly Active Users), transaction patterns, and other geographic business insights in NRR dashboards.",
     "required_flag": "N"
   },
   {
@@ -1452,7 +1452,7 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "t20city",
     "variable_type": NaN,
-    "column_description": "Classification column that categorizes users into India's top 20 major cities (like Delhi, Bangalore, Mumbai, etc.) or groups them as 'Other' for non-major cities. Used for geographic analysis of user engagement and transaction metrics across key metropolitan markets.",
+    "column_description": "Geographic segmentation field that categorizes users into India's top 20 major cities (Delhi, Bangalore, Mumbai, etc.) versus \"Other\" cities. This classification column is used for analyzing UPI payment behavior, user engagement metrics, and transaction patterns across different urban market tiers and key metropolitan markets.",
     "required_flag": "N"
   },
   {
@@ -1501,14 +1501,14 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "Flow_category",
     "variable_type": NaN,
-    "column_description": "Categorizes UPI transaction types by flow category, serving as the base classification that gets standardized into P2P (peer-to-peer) or P2M (peer-to-merchant) categories for business analysis and ratio calculations across user activity, transaction volume, and monetary value metrics.",
+    "column_description": "Categorizes UPI transactions by their flow type, serving as the primary classification for transaction flow categories that get standardized into P2P (peer-to-peer), P2M (peer-to-merchant), or other flow categories. Used as a key dimension for business analysis including transaction pattern analysis, calculating P2P to P2M ratios, and generating metrics across user activity, transaction volumes, and GMV (Gross Merchandise Value).",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "scope_cust_id",
     "variable_type": NaN,
-    "column_description": "Customer identifier used for tracking UPI transaction users in retention analysis, representing the payer customer ID from UPI transactions. This column enables measurement of user retention rates across different time periods and TPU (Transactions Per User) segments in the UPI ecosystem.",
+    "column_description": "Customer identifier used for tracking UPI transaction users in retention analysis, representing the payer customer ID from UPI transactions. This column enables measurement of user retention rates across different time periods and TPU (Transactions Per User) segments in the UPI ecosystem. The field is specifically used to track and measure user retention, calculate base users, retained users, and retention rates for month-over-month UPI transaction performance metrics.",
     "required_flag": "Y"
   },
   {
@@ -1564,36 +1564,36 @@
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "dt",
     "variable_type": NaN,
-    "column_description": "A date column used for temporal filtering and monthly aggregation in gaming merchant retention analysis, enabling time-based segmentation of user activity and retention calculations.",
+    "column_description": "A date column representing the transaction or activity date used for temporal filtering, analysis, and monthly aggregation in gaming merchant retention analysis. This column enables time-based segmentation of user activity, retention calculations, and monthly user segmentation across gaming merchant data.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "gaming_merc",
     "variable_type": "varchar(11)",
-    "column_description": "A categorical identifier that classifies users based on their engagement with gaming merchants, primarily used to filter and segment users for Real Money Gaming (RMG) retention analysis and Monthly Active User calculations.",
+    "column_description": "A categorical identifier that classifies users based on their engagement with gaming merchants, specifically whether they have made payments to gaming merchants. This column is primarily used to filter and segment users for Real Money Gaming (RMG) retention analysis, Monthly Active User calculations, and to measure engagement patterns among gaming payment users.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "mnt",
     "variable_type": "date",
-    "column_description": "Date field representing the month when gaming merchant transactions occurred, used for calculating monthly active user (MAU) retention metrics and filtering transaction data by specific time periods in gaming merchant analysis.",
+    "column_description": "Date field representing the month when gaming merchant transactions occurred. Used as a temporal dimension for calculating monthly active user (MAU) retention metrics, tracking MAU patterns in Real Money Gaming analytics, and filtering transaction data by specific time periods in gaming merchant analysis. Serves as a key time-based dimension for monthly user behavior analysis across gaming merchant platforms.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "payer_cust_id",
     "variable_type": "varchar",
-    "column_description": "Unique identifier for customers who make payments through the Paytm platform, used to track and analyze user-level payment behaviors and transactions, particularly in gaming merchant analysis contexts.",
+    "column_description": "Unique identifier for customers who make payments through the Paytm platform, specifically used to track and analyze user-level payment behaviors and transactions in gaming merchant contexts. This field enables tracking and counting of distinct users in real money gaming (RMG) transaction analysis, user behavior segmentation, and broader payment pattern analysis across the Paytm ecosystem.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "payer_handle",
     "variable_type": NaN,
-    "column_description": "Identifier for the UPI handle used by the payer in transactions, specifically tracking Paytm-branded handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) to analyze user payment patterns across different Paytm service integrations in gaming merchant transactions.",
-    "required_flag": "no"
+    "column_description": "Identifier for the UPI handle used by the payer in transactions, specifically tracking Paytm-branded handles and various banking partnerships (paytm, ptyes, ptaxis, pthdfc, ptsbi) to analyze user payment patterns, payment routing, and user behavior across different Paytm service integrations and PSP handles in gaming merchant transactions.",
+    "required_flag": "N"
   },
   {
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
@@ -1613,7 +1613,7 @@
     "table_name": "hive.user_paytm_payments.gaming_merchant_5816_analysis",
     "column_name": "transaction_type",
     "variable_type": "unknown",
-    "column_description": "Categorizes the type of UPI transaction, specifically distinguishing between 'PAY' (outgoing payments) and 'COLLECT' (incoming payment requests) transaction types used in gaming merchant payment analysis.",
+    "column_description": "Categorizes the type of UPI transaction, specifically distinguishing between 'PAY' (outgoing payments/payment sent) and 'COLLECT' (incoming payment requests) transaction types. Used as a filter criterion in gaming merchant payment analysis and retention analysis to understand transaction flow patterns.",
     "required_flag": "N"
   },
   {
@@ -1627,7 +1627,7 @@
     "table_name": "hive.user_paytm_payments.paytm_upi_mau_final_nrr_1",
     "column_name": "gaming_merc",
     "variable_type": "categorical",
-    "column_description": "A categorical column that identifies whether a customer has transacted with gaming merchants, used as a filter in Real Money Gaming (RMG) retention analysis to segment users by their gaming merchant activity.",
+    "column_description": "A categorical identifier that flags customers associated with gaming merchants, used for segmenting users in Real Money Gaming (RMG) retention analysis and payment transaction categorization. This column serves as a filter to identify whether a customer has transacted with gaming merchants, enabling analysis of user behavior and retention patterns specific to gaming merchant activity.",
     "required_flag": "N"
   },
   {
@@ -2306,91 +2306,91 @@
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "is_p2m",
     "variable_type": "boolean",
-    "column_description": "Boolean flag indicating whether a UPI transaction is a Person-to-Merchant (P2M) transaction, used to categorize and analyze payment flows between individual consumers and business merchants in the UPI ecosystem.",
+    "column_description": "Boolean flag indicating whether a UPI transaction is a Person-to-Merchant (P2M) transaction, used to categorize and analyze payment flows between individual consumers and business merchants in the UPI ecosystem. This field enables business analytics and ratio calculations between P2P (peer-to-peer) and P2M transaction types for comprehensive payment flow analysis.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "is_p2p",
     "variable_type": "boolean",
-    "column_description": "A boolean flag indicating whether the UPI transaction is a Person-to-Person (P2P) payment between individuals. This column is used to categorize transaction flows and distinguish P2P payments from Person-to-Merchant (P2M) or other transaction types. Used consistently across dashboards for transaction type classification and analysis.",
+    "column_description": "A boolean flag indicating whether the UPI transaction is a Person-to-Person (P2P) payment between individuals. This column is used to categorize transaction flows and distinguish P2P payments from Person-to-Merchant (P2M) or other transaction types. It enables transaction type classification, pattern analysis, and business metrics calculations across different dashboard contexts for comprehensive UPI transaction analytics.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "flow_category",
     "variable_type": NaN,
-    "column_description": "Categorizes the type or flow of UPI transactions, serving as a detailed transaction classification that supplements the basic P2P (peer-to-peer) and P2M (peer-to-merchant) categories for payment flow analysis and business intelligence reporting.",
+    "column_description": "A categorical field that classifies UPI transactions into different flow types or transaction categories. This field categorizes the type or flow of UPI transactions, serving as a detailed transaction classification that supplements the basic P2P (peer-to-peer) and P2M (peer-to-merchant) categories. Used as a business dimension for analyzing transaction patterns, user engagement metrics, and payment flow analysis across different business intelligence reporting contexts.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "is_p2m",
     "variable_type": "boolean",
-    "column_description": "Boolean flag indicating whether a UPI transaction is a Person-to-Merchant (P2M) transaction, used to categorize and analyze payment flows for business metrics like DAU ratios, transaction volumes, and GMV comparisons between P2P and P2M payment types.",
+    "column_description": "Boolean flag indicating whether a UPI transaction is a Person-to-Merchant (P2M) transaction. This column is used to categorize and analyze payment flows, distinguishing merchant payment transactions from peer-to-peer (P2P) transactions. Applied in various analytics including business metrics (DAU ratios, transaction volumes, GMV comparisons between P2P and P2M payment types), engagement metrics analysis, and state-wise transaction analysis across different dashboard contexts.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.midgar.engage_data_snapshot_v3",
     "column_name": "is_p2p",
     "variable_type": NaN,
-    "column_description": "Boolean flag indicating whether a UPI transaction is peer-to-peer (P2P), used to distinguish personal money transfers from merchant payments (P2M) for transaction categorization and ratio analysis in UPI payment analytics.",
+    "column_description": "Boolean flag indicating whether a UPI transaction is peer-to-peer (P2P), used to distinguish personal money transfers from merchant payments (P2M) for transaction categorization, business analysis, reporting, and ratio analysis in UPI payment analytics.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "Amount",
     "variable_type": NaN,
-    "column_description": "Represents the transaction amount in UPI transactions, used to calculate GMV (Gross Merchandise Value) buckets for customer lifecycle and retention analysis across different transaction value segments.",
+    "column_description": "Represents the monetary value of UPI transactions used for customer lifecycle and retention analysis. This amount field is utilized to: (1) calculate GMV (Gross Merchandise Value) buckets for analyzing transaction value segments, (2) measure total transaction volume aggregated at the customer lifecycle snapshot level, and (3) enable segmentation analysis across different states, flow categories, and customer segments for comprehensive transaction volume assessment.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "amount",
     "variable_type": NaN,
-    "column_description": "The transaction amount in monetary value for UPI payments, used to calculate Gross Merchandise Value (GMV) and analyze customer transaction patterns in retention and lifecycle metrics.",
+    "column_description": "The transaction amount in monetary value for UPI payments, representing the gross merchandise value (GMV) for UPI transactions at the customer lifecycle level. This field is used to calculate Gross Merchandise Value, analyze customer transaction patterns in retention and lifecycle metrics, analyze payment volumes, and calculate ratios between P2P (peer-to-peer) and P2M (peer-to-merchant) transaction values.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "customer_id_payer",
     "variable_type": NaN,
-    "column_description": "Unique identifier for customers who initiate UPI payments, used as the primary key to track customer lifecycle metrics and calculate retention rates across different time periods in UPI transaction analysis.",
+    "column_description": "Unique identifier for customers who initiate or make UPI payments, serving as the primary key to track customer lifecycle metrics across different time periods. This column is used as a key dimension for analyzing daily active users, calculating retention rates, and distinguishing between P2P (peer-to-peer) vs P2M (peer-to-merchant) transaction patterns in UPI transaction analysis.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "payer_handle",
     "variable_type": "not specified",
-    "column_description": "Identifier for the UPI payment service provider or bank handle (e.g., 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') associated with the payer in UPI transactions. This field is used to analyze customer retention and transaction patterns across different UPI service providers.",
+    "column_description": "Identifier for the UPI payment service provider or bank handle (e.g., 'paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') associated with the payer in UPI transactions. This field is used across dashboards to analyze customer retention, transaction patterns, and ratios across different UPI service providers in customer lifecycle analysis and payment provider performance evaluation.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "transaction_date_key",
     "variable_type": NaN,
-    "column_description": "A date key field representing the transaction date, used as the primary temporal dimension for filtering and analyzing UPI transactions within specific time periods for customer lifecycle and retention calculations.",
+    "column_description": "A date key field representing the transaction date, serving as the primary temporal dimension for UPI transaction analysis. This column enables date range filtering and partitioning of transaction data for time-based analysis, supporting customer lifecycle metrics calculations, retention analysis, and P2P vs P2M transaction pattern studies. Used consistently across dashboards for filtering and analyzing UPI transactions within specific time periods.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "transaction_type",
     "variable_type": NaN,
-    "column_description": "Categorizes the type of UPI transaction, distinguishing between 'PAY' transactions (outgoing payments) and 'COLLECT' transactions (incoming money requests), used for filtering and analyzing customer transaction behavior in lifecycle and retention metrics.",
+    "column_description": "Categorical field that classifies UPI transactions by their transaction flow type. Distinguishes between 'PAY' transactions (outgoing payments) and 'COLLECT' transactions (incoming money requests). Used in conjunction with P2P and P2M flags to determine whether transactions are person-to-person, person-to-merchant, or other flow categories. Applied for filtering and analyzing customer transaction behavior in lifecycle and retention metrics, as well as for business analytics and state-wise flow analysis.",
     "required_flag": "N"
   },
   {
     "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
     "column_name": "txn_id",
     "variable_type": "varies",
-    "column_description": "Unique identifier for each UPI transaction record, used to count distinct transactions per user for calculating transaction frequency metrics (TPU) in retention and lifecycle analysis.",
+    "column_description": "Unique identifier for each UPI transaction record. Used across dashboards to: (1) count distinct transactions per user for calculating transaction frequency metrics (TPU) in retention and lifecycle analysis, and (2) calculate transaction volumes and ratios between P2P (peer-to-peer) and P2M (peer-to-merchant) payments in customer lifecycle analysis. Essential for all transaction-level analytics and customer behavior tracking.",
     "required_flag": "Y"
   },
   {
     "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
     "column_name": "ft_date",
     "variable_type": NaN,
-    "column_description": "A date column that represents the snapshot or processing date for UPI transaction records, used for time-based filtering and retention analysis to compare user activity across different time periods.",
+    "column_description": "A date column that represents the snapshot or processing date for UPI transaction records, serving as a temporal dimension for analyzing transaction patterns and trends over time. This field is used for time-based filtering and retention analysis to compare user activity across different time periods, and supports comparative analysis of P2P and P2M transaction metrics in conjunction with other date fields.",
     "required_flag": "Y"
   },
   {
@@ -2588,5 +2588,61 @@
     "variable_type": NaN,
     "column_description": "Unique identifier for users in the supercash rewards system, used to track and count distinct users who have received or are eligible for cashback rewards through various redemption methods including UPI transactions.",
     "required_flag": "Y"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "Base_users",
+    "variable_type": NaN,
+    "column_description": "Represents the total count of users from a previous period (typically last month) that serves as the baseline cohort for calculating user retention rates in UPI transaction analysis. This metric is used as the denominator when measuring what percentage of users continue to transact in subsequent periods.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+    "column_name": "Retained_users",
+    "variable_type": NaN,
+    "column_description": "Represents the count of UPI users who were active in the previous month and continued to be active in the current month-to-date period, used to measure user retention rates across different transaction frequency segments.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_name": "flow_category",
+    "variable_type": NaN,
+    "column_description": "Categorizes UPI transactions into different flow types or payment categories, serving as a classification system for transaction flows beyond the basic P2P (peer-to-peer) and P2M (peer-to-merchant) distinctions. This column is used for analyzing transaction patterns and user behavior across different payment flow categories in state-wise and lifecycle analyses.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_name": "is_p2m",
+    "variable_type": NaN,
+    "column_description": "Boolean flag that identifies Person-to-Merchant (P2M) UPI transactions, used to segment payment flows and calculate P2P vs P2M performance ratios across metrics like daily active users, transaction volumes, and gross merchandise value.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_name": "is_p2p",
+    "variable_type": NaN,
+    "column_description": "A boolean flag indicating whether a UPI transaction is a peer-to-peer (P2P) payment, used to differentiate P2P transactions from peer-to-merchant (P2M) transactions for business analytics and ratio calculations.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_name": "popular_city",
+    "variable_type": NaN,
+    "column_description": "Represents the primary city where a customer has the highest activity or engagement, determined through aggregation of customer transaction and engagement patterns. This field is used for geographical segmentation in UPI customer lifecycle analysis and state-wise flow categorization.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.cdo.fact_upi_customer_lifecycle_snapshot_v3",
+    "column_name": "popular_state",
+    "variable_type": NaN,
+    "column_description": "Represents the most popular or frequently used state associated with each customer, derived from customer engagement data and used for geographical segmentation and state-wise analysis of UPI transaction flows and customer lifecycle metrics.",
+    "required_flag": "no"
+  },
+  {
+    "table_name": "hive.midgar.engage_data_snapshot_v3",
+    "column_name": "ft_date",
+    "variable_type": NaN,
+    "column_description": "A date field that represents the snapshot date for engagement data, used for temporal filtering and time-series analysis of user activity metrics including daily active users, transactions, and amounts.",
+    "required_flag": "yes"
   }
 ]

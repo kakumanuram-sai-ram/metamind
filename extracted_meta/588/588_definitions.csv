@@ -1,0 +1,86 @@
+term,type,definition,business_alias
+UPI,Category,Unified Payments Interface - India's instant real-time payment system that facilitates inter-bank peer-to-peer and person-to-merchant transactions,Unified Payments Interface
+SR,Metric / Calculated Field,"Success Rate calculated as the count of successful transactions divided by total transaction count, representing the percentage of UPI transactions that completed successfully",Success Rate
+T,Synonym,Current day time period used for monitoring and comparison analysis,"Current Period, Today, Current Day, Today"
+T-1,Synonym,Previous day time period used as baseline for comparison with current day performance,"Yday, Yesterday, Yday, Previous Period, T minus 1, Yesterday, T minus 1, Yesterday, Yday, Yesterday, Yesterday, T minus 1, Yesterday, Previous Day"
+Hourly SR Trend,Category,Time-series analysis showing success rate patterns across hourly intervals for performance monitoring,Hourly Success Rate Trend
+SR Monitoring,Category,Service Request Monitoring - tracking and analysis of payment service requests and their success/failure rates,Success Rate Monitoring
+Bank Codes,Category,Unique identifiers or codes assigned to different banks in the UPI network for transaction routing and identification,Bank Identifiers
+YDay_Failure,Metric,Count of failed transactions from yesterday within the same time window as current analysis,"Yesterday Failure, Yesterday Failures"
+Today_Failure,Metric,Count of failed transactions from today within the current analysis time window,Today Failures
+Failure Growth,Metric / Calculated Field,"Growth rate of failures calculated as (Today Failure / Yesterday Failure) - 1, with zero handling for cases where yesterday failures are zero",
+Payee Handle,Metric,"Virtual Payment Address (VPA) identifier of the recipient in UPI transactions, used to route payments to the correct account.","VPA, Virtual Payment Address"
+txn_id,Metric,Unique transaction identifier used for counting and tracking individual UPI transactions,Transaction ID
+SUCCESS,Category,Transaction status category that includes both 'SUCCESS' and 'DEEMED' statuses for successful UPI transactions.,
+P2P,Category,"Person-to-Person UPI transactions between individual users, including VPA2VPA and VPA2ACCOUNT transfers that are not mandate-based.","Person-to-Person, also referred as Peer-to-Peer, Peer-to-Peer, Person-to-Person, Person to Person"
+P2M Collect,Category,Person-to-Merchant collect transactions where merchants initiate payment requests to customers through UPI.,"Person-to-Merchant Collect, Person to Merchant Collect"
+Hourly,Synonym,Time granularity for data aggregation and trending analysis by hour of the day.,
+Yday Failure,Metric,"Total count of failed UPI transactions that occurred on the previous date (yesterday), used for day-over-day comparison analysis.",Yesterday Failure
+Today Failure,Metric,"Total count of failed UPI transactions that occurred on the current date, aggregated by error code and payer bank.",T Failure
+Error Code,Category,"NPCI response codes that indicate the reason for UPI transaction failures, used for identifying specific failure patterns.","npci_resp_code, NPCI Response Code"
+T vs T-1,Synonym,Time period comparison between current day (T) and previous day (T-1) for trend analysis,"Today vs T-1, also referred as Today vs Yesterday, Today vs Yesterday"
+PSP,Category,Payment Service Provider - entities that provide UPI payment services to users and merchants,Payment Service Provider
+T & T-1,Synonym,Time period references where T represents current time period and T-1 represents the previous time period for comparison analysis,"Today vs Yesterday, Current vs Previous Day, Current and Previous Period, Today vs Yesterday, Today & Yesterday, Current vs Previous Period"
+Error Codes,Category,"Classification system for different types of UPI transaction failures, used to categorize and analyze failure patterns.",NPCI Response Codes
+Today's Failure,Metric,Total count of failed UPI transactions for the current day (T),T Failures
+Yesterday's Failure,Metric,"Total count of UPI transactions that failed yesterday (T-1), filtered by specific transaction types and payer handles.","T-1 Failure, Yday Failure, total_yest_failures, T-1 Failures, Yday Failure"
+Growth,Metric / Calculated Field,"Day-over-day percentage change in failures, calculated as (Today's Failure / Yesterday's Failure) - 1",Failure Growth Rate
+Payer Handle,Category,The UPI handle or virtual payment address (VPA) of the entity initiating the payment,"VPA, Virtual Payment Address"
+Payer Bank,Metric,"The bank from which a UPI transaction originates, used as a dimension for analyzing failure patterns.","Source bank, Sending bank, Payer Bank Name"
+UPI SR Monitoring,Category,Unified Payments Interface Success Rate monitoring dashboard that tracks and compares transaction failure metrics across time periods.,UPI Success Rate Monitoring
+VPA,Category,Virtual Payment Address - unique identifier for UPI users,Virtual Payment Address
+P2M,Category,Peer-to-Merchant transactions - payments from individuals to merchant accounts,Person to Merchant
+Success_txns,Metric,Count of transactions that completed successfully with status 'SUCCESS' or 'DEEMED',Successful Transactions
+total_Txn,Metric,"Total count of all UPI transactions attempted, including both successful and failed transactions",Total Transactions
+Remiter Bank,Synonym,The bank that initiates or sends the UPI payment transaction on behalf of the payer,"Payer Bank, also referred as Remitter Bank, Remitter Bank, Payer Bank"
+payer_bank,Metric,The financial institution associated with the customer who is making the payment in a UPI transaction,"Remiter Bank, also referred as Remitter Bank, Payer's Bank"
+Last 7 Day avg,Metric,"Average count of failed UPI transactions over the last 7 days, calculated by dividing total failures in the 7-day period by 7","L7D Avg, L7D avg, total_L7D_failures"
+% Change(Yest vs L7D Avg),Metric / Calculated Field,"Percentage change calculated as (Yesterday's Failures divided by Last 7 Day Average) minus 1, showing how yesterday's failure rate compares to the recent average.",
+Bank,Category,"Payer bank names involved in UPI transactions, used to identify bank-specific failure patterns.",payer_bank_name
+L7D,Synonym,"Last 7 Days, referring to the 7-day period used for average calculations.","Last 7 days, 7-day period, Last7day, Last 7 Day avg, Last 7 Day, Last 7 Day avg, 7-day average, Last 7 Days, Last7day, 7-day period"
+SnP,Category,Scan and Pay transactions - payments made by scanning QR codes including 3P QR and Paytm QR,Scan and Pay
+Online,Category,"Online UPI transactions including Intent, P2M Collect, and Mandate_Online flow categories.",
+Onus,Category,On-us UPI transactions including Onus_ExcMandates and Mandate_Onus where both payer and payee are within the same bank.,On-us
+Last7day Failure,Metric / Calculated Field,"Average daily count of failed UPI transactions over the last 7 days, calculated by dividing total failures in last 7 days by 7.","L7D Avg Failure, 7-day Average Failure, L7D Avg Failure, L7D Failure, 7-day avg failure, L7D Failure"
+Change Yday vs last 7 day avg,Metric / Calculated Field,"Percentage change comparing yesterday's failure count to the average daily failure count over the last 7 days, calculated as (Yesterday's Failures / Last 7 day average) - 1","% Change vs L7D avg, T-1 vs L7D Change, Daily Change vs Average"
+UPI SR,Category,UPI Success Rate monitoring category encompassing metrics related to UPI transaction success and failure rates.,UPI Success Rate
+L7D Avg,Synonym,Last 7 Days Average,Last 7 day average
+Yday,Synonym,Yesterday,T-1
+NPCI Response Code,Category,Error codes returned by NPCI (National Payments Corporation of India) indicating specific reasons for transaction failures,"Error Code, npci_resp_code, Error Code, NPCI Resp Code"
+U30-Z9 & U30-ZM,Category,Specific error code categories that are excluded from the analysis,Excluded error codes
+payer_handle,Metric,The UPI handle or virtual payment address of the payer initiating the transaction,Payer Handle
+npci_resp_code,Metric,Response code returned by NPCI (National Payments Corporation of India) indicating transaction status or error reason,"Error Code, NPCI Response Code"
+NPCI Resp Code,Metric,Response code returned by NPCI (National Payments Corporation of India) indicating transaction status or failure reason,Error Code
+Transaction Status,Category,Status of UPI transactions including SUCCESS and FAILURE states,
+Failure,Category,UPI transactions with status 'FAILURE' indicating unsuccessful payment processing,"Failed transactions, Transaction failures"
+Transaction ID,Metric,Unique identifier for each UPI transaction used for counting and tracking purposes,"TXN ID, Txn ID"
+Success Rate,Metric / Calculated Field,The percentage of transactions that completed successfully out of total transactions attempted,SR
+Intent,Category,UPI transactions initiated through intent-based payment flows using specific initiation modes,
+Mandate,Category,Recurring payment transactions where customers authorize merchants for automatic debits,
+Paytm QR,Category,QR code based transactions processed through Paytm's QR merchant channel,
+3P QR,Category,Third-party QR code transactions processed through Paytm channel with specific initiation modes,Third Party QR
+Total Txn,Metric,"Total sum of all transactions in the dataset, representing the complete volume of payment attempts.",Total Transactions
+Success Txns,Metric,"Count of transactions that completed successfully, filtered to include only transactions with status 'SUCCESS' or 'DEEMED'.","Success Transactions, Successful Txns, Successful Transactions"
+% Change SR,Metric / Calculated Field,"Percentage change in Success Rate compared to the previous time period, calculated using lag function to show period-over-period SR performance.","Success Rate Change Percentage, Success Rate Change, SR Delta, Success Rate Change %, SR Change %, SR Change, Success Rate Change, Success Rate Change, SR Change, Success Rate Change, Success Rate Change, SR Change %"
+MANDATE,Category,Recurring payment transactions set up through UPI mandate system,
+VPA2VPA,Category,UPI transaction category where payments are made between two Virtual Payment Addresses (peer-to-peer transfers),"VPA to VPA, VPA to VPA, P2P"
+VPA2ACCOUNT,Category,UPI transaction category where payments are made from Virtual Payment Address to bank account,VPA to Account
+QR,Category,"QR Code payment method, including both Paytm QR and 3P QR (third-party QR) transaction types.","QR Code Payments, QR Code"
+Competition,Category,Non-Paytm payment service providers in the UPI ecosystem being compared against Paytm's performance.,
+Txn,Synonym,Transaction,
+sr_current,Metric / Calculated Field,Current hour success rate calculated as distinct successful transaction count divided by distinct total transaction count for the current monitoring period,Current Success Rate
+sr_avg,Metric,Historical average success rate benchmark derived from historical transaction performance data,"Average Success Rate, Benchmark Success Rate"
+sr_difference,Metric / Calculated Field,"Variance between current success rate and historical average, calculated as sr_current minus sr_avg to identify performance deviations","Success Rate Variance, SR Delta"
+VPA2MERCHANT,Category,UPI transaction category where payments are made from Virtual Payment Address to merchant accounts,VPA to Merchant
+Last Hour SR Overall Alert,Category,Monitoring alert system that tracks UPI success rate performance for the most recent hour compared to historical benchmarks,"Hourly SR Alert, Real-time SR Monitoring"
+SR Current,Metric / Calculated Field,"Current hour's success rate for UPI transactions, calculated by dividing successful transactions by total transactions for the last completed hour",Current Success Rate
+SR Average,Metric,Historical benchmark average success rate used as a baseline for comparison against current performance,"Average Success Rate, SR Avg"
+SR Difference,Metric / Calculated Field,"Variance calculated as Current SR minus Average SR, indicating performance deviation from historical baseline",Success Rate Difference
+CC,Category,Channel Code or business unit identifier used to categorize UPI transactions by source or processing channel,Channel Code
+Hour,Metric,Hourly time dimension extracted from transaction creation timestamp for trend analysis,Hourly
+Todays Txns,Metric,Count of transactions for the current day (T),T transactions
+Yesterdays Txns,Metric,Count of transactions for the previous day (T-1),T-1 transactions
+error_code,Category,Classification codes identifying specific types of transaction failures or errors in UPI transactions,Error Code
+todays_txns,Metric,Count of transactions processed on the current day (T),Today's Transactions
+yesterdays_txns,Metric,Count of transactions processed on the previous day (T-1),Yesterday's Transactions
+Failure_Growth,Metric / Calculated Field,Calculated metric comparing failure rates between today and yesterday to identify growth in transaction failures,Failure Growth Rate

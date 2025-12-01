@@ -273,14 +273,44 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             unique_normalized = list(set(normalized_tables))
             step_time = time.time() - step_start
             print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-            print(f"  📊 Found {len(unique_normalized)} unique tables:", flush=True)
-            for table in sorted(unique_normalized):
+            print(f"  📊 Found {len(unique_normalized)} unique tables (before validation):", flush=True)
+            for table in sorted(unique_normalized)[:10]:  # Show first 10 only
                 print(f"    - {table}", flush=True)
+            if len(unique_normalized) > 10:
+                print(f"    ... and {len(unique_normalized) - 10} more", flush=True)
+            
+            # Step 3.3.1: Validate tables against metadata catalog
+            step_start = time.time()
+            print("\n[Step 3.3.1] Validating tables against metadata catalog...", flush=True)
+            from table_validator import validate_tables
+            
+            valid_tables = validate_tables(unique_normalized)
+            invalid_tables = set(unique_normalized) - set(valid_tables)
+            
+            step_time = time.time() - step_start
+            print(f"  ✅ Validation completed in {step_time:.2f} seconds", flush=True)
+            print(f"    - Valid tables: {len(valid_tables)}", flush=True)
+            print(f"    - Invalid tables: {len(invalid_tables)}", flush=True)
+            
+            if invalid_tables:
+                print(f"\n  ⚠️  Invalid tables found (will be skipped):", flush=True)
+                for table in sorted(invalid_tables)[:5]:
+                    print(f"    - {table}", flush=True)
+                if len(invalid_tables) > 5:
+                    print(f"    ... and {len(invalid_tables) - 5} more", flush=True)
+            
+            # Use only valid tables for schema fetching
+            unique_normalized = valid_tables
+            
+            if not unique_normalized:
+                raise Exception("No valid tables found after validation. Cannot proceed with schema enrichment.")
+            
+            print(f"\n  📊 Proceeding with {len(unique_normalized)} validated tables", flush=True)
             
             # Step 3.4: Fetch schemas from Trino
             step_start = time.time()
             print("\n[Step 3.4] Fetching schemas from Trino...", flush=True)
-            print(f"  Connecting to Trino and describing {len(unique_normalized)} tables...", flush=True)
+            print(f"  Connecting to Trino and describing {len(unique_normalized)} validated tables...", flush=True)
             schema_df = fetch_schemas_for_tables(
                 unique_normalized,
                 user_email="kakumanu.ram@paytm.com",
@@ -404,9 +434,47 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         print(f"  📊 Loaded dashboard: {dashboard_info_dict.get('dashboard_title', 'Unknown')}", flush=True)
         print(f"  📊 Loaded {len(tables_columns_df)} table-column mappings", flush=True)
         
+        # Step 4.1.1: Validate tables before LLM metadata generation
+        step_start = time.time()
+        print("\n[Step 4.1.1] Validating tables before LLM metadata generation...", flush=True)
+        
+        # Extract unique tables from tables_columns_df
+        unique_tables = tables_columns_df['tables_involved'].unique().tolist()
+        print(f"  📊 Found {len(unique_tables)} unique tables before validation", flush=True)
+        
+        # Validate tables against metadata catalog
+        from table_validator import validate_tables
+        valid_tables = validate_tables(unique_tables)
+        invalid_tables = set(unique_tables) - set(valid_tables)
+        
+        step_time = time.time() - step_start
+        print(f"  ✅ Validation completed in {step_time:.2f} seconds", flush=True)
+        print(f"  ✅ Valid tables: {len(valid_tables)}", flush=True)
+        print(f"  ❌ Invalid tables: {len(invalid_tables)}", flush=True)
+        
+        if invalid_tables:
+            print(f"\n  ⚠️  Skipping {len(invalid_tables)} invalid tables (will NOT generate metadata for these):", flush=True)
+            for table in sorted(invalid_tables)[:5]:
+                print(f"      - {table}", flush=True)
+            if len(invalid_tables) > 5:
+                print(f"      ... and {len(invalid_tables) - 5} more", flush=True)
+            
+            # Filter tables_columns_df to only include valid tables
+            print(f"\n  🔧 Filtering tables_columns_df to only valid tables...", flush=True)
+            original_count = len(tables_columns_df)
+            tables_columns_df = tables_columns_df[tables_columns_df['tables_involved'].isin(valid_tables)]
+            filtered_count = len(tables_columns_df)
+            print(f"     Filtered {original_count} → {filtered_count} rows ({original_count - filtered_count} removed)", flush=True)
+        
+        if len(valid_tables) == 0:
+            raise ValueError(f"❌ No valid tables found after validation. Cannot proceed with metadata generation.")
+        
+        print(f"\n  📊 Proceeding with {len(valid_tables)} validated tables for LLM metadata generation", flush=True)
+        
         # Step 4.2: Extract table metadata using LLM (chart-by-chart for token optimization)
         step_start = time.time()
         print("\n[Step 4.2] Extracting table metadata using LLM (chart-by-chart)...", flush=True)
+        print(f"  ℹ️  Only generating metadata for {len(valid_tables)} valid tables (saves LLM calls!)", flush=True)
         
         charts = dashboard_info_dict.get('charts', [])
         total_charts = len(charts)

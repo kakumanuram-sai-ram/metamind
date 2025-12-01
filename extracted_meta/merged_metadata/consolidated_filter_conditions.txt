@@ -35,6 +35,16 @@
 
 
 ================================================================================
+## Dashboard merged
+================================================================================
+
+
+================================================================================
+## Dashboard merged
+================================================================================
+
+
+================================================================================
 ## Dashboard 511
 ================================================================================
 
@@ -12365,6 +12375,2249 @@ case
   when scts.status = 2 and scts.fulfillment_status = 1 then 'Unscratched'
   when scts.status = 1 and scts.fulfillment_status = 1 then 'Pending'
 end as status_classification
+
+
+
+
+
+
+================================================================================
+## Dashboard 476
+================================================================================
+
+## #back acc wise MAU distribution
+
+This metric tracks Monthly Active User distribution segmented by bank account ownership patterns within the UPI ecosystem. It measures total user count, MAU (users with transaction activity in current month), and percentage distribution across account segments. The analysis categorizes users into three groups: single account holders (=1_acc), dual account holders (=2_acc), and multi-account holders (>2_acc), providing insights into how banking relationship complexity correlates with UPI engagement levels. The metric helps understand user activation patterns and identifies which account ownership segments drive higher transaction activity, supporting strategic decisions around user acquisition and engagement initiatives.
+
+-- tables_involved
+hive.tpap_pms.account_snapshot_v3 a
+hive.tpap_pms.user_snapshot_v3 u
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+user_paytm_payments.upi_flow_wise_base_cm mtd_txn
+user_paytm_payments.upi_flow_wise_base lmtd_txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- active account status filter
+a.dl_last_updated IS NOT NULL AND
+a.status = 'ACTIVE' AND
+--- account creation cutoff for current analysis period
+DATE(a.created_on) <= current_date + interval '-1' day AND
+--- user data quality filter
+u.dl_last_updated IS NOT NULL AND
+--- paytm ecosystem PSP scope
+u.psp_id IN (6, 7, 8, 9) AND
+--- active or dormant with comments user status
+(u.status = 'ACTIVE' OR (u.status = 'DORMANT' AND u.comments IS NOT NULL)) AND
+--- person type users only
+u.type = 'PERSON' AND
+--- lifecycle data period filter
+date(lifecycle.ft_date) between date_trunc('month', current_date - interval '1' day) and current_date - interval '1' day
+
+--- specific filters
+--- valid account data requirement
+accounts IS NOT NULL
+
+--- calculation_logic
+sum(users) as total_users,
+sum(users) filter(where use_case_mtd > 0) as mau_count,
+format('%.2f%%', (sum(users) filter(where use_case_mtd > 0) * 1.0000) / (sum(sum(users) filter(where use_case_mtd > 0)) over(partition by max(lifecycle)) * 1.0000) * 100) as mau_percentage,
+account_categorization: CASE WHEN accounts < 2 THEN 'a.=1_acc' WHEN accounts = 2 THEN 'b.=2_acc' WHEN accounts > 2 THEN 'c.>2_acc' END
+
+
+
+
+## #Handle wise MAU distribution
+
+This metric tracks Monthly Active Users (MAU) distribution across customer lifecycle stages, measuring engagement patterns by handle ownership and account diversity. MAU is defined as users with at least one transaction use case in the current month (use_case_mtd > 0). The analysis segments customers by lifecycle stages including dormant, reactivated, and overall populations, with additional dimensions for handle counts and account ownership patterns. The metric calculates both absolute MAU counts and percentage distribution within each lifecycle partition, providing insights into user engagement depth across different customer maturity levels. This supports product strategy decisions around user activation, retention, and cross-selling opportunities across the UPI ecosystem.
+
+-- tables_involved
+hive.tpap_pms.account_snapshot_v3 a
+hive.tpap_pms.user_snapshot_v3 u
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 nrr
+user_paytm_payments.upi_flow_wise_base_cm mtd_flow
+user_paytm_payments.upi_flow_wise_base lmtd_flow
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- active accounts only for current user base
+a.dl_last_updated IS NOT NULL AND
+a.status = 'ACTIVE' AND
+DATE(a.created_on) <= current_date - interval '1' day AND
+--- paytm ecosystem PSPs only
+u.dl_last_updated IS NOT NULL AND
+u.psp_id IN (6, 7, 8, 9) AND
+u.type = 'PERSON' AND
+(u.status = 'ACTIVE' OR (u.status = 'DORMANT' AND u.comments IS NOT NULL)) AND
+--- lifecycle data for current month analysis
+date(nrr.ft_date) BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day
+
+--- specific filters
+--- current month transaction analysis for MAU calculation
+mtd_flow.final_category NOT IN ('Others', 'others') AND
+mtd_flow.day_id BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day AND
+--- previous month comparison data
+lmtd_flow.final_category NOT IN ('Others', 'others') AND
+lmtd_flow.day_id BETWEEN date_trunc('month', current_date - interval '1' day - interval '1' month) AND current_date - interval '1' day - interval '1' month
+
+--- calculation_logic
+MAU: sum(users) filter(where use_case_mtd > 0),
+percentage: format('%.2f%%', (sum(users) filter(where use_case_mtd > 0) * 1.0000) / (sum(sum(users) filter(where use_case_mtd > 0)) over(partition by max(lifecycle)) * 1.0000) * 100),
+lifecycle_consolidation: if(lifecycle in ('c:react 1-3', 'c:react 3+'), 'c:react', lifecycle),
+account_buckets: case when accounts < 2 then 'a.=1_acc' when accounts = 2 then 'b.=2_acc' when accounts > 2 then 'c.>2_acc' end
+
+
+
+
+## #Handle wise MAU distribution
+
+This metric tracks Monthly Active Users (MAU) distribution across customer lifecycle stages, measuring engagement patterns by handle ownership and account diversity. MAU is defined as users with at least one transaction use case in the current month (use_case_mtd > 0). The analysis segments customers by lifecycle stages including dormant, reactivated, and overall populations, with additional dimensions for handle counts and account ownership patterns. The metric calculates both absolute MAU counts and percentage distribution within each lifecycle partition, providing insights into user engagement depth across different customer maturity levels. This supports product strategy decisions around user activation, retention, and cross-selling opportunities across the UPI ecosystem.
+
+-- tables_involved
+hive.tpap_pms.account_snapshot_v3 a
+hive.tpap_pms.user_snapshot_v3 u
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 nrr
+user_paytm_payments.upi_flow_wise_base_cm mtd_flow
+user_paytm_payments.upi_flow_wise_base lmtd_flow
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- active accounts only for current user base
+a.dl_last_updated IS NOT NULL AND
+a.status = 'ACTIVE' AND
+DATE(a.created_on) <= current_date - interval '1' day AND
+--- paytm ecosystem PSPs only
+u.dl_last_updated IS NOT NULL AND
+u.psp_id IN (6, 7, 8, 9) AND
+u.type = 'PERSON' AND
+(u.status = 'ACTIVE' OR (u.status = 'DORMANT' AND u.comments IS NOT NULL)) AND
+--- lifecycle data for current month analysis
+date(nrr.ft_date) BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day
+
+--- specific filters
+--- current month transaction analysis for MAU calculation
+mtd_flow.final_category NOT IN ('Others', 'others') AND
+mtd_flow.day_id BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day AND
+--- previous month comparison data
+lmtd_flow.final_category NOT IN ('Others', 'others') AND
+lmtd_flow.day_id BETWEEN date_trunc('month', current_date - interval '1' day - interval '1' month) AND current_date - interval '1' day - interval '1' month
+
+--- calculation_logic
+MAU: sum(users) filter(where use_case_mtd > 0),
+percentage: format('%.2f%%', (sum(users) filter(where use_case_mtd > 0) * 1.0000) / (sum(sum(users) filter(where use_case_mtd > 0)) over(partition by max(lifecycle)) * 1.0000) * 100),
+lifecycle_consolidation: if(lifecycle in ('c:react 1-3', 'c:react 3+'), 'c:react', lifecycle),
+account_buckets: case when accounts < 2 then 'a.=1_acc' when accounts = 2 then 'b.=2_acc' when accounts > 2 then 'c.>2_acc' end
+
+
+
+
+## MAU by Usecase Distribution
+
+MAU by Use Case Distribution tracks monthly active users segmented by customer lifecycle stages and their engagement diversity across UPI use cases. This metric measures user retention and engagement depth by counting distinct customers who used varying numbers of UPI categories (P2P, P2M, etc.) within the current month-to-date (MTD) versus last month-to-date (LMTD) periods. The analysis excludes 'Others' category transactions and includes both lifecycle-specific segments (derived from customer lifecycle snapshots) and an overall aggregated view. This helps identify user engagement patterns and lifecycle progression based on use case adoption, providing insights into customer behavior evolution and platform stickiness across different user maturity stages.
+
+-- tables_involved
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle_snap
+hive.user_paytm_payments.upi_flow_wise_base_partitioned flow_part
+hive.user_paytm_payments.upi_flow_wise_base_cm flow_cm
+hive.user_paytm_payments.upi_flow_wise_base flow_base
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unclassified transaction categories
+flow_part.final_category NOT IN ('Others','others') AND
+flow_cm.final_category NOT IN ('Others','others') AND
+flow_base.final_category NOT IN ('Others','others')
+
+--- specific filters
+--- lifecycle snapshot date range for customer classification
+date(lifecycle_snap.ft_date) BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day AND
+--- transaction date range for MTD/LMTD comparison with day alignment
+flow_part.day_id BETWEEN date_trunc('month', current_date - interval '1' day - interval '1' month) AND current_date - interval '1' day AND
+day(flow_part.day_id) <= day(current_date - interval '1' day)
+
+--- calculation_logic
+pattern: temporal_mtd_comparison
+base_metric: count(distinct customer_id)
+temporal_flags: MTD vs LMTD based on date_trunc month comparison
+aggregation_logic: count distinct use_cases per customer, then count users per use_case_count
+
+
+
+
+## MAU by Usecase Distribution
+
+MAU by Use Case Distribution tracks monthly active users segmented by customer lifecycle stages and their engagement diversity across UPI use cases. This metric measures user retention and engagement depth by counting distinct customers who used varying numbers of UPI categories (P2P, P2M, etc.) within the current month-to-date (MTD) versus last month-to-date (LMTD) periods. The analysis excludes 'Others' category transactions and includes both lifecycle-specific segments (derived from customer lifecycle snapshots) and an overall aggregated view. This helps identify user engagement patterns and lifecycle progression based on use case adoption, providing insights into customer behavior evolution and platform stickiness across different user maturity stages.
+
+-- tables_involved
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle_snap
+hive.user_paytm_payments.upi_flow_wise_base_partitioned flow_part
+hive.user_paytm_payments.upi_flow_wise_base_cm flow_cm
+hive.user_paytm_payments.upi_flow_wise_base flow_base
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unclassified transaction categories
+flow_part.final_category NOT IN ('Others','others') AND
+flow_cm.final_category NOT IN ('Others','others') AND
+flow_base.final_category NOT IN ('Others','others')
+
+--- specific filters
+--- lifecycle snapshot date range for customer classification
+date(lifecycle_snap.ft_date) BETWEEN date_trunc('month', current_date - interval '1' day) AND current_date - interval '1' day AND
+--- transaction date range for MTD/LMTD comparison with day alignment
+flow_part.day_id BETWEEN date_trunc('month', current_date - interval '1' day - interval '1' month) AND current_date - interval '1' day AND
+day(flow_part.day_id) <= day(current_date - interval '1' day)
+
+--- calculation_logic
+pattern: temporal_mtd_comparison
+base_metric: count(distinct customer_id)
+temporal_flags: MTD vs LMTD based on date_trunc month comparison
+aggregation_logic: count distinct use_cases per customer, then count users per use_case_count
+
+
+
+
+## #back acc wise MAU distribution
+
+This metric tracks Monthly Active User distribution segmented by bank account ownership patterns within the UPI ecosystem. It measures total user count, MAU (users with transaction activity in current month), and percentage distribution across account segments. The analysis categorizes users into three groups: single account holders (=1_acc), dual account holders (=2_acc), and multi-account holders (>2_acc), providing insights into how banking relationship complexity correlates with UPI engagement levels. The metric helps understand user activation patterns and identifies which account ownership segments drive higher transaction activity, supporting strategic decisions around user acquisition and engagement initiatives.
+
+-- tables_involved
+hive.tpap_pms.account_snapshot_v3 a
+hive.tpap_pms.user_snapshot_v3 u
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+user_paytm_payments.upi_flow_wise_base_cm mtd_txn
+user_paytm_payments.upi_flow_wise_base lmtd_txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- active account status filter
+a.dl_last_updated IS NOT NULL AND
+a.status = 'ACTIVE' AND
+--- account creation cutoff for current analysis period
+DATE(a.created_on) <= current_date + interval '-1' day AND
+--- user data quality filter
+u.dl_last_updated IS NOT NULL AND
+--- paytm ecosystem PSP scope
+u.psp_id IN (6, 7, 8, 9) AND
+--- active or dormant with comments user status
+(u.status = 'ACTIVE' OR (u.status = 'DORMANT' AND u.comments IS NOT NULL)) AND
+--- person type users only
+u.type = 'PERSON' AND
+--- lifecycle data period filter
+date(lifecycle.ft_date) between date_trunc('month', current_date - interval '1' day) and current_date - interval '1' day
+
+--- specific filters
+--- valid account data requirement
+accounts IS NOT NULL
+
+--- calculation_logic
+sum(users) as total_users,
+sum(users) filter(where use_case_mtd > 0) as mau_count,
+format('%.2f%%', (sum(users) filter(where use_case_mtd > 0) * 1.0000) / (sum(sum(users) filter(where use_case_mtd > 0)) over(partition by max(lifecycle)) * 1.0000) * 100) as mau_percentage,
+account_categorization: CASE WHEN accounts < 2 THEN 'a.=1_acc' WHEN accounts = 2 THEN 'b.=2_acc' WHEN accounts > 2 THEN 'c.>2_acc' END
+
+
+
+
+## DAU MAU Txns by T20 Cities
+
+This metric tracks daily active users (DAU), monthly active users (MAU), transaction volumes, and transactions per user (TPU) segmented by India's top 20 metropolitan cities including New Delhi, Bangalore, Hyderabad, Mumbai, Chennai, and others. It measures user engagement and transaction intensity across major urban centers to understand geographic distribution of UPI usage patterns. The analysis filters for customers with defined lifecycle stages and focuses on successful UPI transactions within the Paytm ecosystem. Cities not in the top 20 list are grouped as 'Other' for comparative analysis. This helps identify high-performing markets and user behavior variations across different metropolitan areas.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.midgar.engage_data_snapshot_v3 profile
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude customers without lifecycle classification
+lifecycle IS NOT NULL AND
+--- successful UPI transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- transaction type filtering for payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem PSP handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- UPI category filtering
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- top 20 cities categorization with fallback to Other
+CASE 
+  WHEN upper(profile.popular_city) IN (
+    'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI',
+    'NOIDA','GURGAON','GHAZIABAD','AHMEDABAD','PUNE','FARIDABAD',
+    'INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','PATNA','LUDHIANA'
+  ) 
+  THEN profile.popular_city 
+  ELSE 'Other' 
+END as t20city
+--- temporal filtering for recent months
+txn.transaction_date_key >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+txn.transaction_date_key < current_date
+
+--- calculation_logic
+count(distinct if(row_number() over(partition by payer_cust_id,day_id order by day_id)=1, payer_cust_id, null)) as DAU,
+count(distinct if(row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id)=1, payer_cust_id, null)) as MAU,
+sum(txns) as total_transactions,
+sum(txns)*1.00/sum(dau) as transactions_per_user
+
+
+
+
+## DAU MAU Txns by T20 Cities
+
+This metric tracks daily active users (DAU), monthly active users (MAU), transaction volumes, and transactions per user (TPU) segmented by India's top 20 metropolitan cities including New Delhi, Bangalore, Hyderabad, Mumbai, Chennai, and others. It measures user engagement and transaction intensity across major urban centers to understand geographic distribution of UPI usage patterns. The analysis filters for customers with defined lifecycle stages and focuses on successful UPI transactions within the Paytm ecosystem. Cities not in the top 20 list are grouped as 'Other' for comparative analysis. This helps identify high-performing markets and user behavior variations across different metropolitan areas.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.midgar.engage_data_snapshot_v3 profile
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude customers without lifecycle classification
+lifecycle IS NOT NULL AND
+--- successful UPI transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- transaction type filtering for payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem PSP handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- UPI category filtering
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- top 20 cities categorization with fallback to Other
+CASE 
+  WHEN upper(profile.popular_city) IN (
+    'NEW DELHI','BANGALORE','HYDERABAD','JAIPUR','MUMBAI','CHENNAI',
+    'NOIDA','GURGAON','GHAZIABAD','AHMEDABAD','PUNE','FARIDABAD',
+    'INDORE','SURAT','THANE','CHANDIGARH','LUCKNOW','AGRA','PATNA','LUDHIANA'
+  ) 
+  THEN profile.popular_city 
+  ELSE 'Other' 
+END as t20city
+--- temporal filtering for recent months
+txn.transaction_date_key >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+txn.transaction_date_key < current_date
+
+--- calculation_logic
+count(distinct if(row_number() over(partition by payer_cust_id,day_id order by day_id)=1, payer_cust_id, null)) as DAU,
+count(distinct if(row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id)=1, payer_cust_id, null)) as MAU,
+sum(txns) as total_transactions,
+sum(txns)*1.00/sum(dau) as transactions_per_user
+
+
+
+
+## DAU MAU Txns by NRR
+
+This metric tracks daily and monthly active users, transaction volumes, and user productivity metrics (transactions per user and GMV per user) segmented by user lifecycle stages (New, Retained, Resurrected users). It analyzes UPI payment behavior across different user retention cohorts to understand engagement patterns and transaction intensity. The analysis focuses on Paytm ecosystem transactions (paytm, ptyes, ptaxis, pthdfc, ptsbi PSPs) for successful payments including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. The temporal filter allows flexible date range selection while excluding users without lifecycle classification. This enables product teams to assess user engagement quality and transaction productivity across different user maturity segments.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.midgar.engage_data_snapshot_v3 engage
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- successful UPI transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem PSPs for comprehensive coverage
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- core UPI payment categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- payment and collection transactions
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- exclude users without lifecycle classification
+lifecycle IS NOT NULL
+
+--- specific filters
+--- temporal range selection (configurable via UI)
+--- day_id TEMPORAL_RANGE (No filter - allows user selection)
+--- data freshness constraint for reliable metrics
+txn.dl_last_updated >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+--- analysis window constraint
+txn.transaction_date_key >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+txn.transaction_date_key < current_date
+
+--- calculation_logic
+DAU: count(distinct if(row_number() over(partition by payer_cust_id,day_id order by day_id)=1, payer_cust_id, null))
+MAU: count(distinct if(row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id)=1, payer_cust_id, null))
+TXNs: sum(txns)
+TPU: sum(txns)*1.00/sum(DAU)
+GPU: sum(GMV)*1.00/sum(DAU)
+
+
+
+
+## DAU MAU Txns by NRR
+
+This metric tracks daily and monthly active users, transaction volumes, and user productivity metrics (transactions per user and GMV per user) segmented by user lifecycle stages (New, Retained, Resurrected users). It analyzes UPI payment behavior across different user retention cohorts to understand engagement patterns and transaction intensity. The analysis focuses on Paytm ecosystem transactions (paytm, ptyes, ptaxis, pthdfc, ptsbi PSPs) for successful payments including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. The temporal filter allows flexible date range selection while excluding users without lifecycle classification. This enables product teams to assess user engagement quality and transaction productivity across different user maturity segments.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.midgar.engage_data_snapshot_v3 engage
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- successful UPI transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem PSPs for comprehensive coverage
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- core UPI payment categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- payment and collection transactions
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- exclude users without lifecycle classification
+lifecycle IS NOT NULL
+
+--- specific filters
+--- temporal range selection (configurable via UI)
+--- day_id TEMPORAL_RANGE (No filter - allows user selection)
+--- data freshness constraint for reliable metrics
+txn.dl_last_updated >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+--- analysis window constraint
+txn.transaction_date_key >= date_trunc('month',current_date+interval'-1' day)-interval '1' month AND
+txn.transaction_date_key < current_date
+
+--- calculation_logic
+DAU: count(distinct if(row_number() over(partition by payer_cust_id,day_id order by day_id)=1, payer_cust_id, null))
+MAU: count(distinct if(row_number() over(partition by payer_cust_id,year(day_id),month(day_id) order by day_id)=1, payer_cust_id, null))
+TXNs: sum(txns)
+TPU: sum(txns)*1.00/sum(DAU)
+GPU: sum(GMV)*1.00/sum(DAU)
+
+
+
+
+## DAU MAU Txns by States
+
+This metric tracks user engagement and transaction activity across Indian states, measuring Daily Active Users (DAU), Monthly Active Users (MAU), total transactions, and Transactions Per User (TPU). It combines UPI transaction data with user demographic information and lifecycle segmentation to provide geographic insights into user behavior patterns. The analysis focuses on successful UPI transactions (PAY/COLLECT) across major payment handles including Paytm ecosystem PSPs. It filters for users with defined lifecycle stages (New/Returning/Reactivated) and enables temporal analysis. This metric helps identify regional performance variations, user concentration patterns, and transaction intensity across different states, supporting geographic expansion strategies and regional market analysis for UPI payment services.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 fact_upi
+hive.midgar.engage_data_snapshot_v3 engage
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure user has valid lifecycle classification for proper segmentation
+lifecycle IS NOT NULL AND
+--- restrict to successful UPI transactions only
+fact_upi.status IN ('SUCCESS', 'DEEMED') AND
+--- focus on core transaction types
+fact_upi.transaction_type IN ('PAY', 'COLLECT') AND
+--- include primary UPI categories
+fact_upi.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT') AND
+--- limit to Paytm ecosystem payment service providers
+fact_upi.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- temporal range filter for transaction analysis period
+--- default: current month and previous month data
+fact_upi.transaction_date_key >= date_trunc('month', current_date + interval '-1' day) - interval '1' month AND
+fact_upi.transaction_date_key < current_date
+
+--- calculation_logic
+DAU: count(distinct case when row_number() over(partition by payer_cust_id, day_id order by day_id) = 1 then payer_cust_id end)
+MAU: count(distinct case when row_number() over(partition by payer_cust_id, year(day_id), month(day_id) order by day_id) = 1 then payer_cust_id end)
+TXNs: sum(transaction_count)
+TPU: sum(txns) * 1.00 / sum(DAU)
+
+
+
+
+## UPI Overall Retention: Monthly
+
+UPI Overall Retention tracks monthly cohort retention rates to measure user engagement persistence over time. This metric calculates what percentage of users active in a given base month continue to be active in subsequent months, creating a cohort analysis across different time intervals. The analysis segments users by lifecycle categories (reactive users grouped as 'c:react') and tracks retention patterns across a 4-month rolling window from the current date. The retention rate is calculated as the ratio of users active in both the base month and retention month to the total users in the base month, providing insights into user stickiness and long-term engagement trends in the UPI ecosystem.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- rolling 4-month analysis window from current date
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+date_trunc('month', a.dt) < current_date AND
+--- user lifecycle categorization for reactive users
+CASE 
+  WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react'
+  ELSE a.user_type
+END
+
+--- specific filters
+--- temporal range filter on base month (configurable)
+--- base_month temporal range (currently set to no filter)
+
+--- calculation_logic
+WITH cohort_base AS (
+  SELECT date_trunc('month', a.dt) as mt, a.cust_id as scope_cust_id,
+         CASE WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react' ELSE a.user_type END as lifecycle
+),
+retention_analysis AS (
+  SELECT date_diff('month', a.mt, b.mt) as diff,
+         a.mt as base_month, b.mt as retention_month,
+         count(distinct b.scope_cust_id) as users
+  FROM cohort_base a
+  LEFT JOIN cohort_base b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+  GROUP BY 1, 2, 3
+)
+SELECT base_month, diff, 
+       users * 1.0000 / MAX(users) OVER (PARTITION BY base_month ORDER BY base_month) as retention
+
+
+
+
+## UPI Overall Retention: Monthly
+
+UPI Overall Retention tracks monthly cohort retention rates to measure user engagement persistence over time. This metric calculates what percentage of users active in a given base month continue to be active in subsequent months, creating a cohort analysis across different time intervals. The analysis segments users by lifecycle categories (reactive users grouped as 'c:react') and tracks retention patterns across a 4-month rolling window from the current date. The retention rate is calculated as the ratio of users active in both the base month and retention month to the total users in the base month, providing insights into user stickiness and long-term engagement trends in the UPI ecosystem.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- rolling 4-month analysis window from current date
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+date_trunc('month', a.dt) < current_date AND
+--- user lifecycle categorization for reactive users
+CASE 
+  WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react'
+  ELSE a.user_type
+END
+
+--- specific filters
+--- temporal range filter on base month (configurable)
+--- base_month temporal range (currently set to no filter)
+
+--- calculation_logic
+WITH cohort_base AS (
+  SELECT date_trunc('month', a.dt) as mt, a.cust_id as scope_cust_id,
+         CASE WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react' ELSE a.user_type END as lifecycle
+),
+retention_analysis AS (
+  SELECT date_diff('month', a.mt, b.mt) as diff,
+         a.mt as base_month, b.mt as retention_month,
+         count(distinct b.scope_cust_id) as users
+  FROM cohort_base a
+  LEFT JOIN cohort_base b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+  GROUP BY 1, 2, 3
+)
+SELECT base_month, diff, 
+       users * 1.0000 / MAX(users) OVER (PARTITION BY base_month ORDER BY base_month) as retention
+
+
+
+
+## DAU MAU Txns by States
+
+This metric tracks user engagement and transaction activity across Indian states, measuring Daily Active Users (DAU), Monthly Active Users (MAU), total transactions, and Transactions Per User (TPU). It combines UPI transaction data with user demographic information and lifecycle segmentation to provide geographic insights into user behavior patterns. The analysis focuses on successful UPI transactions (PAY/COLLECT) across major payment handles including Paytm ecosystem PSPs. It filters for users with defined lifecycle stages (New/Returning/Reactivated) and enables temporal analysis. This metric helps identify regional performance variations, user concentration patterns, and transaction intensity across different states, supporting geographic expansion strategies and regional market analysis for UPI payment services.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 fact_upi
+hive.midgar.engage_data_snapshot_v3 engage
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure user has valid lifecycle classification for proper segmentation
+lifecycle IS NOT NULL AND
+--- restrict to successful UPI transactions only
+fact_upi.status IN ('SUCCESS', 'DEEMED') AND
+--- focus on core transaction types
+fact_upi.transaction_type IN ('PAY', 'COLLECT') AND
+--- include primary UPI categories
+fact_upi.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT') AND
+--- limit to Paytm ecosystem payment service providers
+fact_upi.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- temporal range filter for transaction analysis period
+--- default: current month and previous month data
+fact_upi.transaction_date_key >= date_trunc('month', current_date + interval '-1' day) - interval '1' month AND
+fact_upi.transaction_date_key < current_date
+
+--- calculation_logic
+DAU: count(distinct case when row_number() over(partition by payer_cust_id, day_id order by day_id) = 1 then payer_cust_id end)
+MAU: count(distinct case when row_number() over(partition by payer_cust_id, year(day_id), month(day_id) order by day_id) = 1 then payer_cust_id end)
+TXNs: sum(transaction_count)
+TPU: sum(txns) * 1.00 / sum(DAU)
+
+
+
+
+## UPI Retention-New
+
+This metric tracks UPI user retention rates specifically for new users (lifecycle = 'a:new') across monthly cohorts. It measures what percentage of new users from a given base month remain active in subsequent months, providing insights into user engagement and product stickiness for newly acquired UPI customers. The retention calculation normalizes current month active users against the peak users in each cohort, enabling comparison across different base months. The analysis filters for non-null base months and focuses exclusively on the 'a:new' user lifecycle segment, helping understand how effectively Paytm retains newly onboarded UPI users over time.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude records with null base month to ensure data quality
+base_month IS NOT NULL AND
+--- focus analysis on new user lifecycle segment
+lifecycle = 'a:new'
+
+--- specific filters
+--- date range constraint for analysis window
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- ensure base months are in the past for complete retention tracking
+mt < current_date
+
+--- calculation_logic
+users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+COUNT(DISTINCT b.scope_cust_id) AS users,
+date_diff('month', a.mt, b.mt) AS diff
+
+
+
+
+## UPI Retention-Repeat
+
+This metric tracks UPI user retention rates for repeat users, measuring the percentage of users who continue transacting in subsequent months after their initial cohort month. It calculates Net Retention Rate (NRR) by comparing active users in each retention period to the total users in their base month cohort. The analysis is filtered to focus specifically on repeat users (lifecycle = 'b:repeat') and excludes null values for base months and retention periods. This retention analysis helps understand user engagement patterns and lifecycle value for the repeat user segment within the UPI ecosystem, providing insights into user stickiness and platform loyalty over time.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+hive.default.virtual_table vt
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus on repeat users only for retention analysis
+vt.lifecycle = 'b:repeat' AND
+--- ensure valid base month data exists
+vt.Base_month IS NOT NULL AND
+--- exclude records without retention period calculation
+vt.diff IS NOT NULL
+
+--- specific filters
+--- time window for cohort analysis (4 months back from current date)
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+a.mt < current_date
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id,
+         IF(a.user_type IN ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) user_type
+),
+retention_cohort AS (
+  SELECT a.lifecycle, date_diff('month', a.mt, b.mt) diff, a.mt base_month, b.mt retention_month,
+         COUNT(DISTINCT b.scope_cust_id) users
+  FROM upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+)
+SELECT users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention
+
+
+
+
+## UPI Retention-New
+
+This metric tracks UPI user retention rates specifically for new users (lifecycle = 'a:new') across monthly cohorts. It measures what percentage of new users from a given base month remain active in subsequent months, providing insights into user engagement and product stickiness for newly acquired UPI customers. The retention calculation normalizes current month active users against the peak users in each cohort, enabling comparison across different base months. The analysis filters for non-null base months and focuses exclusively on the 'a:new' user lifecycle segment, helping understand how effectively Paytm retains newly onboarded UPI users over time.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude records with null base month to ensure data quality
+base_month IS NOT NULL AND
+--- focus analysis on new user lifecycle segment
+lifecycle = 'a:new'
+
+--- specific filters
+--- date range constraint for analysis window
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- ensure base months are in the past for complete retention tracking
+mt < current_date
+
+--- calculation_logic
+users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+COUNT(DISTINCT b.scope_cust_id) AS users,
+date_diff('month', a.mt, b.mt) AS diff
+
+
+
+
+## UPI Retention-Repeat
+
+This metric tracks UPI user retention rates for repeat users, measuring the percentage of users who continue transacting in subsequent months after their initial cohort month. It calculates Net Retention Rate (NRR) by comparing active users in each retention period to the total users in their base month cohort. The analysis is filtered to focus specifically on repeat users (lifecycle = 'b:repeat') and excludes null values for base months and retention periods. This retention analysis helps understand user engagement patterns and lifecycle value for the repeat user segment within the UPI ecosystem, providing insights into user stickiness and platform loyalty over time.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+hive.default.virtual_table vt
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus on repeat users only for retention analysis
+vt.lifecycle = 'b:repeat' AND
+--- ensure valid base month data exists
+vt.Base_month IS NOT NULL AND
+--- exclude records without retention period calculation
+vt.diff IS NOT NULL
+
+--- specific filters
+--- time window for cohort analysis (4 months back from current date)
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+a.mt < current_date
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id,
+         IF(a.user_type IN ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) user_type
+),
+retention_cohort AS (
+  SELECT a.lifecycle, date_diff('month', a.mt, b.mt) diff, a.mt base_month, b.mt retention_month,
+         COUNT(DISTINCT b.scope_cust_id) users
+  FROM upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+)
+SELECT users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention
+
+
+
+
+## UPI flow Wise SR
+
+This metric tracks UPI transaction success rates segmented by flow category (VPA2MERCHANT, VPA2VPA, VPA2ACCOUNT) to monitor payment ecosystem performance across different transaction types. It measures the percentage of successful transactions (including deemed successful) against total attempted transactions (success, deemed, failure, pending) for major PSP participants including Paytm, Yes Bank, Axis, HDFC, and SBI. The analysis focuses on PAY and COLLECT transaction types over a rolling 2+ month period, providing insights into payment flow reliability and identifying performance variations across merchant payments, peer-to-peer transfers, and account-based transactions within the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for snapshot table
+a.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) - interval '2' month AND
+--- transaction date range for 2+ months historical analysis
+a.transaction_date_key between date_trunc('month', current_date + interval '-1' day) - interval '2' month
+  and current_date + interval '-1' day AND
+--- core UPI transaction types for payment flows
+a.transaction_type in ('PAY', 'COLLECT') AND
+--- major PSP ecosystem participants
+a.payer_handle in ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- UPI flow categories for comprehensive coverage
+a.category in ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- calculation_logic
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END) as Success_txn,
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END) as Overall_txn,
+cast(round(SUM(success_txn)*100/SUM(overall_txn),2) as varchar)||'%' as success_rate
+
+
+
+
+## UPI Retention-Reactivated
+
+This metric tracks UPI user retention rates specifically for reactivated customers (lifecycle = 'c:react'). It measures the percentage of users from a base month who remain active in subsequent months, calculated using a Net Revenue Retention methodology. The analysis focuses on reactivated users who were previously inactive but returned to using UPI services, providing insights into customer re-engagement effectiveness. The retention calculation compares user counts across different month intervals (diff) from the base month, showing how well Paytm retains users after they've been successfully reactivated. This helps evaluate the long-term value and stickiness of reactivation strategies.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters
+--- focus on reactivated user segment for retention analysis
+lifecycle = 'c:react' AND
+--- exclude null values for temporal analysis
+Base_month IS NOT NULL AND
+--- ensure valid month difference calculations
+diff IS NOT NULL AND
+--- limit analysis to recent 4-month window
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+a.mt < current_date
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id,
+    IF(a.user_type IN ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) user_type
+),
+retention AS (
+  SELECT a.lifecycle, date_diff('month', a.mt, b.mt) AS diff, a.mt AS base_month,
+    COUNT(DISTINCT b.scope_cust_id) AS users
+  FROM upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+)
+SELECT users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention
+
+
+
+
+## UPI Retention-Reactivated
+
+This metric tracks UPI user retention rates specifically for reactivated customers (lifecycle = 'c:react'). It measures the percentage of users from a base month who remain active in subsequent months, calculated using a Net Revenue Retention methodology. The analysis focuses on reactivated users who were previously inactive but returned to using UPI services, providing insights into customer re-engagement effectiveness. The retention calculation compares user counts across different month intervals (diff) from the base month, showing how well Paytm retains users after they've been successfully reactivated. This helps evaluate the long-term value and stickiness of reactivation strategies.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters
+--- focus on reactivated user segment for retention analysis
+lifecycle = 'c:react' AND
+--- exclude null values for temporal analysis
+Base_month IS NOT NULL AND
+--- ensure valid month difference calculations
+diff IS NOT NULL AND
+--- limit analysis to recent 4-month window
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+a.mt < current_date
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id,
+    IF(a.user_type IN ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) user_type
+),
+retention AS (
+  SELECT a.lifecycle, date_diff('month', a.mt, b.mt) AS diff, a.mt AS base_month,
+    COUNT(DISTINCT b.scope_cust_id) AS users
+  FROM upi a LEFT JOIN upi b ON b.scope_cust_id = a.scope_cust_id AND b.mt >= a.mt
+)
+SELECT users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention
+
+
+
+
+## UPI flow Wise SR
+
+This metric tracks UPI transaction success rates segmented by flow category (VPA2MERCHANT, VPA2VPA, VPA2ACCOUNT) to monitor payment ecosystem performance across different transaction types. It measures the percentage of successful transactions (including deemed successful) against total attempted transactions (success, deemed, failure, pending) for major PSP participants including Paytm, Yes Bank, Axis, HDFC, and SBI. The analysis focuses on PAY and COLLECT transaction types over a rolling 2+ month period, providing insights into payment flow reliability and identifying performance variations across merchant payments, peer-to-peer transfers, and account-based transactions within the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for snapshot table
+a.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) - interval '2' month AND
+--- transaction date range for 2+ months historical analysis
+a.transaction_date_key between date_trunc('month', current_date + interval '-1' day) - interval '2' month
+  and current_date + interval '-1' day AND
+--- core UPI transaction types for payment flows
+a.transaction_type in ('PAY', 'COLLECT') AND
+--- major PSP ecosystem participants
+a.payer_handle in ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- UPI flow categories for comprehensive coverage
+a.category in ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- calculation_logic
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END) as Success_txn,
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END) as Overall_txn,
+cast(round(SUM(success_txn)*100/SUM(overall_txn),2) as varchar)||'%' as success_rate
+
+
+
+
+## UPI Retention- M0 MAU
+
+This metric tracks UPI Monthly Active Users (MAU) in their initial month of activity (M0) across different user lifecycle segments, measuring both absolute user counts and month-over-month growth percentages. The analysis calculates retention patterns by comparing user activity across consecutive months, with the diff=0 filter specifically isolating new user acquisition metrics. The business purpose is to monitor user onboarding effectiveness and growth trends in the UPI ecosystem, helping identify whether new user acquisition is accelerating or declining over time. The metric provides insights into user lifecycle management and platform growth dynamics.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent 4-month period for performance and relevance
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+date_trunc('month', a.dt) < current_date AND
+--- focus on M0 MAU (initial month users) 
+diff = 0
+
+--- specific filters
+--- temporal range filter for base_month analysis period
+--- base_month temporal range (configurable via dashboard filter)
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id, a.user_type lifecycle
+  FROM hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+),
+retention_analysis AS (
+  SELECT base_month, lifecycle, COUNT(DISTINCT scope_cust_id) users,
+         LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) prev_month_users,
+         (users - prev_month_users) mom_growth
+  FROM upi GROUP BY base_month, lifecycle
+)
+SELECT SUM(users) MAU, SUM(mom_growth*1.0000)/SUM(users) growth_percentage
+
+
+
+
+## UPI Retention- M0 MAU
+
+This metric tracks UPI Monthly Active Users (MAU) in their initial month of activity (M0) across different user lifecycle segments, measuring both absolute user counts and month-over-month growth percentages. The analysis calculates retention patterns by comparing user activity across consecutive months, with the diff=0 filter specifically isolating new user acquisition metrics. The business purpose is to monitor user onboarding effectiveness and growth trends in the UPI ecosystem, helping identify whether new user acquisition is accelerating or declining over time. The metric provides insights into user lifecycle management and platform growth dynamics.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent 4-month period for performance and relevance
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude current incomplete month
+date_trunc('month', a.dt) < current_date AND
+--- focus on M0 MAU (initial month users) 
+diff = 0
+
+--- specific filters
+--- temporal range filter for base_month analysis period
+--- base_month temporal range (configurable via dashboard filter)
+
+--- calculation_logic
+WITH upi AS (
+  SELECT date_trunc('month', a.dt) mt, a.cust_id scope_cust_id, a.user_type lifecycle
+  FROM hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+),
+retention_analysis AS (
+  SELECT base_month, lifecycle, COUNT(DISTINCT scope_cust_id) users,
+         LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) prev_month_users,
+         (users - prev_month_users) mom_growth
+  FROM upi GROUP BY base_month, lifecycle
+)
+SELECT SUM(users) MAU, SUM(mom_growth*1.0000)/SUM(users) growth_percentage
+
+
+
+
+## UPI Retention NRR MAU
+
+This metric tracks Monthly Active Users (MAU) segmented by user lifecycle categories for UPI retention analysis. It measures the count of unique users in their base month (month of initial activity) across different lifecycle stages including combined reactive users ('c:react' consolidating 3+ and 1-3 reactive segments) and other user types. The analysis focuses on current month MAU by filtering for diff=0 (base month retention) and excludes records with null base months. This provides insights into user acquisition patterns and lifecycle distribution, supporting retention strategy development by showing how many users are in each lifecycle stage during their initial month of UPI activity.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to recent 4 months of data for current retention analysis
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude future dates from analysis
+a.mt < current_date AND
+--- focus on base month MAU (users in their initial month)
+diff = 0 AND
+--- exclude records with missing base month data
+base_month IS NOT NULL
+
+--- specific filters
+--- lifecycle categorization with reactive user consolidation
+CASE 
+  WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react'
+  ELSE a.user_type
+END AS lifecycle
+
+--- calculation_logic
+COUNT(DISTINCT scope_cust_id) AS users,
+date_trunc('month', a.dt) AS mt,
+users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+(users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+
+
+
+
+## UPI Retention NRR MAU
+
+This metric tracks Monthly Active Users (MAU) segmented by user lifecycle categories for UPI retention analysis. It measures the count of unique users in their base month (month of initial activity) across different lifecycle stages including combined reactive users ('c:react' consolidating 3+ and 1-3 reactive segments) and other user types. The analysis focuses on current month MAU by filtering for diff=0 (base month retention) and excludes records with null base months. This provides insights into user acquisition patterns and lifecycle distribution, supporting retention strategy development by showing how many users are in each lifecycle stage during their initial month of UPI activity.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to recent 4 months of data for current retention analysis
+a.dt >= date_trunc('month', current_date + interval '-1' day) - interval '4' month AND
+--- exclude future dates from analysis
+a.mt < current_date AND
+--- focus on base month MAU (users in their initial month)
+diff = 0 AND
+--- exclude records with missing base month data
+base_month IS NOT NULL
+
+--- specific filters
+--- lifecycle categorization with reactive user consolidation
+CASE 
+  WHEN a.user_type IN ('c:react 3+', 'c:react 1-3') THEN 'c:react'
+  ELSE a.user_type
+END AS lifecycle
+
+--- calculation_logic
+COUNT(DISTINCT scope_cust_id) AS users,
+date_trunc('month', a.dt) AS mt,
+users * 1.0000 / MAX(users) OVER (PARTITION BY lifecycle, base_month) AS NRR_retention,
+LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month) AS prev_month_users,
+(users - LAG(users, 1) OVER (PARTITION BY lifecycle ORDER BY base_month)) AS mom_growth
+
+
+
+
+## UPI LMTD Retention
+
+UPI LMTD Retention tracks user retention from the previous month to the current month, measuring how many users from different lifecycle stages (such as c:react for reactive users) who were active in the last month continued to perform UPI transactions in the current month. The analysis segments users by their behavioral lifecycle classification and calculates both absolute retention numbers and retention percentages. Base users are identified from MAU data for the previous month, while retained users are those who conducted successful UPI transactions (PAY/COLLECT) in the current month through Paytm ecosystem PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi handles across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters for last month MAU data
+--- extract users from previous month for base retention calculation
+a.dt >= date_trunc('month', current_date + interval '-1' day) + interval '-2' month AND
+a.dt <= date_trunc('month', current_date + interval '-1' day) + interval '-1' month + interval '-1' day AND
+--- consolidate reactive user types for lifecycle analysis
+if(a.user_type in ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) as lifecycle
+
+--- standard filters for current month transaction data
+--- ensure data freshness and current month scope
+a.dl_last_updated between date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+    and current_date + interval '-1' day + interval '-1' month AND
+a.transaction_date_key between date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+    and current_date + interval '-1' day + interval '-1' month AND
+--- successful transaction types only
+a.transaction_type in ('PAY', 'COLLECT') AND
+a.status in ('SUCCESS', 'DEEMED') AND
+--- paytm ecosystem PSP handles only
+a.payer_handle in ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- standard UPI transaction categories
+a.category in ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- calculation_logic
+count(distinct lm.scope_cust_id) as Base_users,
+count(distinct cmtd.scope_cust_id) as Reatined_users,
+SUM(Reatined_users) * 1.0000 / SUM(Base_users) as retention_rate
+
+
+
+
+## UPI LMTD Retention
+
+UPI LMTD Retention tracks user retention from the previous month to the current month, measuring how many users from different lifecycle stages (such as c:react for reactive users) who were active in the last month continued to perform UPI transactions in the current month. The analysis segments users by their behavioral lifecycle classification and calculates both absolute retention numbers and retention percentages. Base users are identified from MAU data for the previous month, while retained users are those who conducted successful UPI transactions (PAY/COLLECT) in the current month through Paytm ecosystem PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi handles across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 a
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters for last month MAU data
+--- extract users from previous month for base retention calculation
+a.dt >= date_trunc('month', current_date + interval '-1' day) + interval '-2' month AND
+a.dt <= date_trunc('month', current_date + interval '-1' day) + interval '-1' month + interval '-1' day AND
+--- consolidate reactive user types for lifecycle analysis
+if(a.user_type in ('c:react 3+', 'c:react 1-3'), 'c:react', a.user_type) as lifecycle
+
+--- standard filters for current month transaction data
+--- ensure data freshness and current month scope
+a.dl_last_updated between date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+    and current_date + interval '-1' day + interval '-1' month AND
+a.transaction_date_key between date_trunc('month', current_date + interval '-1' day) + interval '-1' month
+    and current_date + interval '-1' day + interval '-1' month AND
+--- successful transaction types only
+a.transaction_type in ('PAY', 'COLLECT') AND
+a.status in ('SUCCESS', 'DEEMED') AND
+--- paytm ecosystem PSP handles only
+a.payer_handle in ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- standard UPI transaction categories
+a.category in ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- calculation_logic
+count(distinct lm.scope_cust_id) as Base_users,
+count(distinct cmtd.scope_cust_id) as Reatined_users,
+SUM(Reatined_users) * 1.0000 / SUM(Base_users) as retention_rate
+
+
+
+
+## UPI MTD Retention
+
+UPI MTD Retention tracks user retention by measuring what percentage of users who transacted in the previous month also transacted in the current month-to-date, segmented by user lifecycle categories. This metric helps assess user engagement consistency and identifies which user segments maintain active transaction behavior month-over-month. The analysis focuses on Paytm ecosystem PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and includes successful PAY/COLLECT transactions across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. Base users are identified from the complete previous month, while retained users are those who have transacted from the start of current month until yesterday, providing insights into ongoing user engagement patterns.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 mau
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- paytm ecosystem psp transactions only
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful transaction status
+txn.status IN ('SUCCESS','DEEMED') AND
+--- standard upi transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- major upi transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- base users: previous month complete period
+mau.dt >= date_trunc('month', current_date + interval '-1' day) + interval '-1' month AND
+mau.dt <= date_trunc('month', current_date + interval '-1' day) + interval '-1' day AND
+--- retained users: current month to date period
+txn.transaction_date_key >= date_trunc('month', current_date + interval '-1' day) AND
+txn.transaction_date_key <= current_date + interval '-1' day AND
+txn.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) AND
+txn.dl_last_updated <= current_date + interval '-1' day
+
+--- calculation_logic
+base_users: count(distinct scope_cust_id) from previous month MAU data
+retained_users: count(distinct scope_cust_id) from current MTD transactions
+retention_rate: sum(retained_users * 1.0000) / sum(base_users)
+lifecycle_segmentation: case when user_type in ('c:react 3+','c:react 1-3') then 'c:react' else user_type end
+
+
+
+
+## UPI MTD Retention
+
+UPI MTD Retention tracks user retention by measuring what percentage of users who transacted in the previous month also transacted in the current month-to-date, segmented by user lifecycle categories. This metric helps assess user engagement consistency and identifies which user segments maintain active transaction behavior month-over-month. The analysis focuses on Paytm ecosystem PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and includes successful PAY/COLLECT transactions across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. Base users are identified from the complete previous month, while retained users are those who have transacted from the start of current month until yesterday, providing insights into ongoing user engagement patterns.
+
+-- tables_involved
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 mau
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- paytm ecosystem psp transactions only
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful transaction status
+txn.status IN ('SUCCESS','DEEMED') AND
+--- standard upi transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- major upi transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- base users: previous month complete period
+mau.dt >= date_trunc('month', current_date + interval '-1' day) + interval '-1' month AND
+mau.dt <= date_trunc('month', current_date + interval '-1' day) + interval '-1' day AND
+--- retained users: current month to date period
+txn.transaction_date_key >= date_trunc('month', current_date + interval '-1' day) AND
+txn.transaction_date_key <= current_date + interval '-1' day AND
+txn.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) AND
+txn.dl_last_updated <= current_date + interval '-1' day
+
+--- calculation_logic
+base_users: count(distinct scope_cust_id) from previous month MAU data
+retained_users: count(distinct scope_cust_id) from current MTD transactions
+retention_rate: sum(retained_users * 1.0000) / sum(base_users)
+lifecycle_segmentation: case when user_type in ('c:react 3+','c:react 1-3') then 'c:react' else user_type end
+
+
+
+
+## RMG Retentions
+
+This metric tracks user retention rates for gaming merchants within the Paytm UPI ecosystem, measuring the percentage of Monthly Active Users from one period who remain transactionally active in the subsequent month. The analysis segments users by lifecycle categories (reactive users with different engagement levels) and gaming merchant participation status. It compares retention across two specific month pairs: August to September and September to October 2025. The metric helps understand user stickiness and engagement patterns specifically for gaming merchant customers, providing insights into customer lifecycle management and the effectiveness of gaming merchant offerings in maintaining user activity on the platform.
+
+-- tables_involved
+hive.user_paytm_payments.gaming_merchant_5816_analysis gma
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 mau
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different analysis periods
+--- gaming merchant identification period
+gma.mnt >= date'2025-05-01' AND gma.mnt <= date'2025-08-31' AND
+--- gaming merchant classification filter
+gma.gaming_merc = 'Gaming merc' AND
+--- upi transaction success criteria
+txn.transaction_type IN ('PAY','COLLECT') AND
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem psp handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- transaction category scope
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- base period definition for aug to sep analysis
+mau.dt >= date'2025-08-01' AND mau.dt <= date'2025-08-31' AND
+--- retention period for aug to sep analysis  
+txn.dl_last_updated BETWEEN date'2025-09-01' AND date'2025-09-30' AND
+txn.transaction_date_key >= date'2025-09-01' AND txn.transaction_date_key <= date'2025-09-30' AND
+--- month-to-date comparison filter
+day(txn.transaction_date_key) < day(current_date) AND
+--- lifecycle categorization logic
+CASE WHEN mau.user_type IN ('c:react 3+','c:react 1-3') THEN 'c:react' ELSE mau.user_type END
+
+--- calculation_logic
+count(distinct mau.cust_id) as users,
+count(distinct txn.customer_id_payer) as retained_users,
+sum(retained_users*1.0000)*100/sum(users)*1.0000 as retention_percentage,
+if(gma.customer_id is not null, 1, 0) as gaming_merchant_flag
+
+
+
+
+## RMG Retentions
+
+This metric tracks user retention rates for gaming merchants within the Paytm UPI ecosystem, measuring the percentage of Monthly Active Users from one period who remain transactionally active in the subsequent month. The analysis segments users by lifecycle categories (reactive users with different engagement levels) and gaming merchant participation status. It compares retention across two specific month pairs: August to September and September to October 2025. The metric helps understand user stickiness and engagement patterns specifically for gaming merchant customers, providing insights into customer lifecycle management and the effectiveness of gaming merchant offerings in maintaining user activity on the platform.
+
+-- tables_involved
+hive.user_paytm_payments.gaming_merchant_5816_analysis gma
+hive.user_paytm_payments.paytm_upi_mau_final_nrr_1 mau
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different analysis periods
+--- gaming merchant identification period
+gma.mnt >= date'2025-05-01' AND gma.mnt <= date'2025-08-31' AND
+--- gaming merchant classification filter
+gma.gaming_merc = 'Gaming merc' AND
+--- upi transaction success criteria
+txn.transaction_type IN ('PAY','COLLECT') AND
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem psp handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- transaction category scope
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- base period definition for aug to sep analysis
+mau.dt >= date'2025-08-01' AND mau.dt <= date'2025-08-31' AND
+--- retention period for aug to sep analysis  
+txn.dl_last_updated BETWEEN date'2025-09-01' AND date'2025-09-30' AND
+txn.transaction_date_key >= date'2025-09-01' AND txn.transaction_date_key <= date'2025-09-30' AND
+--- month-to-date comparison filter
+day(txn.transaction_date_key) < day(current_date) AND
+--- lifecycle categorization logic
+CASE WHEN mau.user_type IN ('c:react 3+','c:react 1-3') THEN 'c:react' ELSE mau.user_type END
+
+--- calculation_logic
+count(distinct mau.cust_id) as users,
+count(distinct txn.customer_id_payer) as retained_users,
+sum(retained_users*1.0000)*100/sum(users)*1.0000 as retention_percentage,
+if(gma.customer_id is not null, 1, 0) as gaming_merchant_flag
+
+
+
+
+## UPI SR DoD Overall Line Trend
+
+This metric tracks daily UPI transaction success rates to monitor payment ecosystem health and performance trends. It measures the percentage of successful transactions (including deemed successful) against total valid transactions across major Payment Service Providers including Paytm, Yes Bank, Axis Bank, HDFC Bank, and SBI. The chart applies standard UPI transaction filters for PAY and COLLECT transaction types across VPA-to-merchant, VPA-to-VPA, and VPA-to-account categories. It provides day-over-day trend analysis within the current month timeframe, enabling stakeholders to identify performance patterns, detect anomalies, and assess the overall reliability of the UPI payment infrastructure across participating banks and payment providers.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness and completeness
+a.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) - interval '2' month AND
+--- current month temporal range for trend analysis
+transaction_date_key between date_trunc('month', current_date + interval '-1' day) - interval '2' month and current_date + interval '-1' day AND
+--- standard UPI transaction types for payment operations
+transaction_type in ('PAY', 'COLLECT') AND
+--- major PSP ecosystem participants
+payer_handle in ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- standard UPI transaction categories
+a.category in ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- current month date range from Superset temporal filter
+"Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30'
+
+--- calculation_logic
+sum(COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END)) as Success,
+sum(COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END)) as Overall,
+cast(round(SUM(success_txn*1.00)*100/SUM(overall_txn), 2) as int) as SR
+
+
+
+
+## [Upi Profile wise] P2P P2M Ratio
+
+This metric tracks the comparative performance between P2P (person-to-person) and P2M (person-to-merchant) transactions segmented by user lifecycle stages. It measures three key ratios: DAU (Daily Active Users), transaction count, and GMV (Gross Merchandise Value) comparing P2P to P2M activity within each lifecycle category. The analysis focuses on Paytm ecosystem PSPs and includes time-based comparison between current month-to-date and last month-to-date periods. This helps understand user behavior patterns across different lifecycle stages, identifying whether users in specific lifecycle phases prefer P2P or P2M transactions, and how these preferences impact overall transaction volumes and values.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 nrr
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- transaction success filter for reliable metrics
+a.status IN ('SUCCESS','DEEMED') AND
+--- transaction type filter for payment flows
+a.transaction_type IN ('PAY','COLLECT') AND
+--- paytm ecosystem psp filter
+a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- upi transaction category filter
+a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- current date exclusion for complete day data
+a.transaction_date_key < current_date AND
+--- lifecycle data availability filter
+lifecycle IS NOT NULL AND
+--- day comparison filter for mtd analysis
+day(day_id) < day(current_date)
+
+--- specific filters
+--- month-to-date time range for current and previous month comparison
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                      AND current_date + interval '-1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                          AND current_date + interval '-1' day AND
+--- lifecycle snapshot date range
+date(ft_date) >= date_trunc('month',(current_Date - interval '01' day )) - interval '01' month
+
+--- calculation_logic
+LAG(sum(metric)) OVER(PARTITION BY Lifecycle,mt_flag ORDER BY p2m_p2p_flag) * 1.000000 / sum(metric)
+CASE flow categorization: WHEN is_p2p=True THEN 'P2P' WHEN is_p2m=True THEN 'P2M' ELSE flow_category END
+Month flag logic: CASE WHEN day_id >= date_trunc('month', current_date) THEN 'CMTD' WHEN day_id >= date_trunc('month', current_date)+interval '-1' month THEN 'LMTD' END
+
+
+
+
+## RMG TPU GPU
+
+This metric tracks monthly active users segmented by gaming behavior and UPI use case diversity patterns. Users are classified as either Gaming (those with transactions to gaming merchants) or Non-gaming based on activity in the gaming merchant analysis table. They are further categorized by use case engagement: single use case (users engaging with only one UPI flow category like P2P, SnP, Online, or Onus) versus multi-use case (2+ categories). The analysis covers transactions from Paytm ecosystem PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi. This segmentation helps understand user engagement patterns and identify opportunities for cross-selling UPI services to single-category users while analyzing gaming user behavior across different payment flows.
+
+-- tables_involved
+user_paytm_payments.gaming_merchant_5816_analysis rmg_analysis
+hive.cdo.fact_upi_transactions_snapshot_v3 upi_txn
+
+--- standard filters to be applied unless specifically requested for different values
+--- limit to paytm ecosystem PSPs for internal analysis
+upi_txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful transactions only for accurate user behavior analysis
+upi_txn.status IN ('SUCCESS','DEEMED') AND
+--- core transaction types for payment flow analysis
+upi_txn.transaction_type IN ('PAY','COLLECT') AND
+--- standard UPI categories for merchant and P2P flows
+upi_txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- current month minus 1 day to previous month date range for monthly analysis
+upi_txn.dl_last_updated BETWEEN date_trunc('month',(current_date - interval '01' day - interval '01' month)) AND current_date AND
+upi_txn.transaction_date_key BETWEEN date_trunc('month',(current_date - interval '01' day - interval '01' month)) AND (current_date - interval '01' day)
+
+--- specific filters
+--- gaming merchant identification for user segmentation
+rmg_analysis.mnt BETWEEN date'2025-05-01' AND date'2025-08-31' AND
+rmg_analysis.gaming_merc = 'Gaming merc'
+
+--- calculation_logic
+CASE WHEN flow_category IN ('P2P') THEN 'P2P'
+     WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+     WHEN flow_category IN ('Intent', 'P2M Collect', 'Mandate_Online') THEN 'Online'
+     WHEN flow_category IN ('Onus_ExcMandates', 'Mandate_Onus') THEN 'Onus'
+END as final_category,
+COUNT(DISTINCT final_category) as use_case_count,
+IF(use_case_count = 1, '1', '2+') as use_case_segment,
+IF(rmg.customer_id IS NULL, 'Non_gaming', 'Gaming') as gaming_flag,
+COUNT(customer_id) as users
+
+
+
+
+## RMG TPU GPU
+
+This metric tracks monthly active users segmented by gaming behavior and UPI use case diversity patterns. Users are classified as either Gaming (those with transactions to gaming merchants) or Non-gaming based on activity in the gaming merchant analysis table. They are further categorized by use case engagement: single use case (users engaging with only one UPI flow category like P2P, SnP, Online, or Onus) versus multi-use case (2+ categories). The analysis covers transactions from Paytm ecosystem PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi. This segmentation helps understand user engagement patterns and identify opportunities for cross-selling UPI services to single-category users while analyzing gaming user behavior across different payment flows.
+
+-- tables_involved
+user_paytm_payments.gaming_merchant_5816_analysis rmg_analysis
+hive.cdo.fact_upi_transactions_snapshot_v3 upi_txn
+
+--- standard filters to be applied unless specifically requested for different values
+--- limit to paytm ecosystem PSPs for internal analysis
+upi_txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful transactions only for accurate user behavior analysis
+upi_txn.status IN ('SUCCESS','DEEMED') AND
+--- core transaction types for payment flow analysis
+upi_txn.transaction_type IN ('PAY','COLLECT') AND
+--- standard UPI categories for merchant and P2P flows
+upi_txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- current month minus 1 day to previous month date range for monthly analysis
+upi_txn.dl_last_updated BETWEEN date_trunc('month',(current_date - interval '01' day - interval '01' month)) AND current_date AND
+upi_txn.transaction_date_key BETWEEN date_trunc('month',(current_date - interval '01' day - interval '01' month)) AND (current_date - interval '01' day)
+
+--- specific filters
+--- gaming merchant identification for user segmentation
+rmg_analysis.mnt BETWEEN date'2025-05-01' AND date'2025-08-31' AND
+rmg_analysis.gaming_merc = 'Gaming merc'
+
+--- calculation_logic
+CASE WHEN flow_category IN ('P2P') THEN 'P2P'
+     WHEN flow_category IN ('3P QR', 'Paytm QR') THEN 'SnP'
+     WHEN flow_category IN ('Intent', 'P2M Collect', 'Mandate_Online') THEN 'Online'
+     WHEN flow_category IN ('Onus_ExcMandates', 'Mandate_Onus') THEN 'Onus'
+END as final_category,
+COUNT(DISTINCT final_category) as use_case_count,
+IF(use_case_count = 1, '1', '2+') as use_case_segment,
+IF(rmg.customer_id IS NULL, 'Non_gaming', 'Gaming') as gaming_flag,
+COUNT(customer_id) as users
+
+
+
+
+## [Growth]TG CG tracking feature for New PTS Banner 2.0
+
+This metric measures the total number of users who viewed PTS Banner 2.0 campaigns across various UPI payment features including bank linking, RuPay credit card linking, UPI Lite activation, statement downloads, widget additions, spend analytics, auto top-up, balance checking, custom VPA creation, and payment hiding. The tracking system correlates banner impressions with subsequent feature adoption to measure campaign effectiveness. The data encompasses multiple feature types promoted through banner campaigns, providing insights into user engagement with Paytm's payment feature discovery initiatives. This helps evaluate which banner-driven features generate the most user interest and drive feature adoption within the UPI ecosystem.
+
+-- tables_involved
+hive.team_measurement.banner_campaigns_customer_v1 banner
+hive.user_paytm_payments.bank_link bank_link
+hive.user_paytm_payments.cc_all_linkages cc_link
+hive.user_paytm_payments.lite_active lite
+hive.user_paytm_payments.upi_statement_download_V1 stmt
+hive.user_paytm_payments.widget_added_rec_money_ER_daily rec_widget
+hive.user_paytm_payments.widget_added_snp_ER_daily snp_widget
+hive.user_paytm_payments.spend_analytics spend
+hive.user_paytm_payments.lite_auto_topup auto_topup
+hive.user_paytm_payments.check_balance balance
+hive.user_paytm_payments.customer_vpa vpa
+hive.user_paytm_payments.hide_payments hide
+hive.user_paytm_payments.mapper mapper
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude current date to ensure data completeness
+bank_link.dt < current_date AND
+cc_link.dt < current_date AND
+lite.lite_dt < current_date AND
+stmt.dt < current_date AND
+rec_widget.dl_last_updated < current_date AND
+snp_widget.dl_last_updated < current_date AND
+spend.dt < current_date AND
+auto_topup.dt < current_date AND
+balance.dt < current_date AND
+vpa.dt < current_date AND
+hide.dt < current_date AND
+mapper.dt < current_date
+
+--- specific filters
+--- PTS Banner 2.0 campaign identification
+banner.banner_id IN ('3159810','3159843','3159842','3159841','3159987','3159988','3159989','3160634','3159986','3041990','3159992','3159993','3159994','3159995')
+
+--- calculation_logic
+SUM(banner.users_viewed_banner) as total_users_viewed
+
+
+
+
+## [Growth]TG CG tracking feature for New PTS Banner 2.0
+
+This metric measures the total number of users who viewed PTS Banner 2.0 campaigns across various UPI payment features including bank linking, RuPay credit card linking, UPI Lite activation, statement downloads, widget additions, spend analytics, auto top-up, balance checking, custom VPA creation, and payment hiding. The tracking system correlates banner impressions with subsequent feature adoption to measure campaign effectiveness. The data encompasses multiple feature types promoted through banner campaigns, providing insights into user engagement with Paytm's payment feature discovery initiatives. This helps evaluate which banner-driven features generate the most user interest and drive feature adoption within the UPI ecosystem.
+
+-- tables_involved
+hive.team_measurement.banner_campaigns_customer_v1 banner
+hive.user_paytm_payments.bank_link bank_link
+hive.user_paytm_payments.cc_all_linkages cc_link
+hive.user_paytm_payments.lite_active lite
+hive.user_paytm_payments.upi_statement_download_V1 stmt
+hive.user_paytm_payments.widget_added_rec_money_ER_daily rec_widget
+hive.user_paytm_payments.widget_added_snp_ER_daily snp_widget
+hive.user_paytm_payments.spend_analytics spend
+hive.user_paytm_payments.lite_auto_topup auto_topup
+hive.user_paytm_payments.check_balance balance
+hive.user_paytm_payments.customer_vpa vpa
+hive.user_paytm_payments.hide_payments hide
+hive.user_paytm_payments.mapper mapper
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude current date to ensure data completeness
+bank_link.dt < current_date AND
+cc_link.dt < current_date AND
+lite.lite_dt < current_date AND
+stmt.dt < current_date AND
+rec_widget.dl_last_updated < current_date AND
+snp_widget.dl_last_updated < current_date AND
+spend.dt < current_date AND
+auto_topup.dt < current_date AND
+balance.dt < current_date AND
+vpa.dt < current_date AND
+hide.dt < current_date AND
+mapper.dt < current_date
+
+--- specific filters
+--- PTS Banner 2.0 campaign identification
+banner.banner_id IN ('3159810','3159843','3159842','3159841','3159987','3159988','3159989','3160634','3159986','3041990','3159992','3159993','3159994','3159995')
+
+--- calculation_logic
+SUM(banner.users_viewed_banner) as total_users_viewed
+
+
+
+
+## UPI SR Flow wise DoD Overall Line Trend
+
+This metric tracks UPI transaction success rate trends segmented by flow category to monitor payment ecosystem performance over time. Success rate is calculated as the percentage of successful and deemed transactions against total transaction volume including failures and pending transactions. The analysis focuses on core UPI flows (P2P, P2M merchant payments, and account transfers) while excluding mandate-based and onus transactions. Filtering is applied to major PSP partners including Paytm, Yes Bank, Axis, HDFC, and SBI for comprehensive ecosystem coverage. The day-over-day trending capability enables identification of performance patterns and anomalies across different transaction flow categories within the UPI network.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to core payment transaction types
+a.transaction_type IN ('PAY','COLLECT') AND
+--- focus on major PSP ecosystem partners
+a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- include primary UPI flow categories
+a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT') AND
+--- exclude mandate and onus transaction flows
+Flow_category NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M') AND
+--- data freshness constraint for incremental processing
+a.dl_last_updated >= date_trunc('month',current_date+interval'-1' day)-interval '2' month
+
+--- specific filters
+--- temporal range for monthly trending analysis
+--- transaction_date_key between date_trunc('month',current_date+interval'-1' day)-interval '2' month and current_date+interval'-1' day
+Date >= DATE '2025-10-01' AND Date < DATE '2025-11-30'
+
+--- calculation_logic
+SUM(success_txn*1.0000)/SUM(overall_txn) AS success_rate
+WHERE success_txn = COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END)
+AND overall_txn = COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END)
+
+
+
+
+## UPI SR Flow wise DoD Overall Line Trend
+
+This metric tracks UPI transaction success rates segmented by flow category with day-over-day trend analysis. Success rate is calculated as the ratio of successful transactions (status: success or deemed) to total attempted transactions (status: success, deemed, failure, or pending). The analysis focuses on core UPI payment flows (PAY and COLLECT transaction types) processed through major PSP handles including Paytm, Yes Bank, Axis, HDFC, and SBI. It excludes mandate-related flows and other P2M categories to concentrate on primary VPA-to-VPA, VPA-to-merchant, and VPA-to-account transactions. This metric helps monitor payment system reliability and identify performance variations across different transaction flow categories over time.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for incremental processing
+a.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) - interval '2' month AND
+--- temporal range for analysis period
+a.transaction_date_key between date_trunc('month', current_date + interval '-1' day) - interval '2' month
+  and current_date + interval '-1' day AND
+--- core UPI transaction types
+a.transaction_type IN ('PAY', 'COLLECT') AND
+--- major PSP handles focus
+a.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- primary UPI flow categories
+a.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- specific filters
+--- exclude mandate and specialized flow categories
+"Flow_category" NOT IN ('Mandate_Onus', 'Onus_ExcMandates', 'Mandate_Online', 'Other P2M') AND
+--- chart-specific temporal filter
+"Date" >= DATE '2025-10-01' AND "Date" < DATE '2025-11-30'
+
+--- calculation_logic
+success_txn: COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END),
+overall_txn: COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END),
+success_rate: SUM(success_txn * 1.0000) / SUM(overall_txn)
+
+
+
+
+## UPI SR DoD Overall Line Trend
+
+This metric tracks UPI transaction success rate trends over time, measuring the percentage of successful transactions (success/deemed status) against total attempted transactions (success/deemed/failure/pending). It focuses on core UPI payment flows including PAY and COLLECT transaction types across major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) and standard UPI categories (VPA2MERCHANT, VPA2VPA, VPA2ACCOUNT). The success rate calculation provides daily insights into UPI ecosystem health and performance stability. Data spans approximately two months from the previous month start to yesterday, enabling day-over-day trend analysis for operational monitoring and performance benchmarking across the UPI network.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness control for reliable metrics
+a.dl_last_updated >= date_trunc('month', current_date + interval '-1' day) - interval '2' month AND
+--- temporal range covering approximately 2 months for trend analysis
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month 
+AND current_date + interval '-1' day AND
+--- core UPI payment transaction types
+a.transaction_type IN ('PAY', 'COLLECT') AND
+--- major PSP ecosystem participants
+a.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- standard UPI transaction categories
+a.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT')
+
+--- calculation_logic
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed') THEN txn_id END) AS Success_txn,
+COUNT(CASE WHEN LOWER(status) IN ('success', 'deemed', 'failure', 'pending') THEN txn_id END) AS Overall_txn,
+CAST(ROUND(SUM(success_txn * 1.00) * 100 / SUM(overall_txn), 2) AS int) AS SR
+
+
+
+
+## UPI Retention TPU wise LMTD
+
+This metric tracks UPI user retention rates segmented by Transaction Per User (TPU) frequency buckets for Last Month To Date comparison. It measures how many users from the previous complete month continue transacting in the current month up to the same day, providing insights into user engagement patterns across different transaction frequency segments. The analysis includes lifecycle categorization (returning vs fresh users) and TPU buckets ranging from single transactions to 20+ transactions. This retention analysis helps identify which user segments demonstrate stronger engagement and loyalty patterns, enabling targeted retention strategies for different user behavior profiles within the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters for UPI ecosystem analysis
+--- paytm group psp handles only
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful and deemed transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- pay and collect transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- core upi categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters for retention analysis
+--- last month complete period for base users (LlM CTE)
+txn.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                         AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day AND
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                              AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day AND
+--- current month up to same day for retained users (lMTD CTE)
+txn.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                         AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                              AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+day(txn.transaction_date_key) < day(current_date)
+
+--- calculation_logic
+WITH base_users: COUNT(DISTINCT customer_id_payer) FROM last_month_complete,
+retained_users: COUNT(DISTINCT CASE WHEN current_month_user EXISTS THEN base_user END),
+retention_rate: SUM(retained_users*1.0000)/SUM(base_users),
+tpu_buckets: CASE tpu WHEN 1 THEN 'a.1' WHEN 2 THEN 'b.2' WHEN 3 THEN 'c.3' WHEN 4-10 THEN 'd.4-10' WHEN 11-20 THEN 'e.11-20' ELSE 'f.20+' END
+
+
+
+
+## UPI Retention TPU wise MTD
+
+This metric tracks UPI user retention rates segmented by Transaction Per User (TPU) frequency buckets from the previous month, measuring what percentage of users continue transacting in the current month-to-date period. It analyzes user stickiness across different engagement levels, from single-transaction users (TPU=1) to highly active users (TPU=20+), providing insights into retention patterns by user activity segments. The metric includes both lifecycle-specific retention breakdowns and overall retention rates, helping identify which user engagement levels show stronger month-over-month retention. Base users represent the total addressable cohort from last month, while retained users are those who successfully transacted in the current MTD period, with retention calculated as the ratio between them.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- UPI transaction scope for successful payment flows
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- successful transaction status only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem PSP handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- core UPI transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- last month cohort period for base users
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                              AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+--- current month-to-date period for retention measurement
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)
+                              AND current_date + interval '-1' day AND
+--- data freshness alignment
+txn.dl_last_updated BETWEEN respective_period_start AND respective_period_end
+
+--- calculation_logic
+-- TPU buckets: CASE WHEN tpu = 1 THEN 'a.1', tpu = 2 THEN 'b.2', tpu = 3 THEN 'c.3', tpu BETWEEN 4 AND 10 THEN 'd.4-10', tpu BETWEEN 11 AND 20 THEN 'e.11-20', tpu > 20 THEN 'f.20+'
+-- Base users: COUNT(DISTINCT customer_id_payer) from last month
+-- Retained users: COUNT(DISTINCT CASE WHEN current_mtd_user EXISTS THEN last_month_user END)
+-- Retention rate: SUM(Retained_users*1.0000)/SUM(Base_users)
+
+
+
+
+## [Upi Profile wise] P2P P2M Ratio
+
+This metric tracks the comparative performance between P2P and P2M transaction flows across customer lifecycle segments, measuring Daily Active Users, transaction counts, and Gross Merchandise Value ratios. The analysis segments users by their lifecycle stage and compares current month-to-date performance against last month-to-date periods. It calculates P2P-to-P2M ratios using window functions to understand the relative adoption and usage patterns between peer-to-peer and peer-to-merchant transactions. The metric helps identify which customer segments prefer P2P vs P2M flows and how these preferences shift over time periods, providing insights for product strategy and user engagement optimization across different lifecycle stages.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to successful UPI transactions only
+txn.status IN ('SUCCESS', 'DEEMED') AND
+--- limit to PAY and COLLECT transaction types
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- focus on core UPI payment categories
+txn.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT') AND
+--- include only PSP ecosystem transactions
+txn.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi') AND
+--- exclude future transactions
+txn.transaction_date_key < current_date AND
+--- ensure lifecycle data availability
+lifecycle.lifecycle IS NOT NULL
+
+--- specific filters
+--- month-over-month comparison window
+txn.dl_last_updated BETWEEN date_trunc('month', current_date - interval '1' day) - interval '1' month
+                         AND current_date - interval '1' day AND
+txn.transaction_date_key BETWEEN date_trunc('month', current_date - interval '1' day) - interval '1' month
+                              AND current_date - interval '1' day AND
+--- lifecycle snapshot temporal alignment
+lifecycle.ft_date >= date_trunc('month', current_date - interval '1' day) - interval '1' month AND
+--- day-of-month alignment for fair comparison
+day(txn.transaction_date_key) < day(current_date)
+
+--- calculation_logic
+LAG(sum(base_metric)) OVER (PARTITION BY lifecycle, mt_flag ORDER BY p2m_p2p_flag) * 1.0 / sum(base_metric)
+base_metrics: DAU (count distinct payer_cust_id), Txns (count distinct txn_id), Amount (sum amount)
+p2m_p2p_flag: CASE WHEN is_p2p=True THEN 'P2P' WHEN is_p2m=True THEN 'P2M' ELSE flow_category END
+mt_flag: CASE WHEN day_id >= date_trunc('month', current_date) THEN 'CMTD' 
+              WHEN day_id >= date_trunc('month', current_date) - interval '1' month THEN 'LMTD' END
+
+
+
+
+## UPI Retention TPU wise LMTD
+
+This metric tracks UPI user retention rates by analyzing how many users from the previous month continue transacting in the current month-to-date period, segmented by TPU (Transactions Per User) buckets and customer lifecycle stages. It measures engagement persistence by comparing last month's active user base against current month's activity, providing insights into user stickiness across different transaction frequency segments (1, 2, 3, 4-10, 11-20, 20+ TPU) and lifecycle categories including fresh users. The analysis helps identify retention patterns across user engagement levels and lifecycle stages, enabling targeted retention strategies for different user segments in the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+hive.default.virtual_table virtual
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- upi ecosystem transactions only
+a.transaction_type IN ('PAY','COLLECT') AND
+--- successful transaction statuses only
+a.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem psp handles
+a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- core upi transaction categories
+a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- last month full period for base users (llm cte)
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                       AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                           AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day AND
+--- current mtd period for retained users (lmtd cte)  
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                       AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                           AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+--- ensure mtd comparison excludes future days
+day(transaction_date_key) < day(current_date)
+
+--- calculation_logic
+Base_users: COUNT(DISTINCT customer_id_payer) from last month,
+Retained_users: COUNT(DISTINCT CASE WHEN current_month_user EXISTS THEN customer_id_payer END),
+retention_percentage: SUM(Retained_users*1.0000)/SUM(Base_users),
+tpu_buckets: CASE WHEN tpu=1 THEN 'a.1' ... WHEN tpu>20 THEN 'f.20+' END,
+lifecycle_segmentation: customer lifecycle categories plus overall aggregation
+
+
+
+
+## UPI Retention TPU wise MTD
+
+This metric tracks UPI user retention from last month to current month-to-date, segmented by TPU (Transactions Per User) buckets to understand retention patterns across different user activity levels. Base users are those who transacted in the last complete month, categorized into TPU buckets (1, 2, 3, 4-10, 11-20, 20+) based on their transaction frequency. Retained users are those base users who also transacted in the current month-to-date period. The retention rate reveals how well different user segments are retained month-over-month, with segmentation by customer lifecycle stages and an overall aggregate view. This analysis helps identify which transaction frequency segments have higher retention rates and inform targeted retention strategies.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- upi ecosystem transactions only
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- successful transactions only
+txn.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem psp handles
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- standard upi transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- last month date range for base user identification
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                              AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+--- current month-to-date range for retained user identification  
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day)
+                              AND current_date + interval '-1' day AND
+--- lifecycle snapshot date range
+lifecycle.ft_date BETWEEN date_trunc('month',(current_date - interval '01' day - interval '01' month))
+                       AND date_trunc('month',current_date)- interval '01' day
+
+--- calculation_logic
+pattern: monthly_retention_analysis
+base_users: COUNT(DISTINCT last_month_users)
+retained_users: COUNT(DISTINCT CASE WHEN current_month_activity IS NOT NULL THEN last_month_users END)
+retention_rate: SUM(retained_users*1.0000)/SUM(base_users)
+tpu_buckets: CASE WHEN tpu=1 THEN 'a.1' WHEN tpu=2 THEN 'b.2' ... END
+
+
+
+
+## State wise flow wise
+
+This metric tracks UPI ecosystem performance by measuring Daily Active Users (DAU), transaction volumes, and transaction amounts segmented by customer lifecycle stage, state, and transaction flow type (P2P vs P2M). It provides operational insights into regional user engagement patterns and transaction behavior across different customer maturity stages. The analysis combines transaction data with customer geography and lifecycle information to enable performance monitoring at state level. Data is filtered to show recent activity (last 3 days) and focuses on successful UPI transactions within the Paytm ecosystem including partner PSPs (ptyes, ptaxis, pthdfc, ptsbi). This enables business teams to identify regional growth opportunities and understand how different customer segments contribute to overall UPI performance.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+hive.midgar.engage_data_snapshot_v3 geo
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent transactional activity for operational monitoring
+day_id >= current_date - interval '3' day AND
+--- ensure transaction data freshness and completeness
+txn.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month AND current_date + interval '-1' day AND
+txn.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month AND current_date + interval '-1' day AND
+--- exclude future dated transactions
+txn.transaction_date_key < current_date AND
+--- focus on completed transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+txn.status IN ('SUCCESS', 'DEEMED') AND
+--- limit to UPI ecosystem transactions
+txn.category IN ('VPA2MERCHANT', 'VPA2VPA', 'VPA2ACCOUNT') AND
+--- paytm ecosystem PSPs only
+txn.payer_handle IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- lifecycle data alignment with transaction month
+lifecycle.ft_date >= date_trunc('month', current_date - interval '1' day) - interval '1' month
+
+--- calculation_logic
+count(distinct payer_cust_id) as DAU,
+sum(txns) as Txns,
+sum(amount) as Amount,
+CASE WHEN txn.is_p2p = True THEN 'P2P' WHEN txn.is_p2m = True THEN 'P2M' ELSE flow_category END as p2m_p2p_flag,
+coalesce(geo.popular_state, 'Other') as state
+
+
+
+
+## UPI Retention GPU wise MTD
+
+This metric tracks UPI user retention rates from the previous month to the current month-to-date period, segmented by GMV transaction value buckets and customer lifecycle stages. It measures how many users who were active in the last month continue to perform UPI transactions in the current month, providing insights into user engagement and loyalty patterns. The analysis includes TPU bucketing (1, 2, 3, 4-10, 11-20, 20+) and GMV ranges (1-1k, 1k-3k, 3k-5k, 5k-10k, 10k-20k, 20k+) to understand retention behavior across different user value segments. The metric calculates base users from last month's activity and retained users who appear in both periods, with an overall retention percentage.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters for UPI transaction analysis
+--- transaction type scope for payment flows
+a.transaction_type IN ('PAY','COLLECT') AND
+--- successful transaction status filtering
+a.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem PSP handles only
+a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- upi category filtering for standard flows
+a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- current month-to-date period for retention measurement
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) AND current_date + interval '-1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) AND current_date + interval '-1' day
+--- last month period for base user identification
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month AND date_trunc('month', current_date + interval '-1' day) - interval '1' day
+
+--- calculation_logic
+SUM(Base_users) as base_users_total,
+SUM(Retained_users) as retained_users_total,
+SUM(Retained_users*1.0000)/SUM(Base_users) as retention_rate
+
+
+
+
+## State wise flow wise
+
+This metric tracks daily active users, transaction volumes, and transaction amounts for UPI payments segmented by customer lifecycle stage, geographic state, and payment flow type (P2P vs P2M). It provides operational insights into user engagement patterns across different customer maturity stages and geographic regions within the Paytm UPI ecosystem. The analysis focuses on recent activity (last 3 days) and includes both peer-to-peer and peer-to-merchant transaction flows. The geographic segmentation helps identify state-wise adoption patterns, while lifecycle segmentation reveals how user behavior varies across different customer journey stages from new to retained users.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+hive.midgar.engage_data_snapshot_v3 geo
+hive.default.virtual_table vt
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent operational data for performance monitoring
+vt.day_id >= current_date - interval '3' day AND
+--- paytm ecosystem psp focus for internal analytics
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- successful transactions only for accurate business metrics
+txn.status IN ('SUCCESS','DEEMED') AND
+--- upi payment types excluding refunds and reversals
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- standard upi transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- data freshness constraint for snapshot tables
+txn.dl_last_updated BETWEEN date_trunc('month', current_date - interval '1' day) - interval '1' month AND current_date - interval '1' day AND
+--- transaction date range for monthly analysis window
+txn.transaction_date_key BETWEEN date_trunc('month', current_date - interval '1' day) - interval '1' month AND current_date - interval '1' day AND
+--- exclude future dated transactions
+txn.transaction_date_key < current_date AND
+--- lifecycle data alignment with transaction month
+lifecycle.ft_date >= date_trunc('month', current_date - interval '1' day) - interval '1' month
+
+--- calculation_logic
+sum(vt.dau) as total_dau,
+sum(vt.txns) as total_transactions, 
+sum(vt.amount) as total_amount,
+segmented by lifecycle.lifecycle, vt.state, vt.p2m_p2p_flag, vt.flow_category
+
+
+
+
+## UPI Retention GPU wise MTD
+
+This metric measures UPI user retention rates segmented by GMV buckets (ranging from ₹1-1k to ₹20k+) and customer lifecycle categories from the previous month. It tracks what percentage of users who were active in the last month continue to transact in the current month-to-date period. The analysis focuses on UPI transactions (PAY/COLLECT) with SUCCESS/DEEMED status through major PSP handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) across VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories. Base users represent the cohort from last month, while retained users are those who remain active in the current MTD period. The metric provides both lifecycle-specific retention rates and an overall retention summary, enabling analysis of user engagement patterns across different value segments and user maturity stages.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters to be applied unless specifically requested for different values
+--- restrict to successful UPI transactions only
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- include only completed transactions
+txn.status IN ('SUCCESS','DEEMED') AND
+--- focus on major PSP ecosystem partners
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- cover primary UPI transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- temporal filtering for retention analysis
+--- last month period: date_trunc('month', current_date - interval '1 day') - interval '1' month to date_trunc('month', current_date - interval '1 day') - interval '1' day
+--- current MTD period: date_trunc('month', current_date - interval '1 day') to current_date - interval '1 day
+txn.dl_last_updated BETWEEN [period_start] AND [period_end] AND
+txn.transaction_date_key BETWEEN [period_start] AND [period_end] AND
+--- lifecycle snapshot filtering for customer segmentation
+lifecycle.ft_date BETWEEN date_trunc('month', current_date - interval '1 day' - interval '1 month') AND date_trunc('month', current_date) - interval '1 day'
+
+--- calculation_logic
+-- Base users: COUNT(DISTINCT customer_id_payer) from last month with TPU and GMV calculations
+-- Retained users: COUNT(DISTINCT customer_id_payer) who appear in both last month and current MTD
+-- Retention rate: SUM(Retained_users*1.0000)/SUM(Base_users)
+-- GMV bucketing: CASE statement for ranges (1-1k, 1k-3k, 3k-5k, 5k-10k, 10k-20k, 20k+)
+-- TPU bucketing: CASE statement for transaction frequency (1, 2, 3, 4-10, 11-20, 20+)
+
+
+
+
+## UPI Retention GPU wise LMTD
+
+This metric measures UPI user retention rates segmented by GMV buckets for Last Month-To-Date analysis, tracking how many users from the previous full month continue transacting in the current month up to the same day. It analyzes customer stickiness across different spending tiers (1-1k, 1k-3k, 3k-5k, 5k-10k, 10k-20k, 20k+) and lifecycle stages including fresh users. The retention calculation compares previous month's complete user base against current month-to-date active users, providing insights into customer engagement patterns across value segments. This helps identify which GMV segments show stronger retention behavior and supports targeted retention strategies for different customer value tiers within the UPI ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 a
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle_table
+hive.default.virtual_table virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- upi transaction type filtering for payment flows
+a.transaction_type IN ('PAY','COLLECT') AND
+--- successful transaction status filtering
+a.status IN ('SUCCESS','DEEMED') AND
+--- paytm ecosystem psp filtering
+a.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- upi transaction category filtering
+a.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- last month-to-date date range for current period cohort
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                       AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '1' month
+                           AND date_trunc('month', current_date + interval '-1' day) - interval '1' day AND
+--- same day comparison constraint
+day(transaction_date_key) < day(current_date) AND
+--- previous full month date range for base cohort
+a.dl_last_updated BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                       AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day AND
+a.transaction_date_key BETWEEN date_trunc('month', current_date + interval '-1' day) - interval '2' month
+                           AND date_trunc('month', current_date + interval '-1' day) - interval '1' month + interval '-1' day
+
+--- calculation_logic
+pattern: mtd_retention_cohort_analysis
+base_metric: count(distinct customer_id_payer)
+retention_logic: left_join_cohort_matching
+gmv_segmentation: case_when_tiered_buckets
+lifecycle_integration: left_join_lifecycle_snapshot
+
+
+
+
+## UPI Retention GPU wise LMTD
+
+This metric measures UPI user retention rates by analyzing what percentage of last month's active users remained active in the current month-to-date period, segmented by customer lifecycle stage (returning vs fresh users), transaction frequency buckets (TPU: 1, 2, 3, 4-10, 11-20, 20+), and GMV value bands (1-1k, 1k-3k, 3k-5k, 5k-10k, 10k-20k, 20k+). The analysis helps understand user engagement patterns and retention behavior across different customer segments and spending levels. It focuses on successful UPI transactions (PAY/COLLECT) with SUCCESS/DEEMED status across major PSP handles, providing insights into customer stickiness and engagement depth for product and retention strategy optimization.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_customer_lifecycle_snapshot_v3 lifecycle
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to successful UPI payment transactions
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- include only completed transactions
+txn.status IN ('SUCCESS','DEEMED') AND
+--- focus on major PSP ecosystem
+txn.payer_handle IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- cover primary UPI transaction categories
+txn.category IN ('VPA2MERCHANT','VPA2VPA','VPA2ACCOUNT')
+
+--- specific filters
+--- last month complete period for base user calculation
+txn.transaction_date_key BETWEEN date_trunc('month', current_date - interval '1' day) - interval '2' month
+                              AND date_trunc('month', current_date - interval '1' day) - interval '1' month - interval '1' day AND
+--- current month-to-date for retention calculation (excluding current day)
+txn.transaction_date_key BETWEEN date_trunc('month', current_date - interval '1' day) - interval '1' month
+                              AND date_trunc('month', current_date - interval '1' day) - interval '1' day AND
+day(txn.transaction_date_key) < day(current_date)
+
+--- calculation_logic
+Base_users: COUNT(DISTINCT last_month_users.customer_id_payer),
+Retained_users: COUNT(DISTINCT CASE WHEN current_mtd_users.customer_id_payer IS NOT NULL THEN last_month_users.customer_id_payer END),
+Retention_rate: SUM(Retained_users*1.0000)/SUM(Base_users),
+TPU_buckets: CASE WHEN tpu=1 THEN 'a.1' WHEN tpu=2 THEN 'b.2' WHEN tpu=3 THEN 'c.3' WHEN tpu BETWEEN 4 AND 10 THEN 'd.4-10' WHEN tpu BETWEEN 11 AND 20 THEN 'e.11-20' WHEN tpu>20 THEN 'f.20+' END,
+GMV_buckets: CASE WHEN gmv BETWEEN 1 AND 999 THEN 'A: 1–1k' WHEN gmv BETWEEN 1000 AND 2999 THEN 'B: 1k–3k' WHEN gmv BETWEEN 3000 AND 4999 THEN 'C: 3k–5k' WHEN gmv BETWEEN 5000 AND 9999 THEN 'D: 5k–10k' WHEN gmv BETWEEN 10000 AND 19999 THEN 'E: 10k–20k' WHEN gmv>=20000 THEN 'F: 20k+' END
+
+
+
+
+
+
+================================================================================
+## Dashboard 511
+================================================================================
+
+## Category SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different flow categories
+--- restrict to current month data for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- include recent transaction data for up-to-date analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- exclude P2P transactions to focus on merchant payments
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- limit to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- focus on non-P2P flow categories for merchant payment analysis
+txn.final_category IN ('Online', 'Onus', 'SnP')
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
+
+
+
+
+## Category SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different flow categories
+--- restrict to current month data for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- include recent transaction data for up-to-date analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- exclude P2P transactions to focus on merchant payments
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- limit to Paytm ecosystem payers
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- focus on non-P2P flow categories for merchant payment analysis
+txn.final_category IN ('Online', 'Onus', 'SnP')
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
+
+
+
+
+## Handle SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions segmented by payer PSP handles including ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), and ptsbi (SBI). The success rate is calculated as the ratio of successful transactions (those with DEEMED or SUCCESS status) to total transactions, providing insight into payment service provider performance. The metric filters for current month data and focuses on P2P, P2M transaction categories (VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT) with PAY and COLLECT transaction types. This enables monitoring of partner PSP reliability and identifying performance variations across different banking partners for operational and business relationship management.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- limit to payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- focus on core UPI transaction flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
+
+--- specific filters
+--- current month data for timely performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '1' day) AND
+--- segment by payer PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), ptsbi (SBI)
+txn.payer_handle IN ({payer_psp}: ptyes, ptaxis, pthdfc, ptsbi)
+
+--- calculation_logic
+(count(txn.txn_id) FILTER(WHERE txn.status IN ('DEEMED', 'SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) AS success_rate
+
+
+
+
+## Handle SR_511
+
+This metric tracks the Success Rate (SR) for UPI transactions segmented by payer PSP handles including ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), and ptsbi (SBI). The success rate is calculated as the ratio of successful transactions (those with DEEMED or SUCCESS status) to total transactions, providing insight into payment service provider performance. The metric filters for current month data and focuses on P2P, P2M transaction categories (VPA2ACCOUNT, VPA2VPA, VPA2MERCHANT) with PAY and COLLECT transaction types. This enables monitoring of partner PSP reliability and identifying performance variations across different banking partners for operational and business relationship management.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- ensure data freshness for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- limit to payment transactions only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- focus on core UPI transaction flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT')
+
+--- specific filters
+--- current month data for timely performance monitoring
+txn.day_id >= date_trunc('month', current_date - interval '1' day) AND
+--- segment by payer PSP for partner performance analysis
+--- parameter values: ptyes (Yes Bank), ptaxis (Axis Bank), pthdfc (HDFC Bank), ptsbi (SBI)
+txn.payer_handle IN ({payer_psp}: ptyes, ptaxis, pthdfc, ptsbi)
+
+--- calculation_logic
+(count(txn.txn_id) FILTER(WHERE txn.status IN ('DEEMED', 'SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) AS success_rate
+
+
+
+
+## Flowwise SR_511
+
+This metric tracks the success rate of UPI transactions within the Paytm ecosystem, measuring the percentage of transactions that achieve 'SUCCESS' or 'DEEMED' status out of total transaction attempts. It segments performance by flow category (P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate types) and day of month to identify patterns in transaction success across different payment methods and time periods. The analysis focuses specifically on transactions where Paytm acts as the payer PSP, excluding refund transactions (purpose code 14), and provides daily granular insights into operational performance for the current month to support real-time monitoring and troubleshooting efforts.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different categorical values
+--- restrict to current month transactions for real-time monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- focus on Paytm ecosystem as payer PSP
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude refund transactions
+txn.purpose_code != '14' AND
+--- include only relevant transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- focus on core UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- ensure data freshness for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as success_rate,
+grouped by Day(day_id) and flow_category
+
+
+
+
+## Flowwise SR_511
+
+This metric tracks the success rate of UPI transactions within the Paytm ecosystem, measuring the percentage of transactions that achieve 'SUCCESS' or 'DEEMED' status out of total transaction attempts. It segments performance by flow category (P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate types) and day of month to identify patterns in transaction success across different payment methods and time periods. The analysis focuses specifically on transactions where Paytm acts as the payer PSP, excluding refund transactions (purpose code 14), and provides daily granular insights into operational performance for the current month to support real-time monitoring and troubleshooting efforts.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for different categorical values
+--- restrict to current month transactions for real-time monitoring
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- focus on Paytm ecosystem as payer PSP
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- exclude refund transactions
+txn.purpose_code != '14' AND
+--- include only relevant transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- focus on core UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- ensure data freshness for current analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month)
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0000) / (count(txn_id)*1.0000) as success_rate,
+grouped by Day(day_id) and flow_category
+
+
+
+
+## P2P P2M SR_511
+
+This metric tracks the success rate of UPI transactions within the Paytm ecosystem, segmented by P2P (person-to-person) and P2M (person-to-merchant) transaction types. It calculates the percentage of transactions with successful outcomes (DEEMED or SUCCESS status) against total transaction attempts. The analysis focuses on current month performance, excluding bill payment transactions, and is filtered to Paytm ecosystem PSPs including paytm, ptyes, ptaxis, pthdfc, and ptsbi. The metric provides daily granular insights into transaction reliability across different payment flows, enabling performance monitoring and trend analysis for both peer-to-peer transfers and merchant payments within the Paytm network infrastructure.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude bill payment transactions from success rate calculation
+txn.purpose_code != '14' AND
+--- limit to current month transactions for performance analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- focus on paytm ecosystem transactions only
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- include only relevant transaction types for P2P/P2M analysis
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- filter to core UPI transaction categories
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT')
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS'))*1.0) / (count(txn_id)*1.0) as success_rate,
+CASE 
+    WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
+    WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
+    ELSE NULL 
+END as transaction_flow
+
+
+
+
+## Overall SR_511
+
+Overall Success Rate (SR) measures the percentage of UPI transactions that complete successfully (including both SUCCESS and DEEMED status) out of total transaction attempts. This metric provides critical insight into payment system reliability and user experience quality for the Paytm ecosystem. The calculation filters out purpose code '14' transactions and focuses on current month data to track real-time performance. It specifically analyzes transactions where Paytm ecosystem handles (paytm, ptyes, ptaxis, pthdfc, ptsbi) are the payer, covering PAY and COLLECT transaction types across VPA2ACCOUNT, VPA2VPA, and VPA2MERCHANT categories. The metric is segmented by day and month to enable temporal performance analysis and identify daily success rate trends within monthly periods.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to recent data for performance and relevance
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- focus on primary UPI transaction types
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- include all VPA-based transaction categories
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- restrict to Paytm ecosystem as payer
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- exclude refund/reversal transactions (purpose_code 14)
+txn.purpose_code != '14' AND
+--- current month data only for real-time monitoring
+txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day)
+
+--- calculation_logic
+(count(txn.txn_id) filter(where txn.status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn.txn_id) * 1.0000) AS success_rate
+
+
+
+
+## Overall SR_511
+
+Overall SR tracks the success rate of UPI transactions within the Paytm ecosystem, measuring the percentage of transactions that complete successfully (including both SUCCESS and DEEMED status) out of total transaction attempts. This metric provides daily granular visibility into transaction performance across the current month, helping monitor operational excellence and identify potential issues in payment processing. The analysis focuses on core UPI payment flows (P2P via VPA2ACCOUNT/VPA2VPA and P2M via VPA2MERCHANT) while excluding cash withdrawal transactions and limiting scope to transactions where Paytm ecosystem handles act as payers, providing insights into Paytm's transaction success performance.
+
+-- tables_involved
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit to core UPI payment transaction types
+txn.transaction_type IN ('PAY','COLLECT') AND
+--- exclude cash withdrawal transactions
+txn.purpose_code != '14' AND
+--- focus on VPA-based transactions (P2P and P2M flows)
+txn.category IN ('VPA2ACCOUNT','VPA2VPA','VPA2MERCHANT') AND
+--- restrict to Paytm ecosystem as payer
+lower(txn.payer_handle) IN ('paytm','ptyes','ptaxis','pthdfc','ptsbi') AND
+--- ensure data freshness for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month)
+
+--- specific filters
+--- analyze current month performance from previous day onwards
+txn.day_id >= date_trunc('month', current_date - interval '1' day)
+
+--- calculation_logic
+count(txn_id) FILTER(WHERE status IN ('DEEMED','SUCCESS')) * 1.0000 / count(txn_id) * 1.0000 AS success_rate,
+grouped by DAY(day_id), date_trunc('month', day_id)
+
+
+
+
+## P2P P2M SR_511
+
+This metric tracks the success rate (SR) of UPI transactions for Paytm ecosystem PSPs, measuring the percentage of transactions that achieve DEEMED or SUCCESS status out of total attempted transactions. The analysis is segmented between P2P (person-to-person via VPA2ACCOUNT, VPA2VPA) and P2M (person-to-merchant via VPA2MERCHANT) transaction flows. The metric filters for current month data, excludes purpose code 14 transactions, and focuses specifically on Paytm ecosystem payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). This provides insights into transaction processing reliability and user experience quality across different payment flows within the Paytm PSP network, enabling performance monitoring and operational optimization.
+
+-- tables_involved
+cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- transaction scope filter for payment flows only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- category filter for P2P and P2M flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- payer ecosystem filter for Paytm PSPs
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- current month data filter for month-to-date analysis
+txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day) AND
+--- exclude purpose code 14 transactions (likely specific merchant category exclusion)
+txn.purpose_code != '14'
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR,
+CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
+     WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
+     ELSE NULL END AS P2P_P2M
 
 
 

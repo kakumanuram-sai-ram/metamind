@@ -1,5 +1,5 @@
 {
-  "total_conflicts": 40,
+  "total_conflicts": 14,
   "conflicts_by_type": {
     "columns_metadata": [
       {
@@ -27,7 +27,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'N' format while preserving the semantic meaning that the field is not required",
+        "resolution_approach": "Standardized to 'N' format as both values indicate not required",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "category",
         "metadata_type": "columns_metadata"
@@ -42,7 +42,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required, just using different notation conventions",
+        "resolution_approach": "Standardized to 'Y' format while maintaining required status since both indicate the field is required",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "customer_id_payer",
         "metadata_type": "columns_metadata"
@@ -57,7 +57,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'Y' format while maintaining required status since both values indicate the column is required",
+        "resolution_approach": "Standardized to 'Y' format while maintaining required status since both indicate the field is required",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "dl_last_updated",
         "metadata_type": "columns_metadata"
@@ -72,22 +72,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'N' format as both values indicate the field is not required",
-        "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
-        "column_name": "flow_category",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "column_description",
-        "conflicting_values": [
-          "Detailed comprehensive description",
-          "Concise description"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "511"
-        ],
-        "resolution_approach": "Preserved the more comprehensive description from merged entry as it contains all information from dashboard 511 plus additional context",
+        "resolution_approach": "Standardized to 'N' format - both values indicate non-required status with different notation conventions",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "flow_category",
         "metadata_type": "columns_metadata"
@@ -162,7 +147,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'Y' format - both values indicate required field, resolved to consistent format",
+        "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "transaction_date_key",
         "metadata_type": "columns_metadata"
@@ -177,7 +162,22 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'N' format while maintaining semantic meaning (not required)",
+        "resolution_approach": "Semantic equivalence - both values indicate not required, standardized to 'N' format",
+        "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+        "column_name": "transaction_type",
+        "metadata_type": "columns_metadata"
+      },
+      {
+        "field_name": "column_description",
+        "conflicting_values": [
+          "Comprehensive description covering operation types and payment flow types",
+          "Description focused only on operation types (PAY/COLLECT)"
+        ],
+        "dashboard_ids": [
+          "merged",
+          "511"
+        ],
+        "resolution_approach": "Used more comprehensive description from merged entry as it encompasses the narrower description from dashboard 511",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "transaction_type",
         "metadata_type": "columns_metadata"
@@ -192,7 +192,7 @@
           "merged",
           "511"
         ],
-        "resolution_approach": "Standardized to 'Y' format while maintaining required status - both values indicate required field",
+        "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "txn_id",
         "metadata_type": "columns_metadata"
@@ -211,397 +211,6 @@
         "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
         "column_name": "txn_timestamp",
         "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate not required, just different notation",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "amount",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values represent the same semantic meaning (not required)",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "campaign",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format - both values indicate required status, just different notation",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "dl_last_updated",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format while maintaining not-required status",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "fulfillment_status",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format - both values indicate required status, just different notation",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "id",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate non-required status, resolved by using consistent notation",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "redemption_type",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate not required",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "status",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          729
-        ],
-        "resolution_approach": "Standardized to 'Y' format - both values indicate required status, only format differs",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "updated_at",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "user_id",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate not required, just different formatting conventions",
-        "table_name": "hive.code.campaign_snapshot_v3",
-        "column_name": "wallet",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format as both values indicate the column is required",
-        "table_name": "hive.promocad.supercash_task_snapshot_v3",
-        "column_name": "user_id",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Format standardization - both values indicate not required, standardized to 'N'",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "campaign",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized format difference - both indicate not required, resolved to 'N' for consistency",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "cashburn",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format as both values semantically indicate the field is not required",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "created_at",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          729
-        ],
-        "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "dl_last_updated",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format as both values semantically indicate not required",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "fulfillment_status",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format while preserving required status since both values indicate the column is required",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "id",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate field is not required, just different notation",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "info",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate not required, conflict is only in formatting",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "redemption_type",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Format normalization - both values indicate not required, standardized to 'N' format",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "status",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "updated_at",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format as both values indicate required status",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "user_id",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          729
-        ],
-        "resolution_approach": "Standardized to 'N' format - both values indicate not required, difference is only in format representation",
-        "table_name": "hive.promocard.supercash_task_snapshot_v3",
-        "column_name": "wallet",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "N",
-          "no"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'N' format as both values indicate not required - semantic equivalence, no real conflict",
-        "table_name": "hive.promocod.supercash_task_snapshot_v3",
-        "column_name": "info",
-        "metadata_type": "columns_metadata"
-      },
-      {
-        "field_name": "required_flag",
-        "conflicting_values": [
-          "Y",
-          "yes"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Standardized to 'Y' format - both values semantically indicate the field is required",
-        "table_name": "hive.promocoda.supercash_task_snapshot_v3",
-        "column_name": "user_id",
-        "metadata_type": "columns_metadata"
-      }
-    ],
-    "definitions": [
-      {
-        "field_name": "type",
-        "conflicting_values": [
-          "Category",
-          "Synonym"
-        ],
-        "dashboard_ids": [
-          "merged",
-          "729"
-        ],
-        "resolution_approach": "Used more specific type 'Category' over 'Synonym'",
-        "term": "MTD",
-        "metadata_type": "definitions"
       }
     ]
   },
@@ -631,7 +240,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'N' format while preserving the semantic meaning that the field is not required",
+      "resolution_approach": "Standardized to 'N' format as both values indicate not required",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "category",
       "metadata_type": "columns_metadata"
@@ -646,7 +255,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required, just using different notation conventions",
+      "resolution_approach": "Standardized to 'Y' format while maintaining required status since both indicate the field is required",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "customer_id_payer",
       "metadata_type": "columns_metadata"
@@ -661,7 +270,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'Y' format while maintaining required status since both values indicate the column is required",
+      "resolution_approach": "Standardized to 'Y' format while maintaining required status since both indicate the field is required",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "dl_last_updated",
       "metadata_type": "columns_metadata"
@@ -676,22 +285,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'N' format as both values indicate the field is not required",
-      "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
-      "column_name": "flow_category",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "column_description",
-      "conflicting_values": [
-        "Detailed comprehensive description",
-        "Concise description"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "511"
-      ],
-      "resolution_approach": "Preserved the more comprehensive description from merged entry as it contains all information from dashboard 511 plus additional context",
+      "resolution_approach": "Standardized to 'N' format - both values indicate non-required status with different notation conventions",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "flow_category",
       "metadata_type": "columns_metadata"
@@ -766,7 +360,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'Y' format - both values indicate required field, resolved to consistent format",
+      "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "transaction_date_key",
       "metadata_type": "columns_metadata"
@@ -781,7 +375,22 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'N' format while maintaining semantic meaning (not required)",
+      "resolution_approach": "Semantic equivalence - both values indicate not required, standardized to 'N' format",
+      "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
+      "column_name": "transaction_type",
+      "metadata_type": "columns_metadata"
+    },
+    {
+      "field_name": "column_description",
+      "conflicting_values": [
+        "Comprehensive description covering operation types and payment flow types",
+        "Description focused only on operation types (PAY/COLLECT)"
+      ],
+      "dashboard_ids": [
+        "merged",
+        "511"
+      ],
+      "resolution_approach": "Used more comprehensive description from merged entry as it encompasses the narrower description from dashboard 511",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "transaction_type",
       "metadata_type": "columns_metadata"
@@ -796,7 +405,7 @@
         "merged",
         "511"
       ],
-      "resolution_approach": "Standardized to 'Y' format while maintaining required status - both values indicate required field",
+      "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "txn_id",
       "metadata_type": "columns_metadata"
@@ -815,395 +424,6 @@
       "table_name": "hive.cdo.fact_upi_transactions_snapshot_v3",
       "column_name": "txn_timestamp",
       "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate not required, just different notation",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "amount",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values represent the same semantic meaning (not required)",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "campaign",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format - both values indicate required status, just different notation",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "dl_last_updated",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format while maintaining not-required status",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "fulfillment_status",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format - both values indicate required status, just different notation",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate non-required status, resolved by using consistent notation",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "redemption_type",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate not required",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "status",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        729
-      ],
-      "resolution_approach": "Standardized to 'Y' format - both values indicate required status, only format differs",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "updated_at",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format as both values indicate the field is required",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "user_id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate not required, just different formatting conventions",
-      "table_name": "hive.code.campaign_snapshot_v3",
-      "column_name": "wallet",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format as both values indicate the column is required",
-      "table_name": "hive.promocad.supercash_task_snapshot_v3",
-      "column_name": "user_id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Format standardization - both values indicate not required, standardized to 'N'",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "campaign",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized format difference - both indicate not required, resolved to 'N' for consistency",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "cashburn",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format as both values semantically indicate the field is not required",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "created_at",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        729
-      ],
-      "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "dl_last_updated",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format as both values semantically indicate not required",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "fulfillment_status",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format while preserving required status since both values indicate the column is required",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate field is not required, just different notation",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "info",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate not required, conflict is only in formatting",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "redemption_type",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Format normalization - both values indicate not required, standardized to 'N' format",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "status",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format while preserving required status from both sources",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "updated_at",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format as both values indicate required status",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "user_id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        729
-      ],
-      "resolution_approach": "Standardized to 'N' format - both values indicate not required, difference is only in format representation",
-      "table_name": "hive.promocard.supercash_task_snapshot_v3",
-      "column_name": "wallet",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "N",
-        "no"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'N' format as both values indicate not required - semantic equivalence, no real conflict",
-      "table_name": "hive.promocod.supercash_task_snapshot_v3",
-      "column_name": "info",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "required_flag",
-      "conflicting_values": [
-        "Y",
-        "yes"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Standardized to 'Y' format - both values semantically indicate the field is required",
-      "table_name": "hive.promocoda.supercash_task_snapshot_v3",
-      "column_name": "user_id",
-      "metadata_type": "columns_metadata"
-    },
-    {
-      "field_name": "type",
-      "conflicting_values": [
-        "Category",
-        "Synonym"
-      ],
-      "dashboard_ids": [
-        "merged",
-        "729"
-      ],
-      "resolution_approach": "Used more specific type 'Category' over 'Synonym'",
-      "term": "MTD",
-      "metadata_type": "definitions"
     }
   ]
 }

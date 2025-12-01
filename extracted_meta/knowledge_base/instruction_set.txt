@@ -2,7 +2,7 @@
 SQL QUERY GENERATION AGENT - INSTRUCTION SET
 ================================================================================
 
-Generated: 2025-11-27T03:26:04.797311
+Generated: 2025-12-01T11:02:09.724444
 Version: 2.0-fallback
 Generation Method: Template (LLM unavailable)
 
@@ -50,9 +50,9 @@ Use these join patterns:
 METADATA SUMMARY
 ----------------------------------------
 Tables: 41
-Columns: 370
+Columns: 378
 Joins: 0
-Definitions: 120
+Definitions: 127
 
 ================================================================================
 END OF INSTRUCTION SET
