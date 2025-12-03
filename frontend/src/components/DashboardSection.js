@@ -640,8 +640,83 @@ const MetadataFileViewer = ({ dashboardId, fileType, title }) => {
   );
 };
 
+const ConfidenceSection = styled.div`
+  margin-top: ${props => props.theme.spacing.md};
+  margin-bottom: ${props => props.theme.spacing.md};
+  padding: ${props => props.theme.spacing.md};
+  background: ${props => props.theme.colors.gray[50]};
+  border-radius: ${props => props.theme.borderRadius.md};
+  border: 1px solid ${props => props.theme.colors.gray[200]};
+`;
+
+const ConfidenceHeader = styled.h4`
+  margin: 0 0 ${props => props.theme.spacing.sm} 0;
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => props.theme.colors.gray[700]};
+`;
+
+const ConfidenceGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${props => props.theme.spacing.md};
+`;
+
+const ConfidenceItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${props => props.theme.spacing.xs};
+`;
+
+const ConfidenceLabel = styled.span`
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => props.theme.colors.gray[600]};
+  text-transform: capitalize;
+`;
+
+const ConfidenceValue = styled.span`
+  font-size: ${props => props.theme.typography.fontSize.sm};
+  font-weight: ${props => props.theme.typography.fontWeight.semibold};
+  color: ${props => {
+    const score = props.score;
+    if (score >= 0.85) return props.theme.colors.success;
+    if (score >= 0.70) return '#EAB308'; // yellow-500
+    return props.theme.colors.error;
+  }};
+`;
+
+const OverallConfidence = styled.div`
+  margin-top: ${props => props.theme.spacing.sm};
+  font-size: ${props => props.theme.typography.fontSize.xs};
+  color: ${props => props.theme.colors.gray[600]};
+  
+  strong {
+    color: ${props => props.theme.colors.gray[800]};
+  }
+`;
+
 const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
   const [selectedFileType, setSelectedFileType] = useState(null);
+  const [confidenceScores, setConfidenceScores] = useState(null);
+
+  // Fetch confidence scores when dashboard is completed
+  useEffect(() => {
+    const fetchConfidenceScores = async () => {
+      if (progress?.status === 'completed' || useExisting) {
+        try {
+          const scores = await dashboardAPI.getDashboardConfidenceScores(dashboardId);
+          if (scores && scores.overall_confidence !== null) {
+            setConfidenceScores(scores);
+          }
+        } catch (error) {
+          // Confidence scores not available - that's okay (backward compatibility)
+          console.debug('Confidence scores not available:', error);
+        }
+      }
+    };
+
+    fetchConfidenceScores();
+  }, [dashboardId, progress?.status, useExisting]);
   
   const metadataTypes = [
     { key: 'table_metadata', title: 'Table Metadata', fileType: 'table_metadata', phase: 'Phase 4: Table Metadata' },
@@ -794,6 +869,30 @@ const DashboardSection = ({ dashboardId, progress, useExisting = false }) => {
           Current Phase: {getPhaseDisplayName(currentPhase)}
         </CurrentPhaseDisplay>
       )}
+      
+      {/* Confidence Scores Section */}
+      {confidenceScores && confidenceScores.per_metadata_type && Object.keys(confidenceScores.per_metadata_type).length > 0 && confidenceScores.overall_confidence != null && (
+        <ConfidenceSection>
+          <ConfidenceHeader>Confidence Scores</ConfidenceHeader>
+          <ConfidenceGrid>
+            {Object.entries(confidenceScores.per_metadata_type).map(([type, score]) => (
+              <ConfidenceItem key={type}>
+                <ConfidenceLabel>{type}:</ConfidenceLabel>
+                <ConfidenceValue score={score}>
+                  {(score * 100).toFixed(0)}%
+                </ConfidenceValue>
+              </ConfidenceItem>
+            ))}
+          </ConfidenceGrid>
+          <OverallConfidence>
+            Overall: <strong>{(confidenceScores.overall_confidence * 100).toFixed(0)}%</strong>
+            {confidenceScores.reflexion_stats && confidenceScores.reflexion_stats.charts_needing_reflexion > 0 && (
+              <> | {confidenceScores.reflexion_stats.charts_needing_reflexion} charts refined</>
+            )}
+          </OverallConfidence>
+        </ConfidenceSection>
+      )}
+      
       <MetadataSections>
         {metadataTypes.map(({ key, title, fileType, phase }) => {
           const statusInfo = getStatus(fileType, phase);

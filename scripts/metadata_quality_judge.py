@@ -16,9 +16,11 @@ The judge evaluates 5 metadata types:
 import json
 import os
 import sys
+import time
+import random
 import threading
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 import pandas as pd
 import dspy
 from dspy.teleprompt import BootstrapFewShot
@@ -30,6 +32,101 @@ if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
 from config import LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
+
+
+# ============================================================================
+# Rate Limit Handling
+# ============================================================================
+
+class RateLimitExhaustedError(Exception):
+    """
+    Raised when rate limit retries are exhausted.
+    This is a FATAL error that should stop the entire pipeline.
+    """
+    pass
+
+
+def call_judge_with_retry(
+    judge_func: Callable,
+    max_retries: int = 5,
+    initial_delay: float = 2.0,
+    max_delay: float = 64.0,
+    backoff_factor: float = 2.0,
+    **kwargs
+) -> Any:
+    """
+    Call a judge function with exponential backoff retry on rate limit errors.
+    
+    Retry schedule with backoff_factor=2.0:
+        Attempt 1: immediate
+        Attempt 2: ~2s delay
+        Attempt 3: ~4s delay
+        Attempt 4: ~8s delay
+        Attempt 5: ~16s delay
+        Attempt 6: ~32s delay
+        FAIL: raises RateLimitExhaustedError (stops pipeline)
+    
+    Args:
+        judge_func: The DSPy judge function to call
+        max_retries: Maximum retry attempts (default: 5, gives up to ~64s delay)
+        initial_delay: Initial delay in seconds (default: 2.0)
+        max_delay: Maximum delay between retries (default: 64.0)
+        backoff_factor: Multiplier for exponential backoff (default: 2.0)
+        **kwargs: Arguments to pass to the judge function
+    
+    Returns:
+        Result from the judge function
+    
+    Raises:
+        RateLimitExhaustedError: If all retries are exhausted (FATAL - stops pipeline)
+    """
+    last_exception = None
+    delay = initial_delay
+    
+    for attempt in range(max_retries + 1):
+        try:
+            return judge_func(**kwargs)
+        except Exception as e:
+            error_str = str(e).lower()
+            # Check for rate limit errors (429, rate limit, too many tokens)
+            is_rate_limit = (
+                '429' in error_str or
+                ('rate' in error_str and 'limit' in error_str) or
+                'too many' in error_str or
+                'ratelimit' in error_str or
+                'too many tokens' in error_str
+            )
+            
+            if is_rate_limit and attempt < max_retries:
+                last_exception = e
+                # Add jitter (0.5x to 1.5x) to prevent thundering herd
+                actual_delay = delay * (0.5 + random.random())
+                actual_delay = min(actual_delay, max_delay)
+                
+                print(f"    ⏳ Rate limit hit, waiting {actual_delay:.1f}s before retry {attempt + 1}/{max_retries}...", flush=True)
+                time.sleep(actual_delay)
+                
+                # Exponential backoff: 2s -> 4s -> 8s -> 16s -> 32s -> 64s
+                delay = min(delay * backoff_factor, max_delay)
+            else:
+                # Not a rate limit error OR we're on the last attempt
+                if is_rate_limit:
+                    # Exhausted all retries for rate limit - FATAL ERROR
+                    raise RateLimitExhaustedError(
+                        f"❌ FATAL: Rate limit exhausted after {max_retries} retries. "
+                        f"Maximum delay reached: {max_delay:.1f}s. Stopping pipeline.\n"
+                        f"Original error: {str(e)}"
+                    )
+                else:
+                    # Some other error, re-raise it
+                    raise e
+    
+    # Should not reach here, but just in case
+    if last_exception:
+        raise RateLimitExhaustedError(
+            f"❌ FATAL: Rate limit exhausted after {max_retries} retries. Stopping pipeline.\n"
+            f"Original error: {str(last_exception)}"
+        )
 
 
 # ============================================================================
@@ -442,18 +539,26 @@ class MetadataQualityJudge:
             
         Returns:
             MetadataTypeReport with scores and feedback
+            
+        Raises:
+            RateLimitExhaustedError: If rate limit retries are exhausted (FATAL)
         """
         chart_json_str = json.dumps(chart_json, indent=2)
         
         try:
-            output = self.table_judge(
+            # Use retry wrapper for rate limit handling
+            output = call_judge_with_retry(
+                self.table_judge,
                 chart_json=chart_json_str,
                 table_metadata_csv=table_metadata_csv
             )
             return self._parse_judge_output(output, "table_metadata")
+        except RateLimitExhaustedError:
+            # Re-raise to stop the pipeline - this is FATAL
+            raise
         except Exception as e:
             print(f"Error judging table metadata: {str(e)}")
-            # Return default report on error
+            # Return default report on non-fatal error
             return MetadataTypeReport(
                 metadata_type="table_metadata",
                 scores={"completeness": 0, "accuracy": 0, "clarity": 0, "confidence": 0},
@@ -473,15 +578,23 @@ class MetadataQualityJudge:
             
         Returns:
             MetadataTypeReport with scores and feedback
+            
+        Raises:
+            RateLimitExhaustedError: If rate limit retries are exhausted (FATAL)
         """
         chart_json_str = json.dumps(chart_json, indent=2)
         
         try:
-            output = self.column_judge(
+            # Use retry wrapper for rate limit handling
+            output = call_judge_with_retry(
+                self.column_judge,
                 chart_json=chart_json_str,
                 column_metadata_csv=column_metadata_csv
             )
             return self._parse_judge_output(output, "column_metadata")
+        except RateLimitExhaustedError:
+            # Re-raise to stop the pipeline - this is FATAL
+            raise
         except Exception as e:
             print(f"Error judging column metadata: {str(e)}")
             return MetadataTypeReport(
@@ -503,15 +616,23 @@ class MetadataQualityJudge:
             
         Returns:
             MetadataTypeReport with scores and feedback
+            
+        Raises:
+            RateLimitExhaustedError: If rate limit retries are exhausted (FATAL)
         """
         chart_json_str = json.dumps(chart_json, indent=2)
         
         try:
-            output = self.joining_judge(
+            # Use retry wrapper for rate limit handling
+            output = call_judge_with_retry(
+                self.joining_judge,
                 chart_json=chart_json_str,
                 joining_conditions_csv=joining_conditions_csv
             )
             return self._parse_judge_output(output, "joining_conditions")
+        except RateLimitExhaustedError:
+            # Re-raise to stop the pipeline - this is FATAL
+            raise
         except Exception as e:
             print(f"Error judging joining conditions: {str(e)}")
             return MetadataTypeReport(
@@ -533,15 +654,23 @@ class MetadataQualityJudge:
             
         Returns:
             MetadataTypeReport with scores and feedback
+            
+        Raises:
+            RateLimitExhaustedError: If rate limit retries are exhausted (FATAL)
         """
         chart_json_str = json.dumps(chart_json, indent=2)
         
         try:
-            output = self.filter_judge(
+            # Use retry wrapper for rate limit handling
+            output = call_judge_with_retry(
+                self.filter_judge,
                 chart_json=chart_json_str,
                 filter_conditions_txt=filter_conditions_txt
             )
             return self._parse_judge_output(output, "filter_conditions")
+        except RateLimitExhaustedError:
+            # Re-raise to stop the pipeline - this is FATAL
+            raise
         except Exception as e:
             print(f"Error judging filter conditions: {str(e)}")
             return MetadataTypeReport(
@@ -563,15 +692,23 @@ class MetadataQualityJudge:
             
         Returns:
             MetadataTypeReport with scores and feedback
+            
+        Raises:
+            RateLimitExhaustedError: If rate limit retries are exhausted (FATAL)
         """
         chart_json_str = json.dumps(chart_json, indent=2)
         
         try:
-            output = self.definitions_judge(
+            # Use retry wrapper for rate limit handling
+            output = call_judge_with_retry(
+                self.definitions_judge,
                 chart_json=chart_json_str,
                 definitions_csv=definitions_csv
             )
             return self._parse_judge_output(output, "definitions")
+        except RateLimitExhaustedError:
+            # Re-raise to stop the pipeline - this is FATAL
+            raise
         except Exception as e:
             print(f"Error judging definitions: {str(e)}")
             return MetadataTypeReport(
@@ -695,6 +832,181 @@ class MetadataQualityJudge:
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+def normalize_score(score: int) -> float:
+    """
+    Convert 0-100 integer score to 0-1 float.
+    
+    Args:
+        score: Integer score from 0-100
+        
+    Returns:
+        Float score from 0-1
+    """
+    if isinstance(score, (int, float)):
+        return min(max(float(score) / 100.0, 0.0), 1.0)
+    return 0.0
+
+
+def evaluate_all_metadata_types(
+    chart_json: Dict,
+    table_metadata_csv: str,
+    column_metadata_csv: str,
+    joining_conditions_csv: str,
+    filter_conditions_txt: str,
+    definitions_csv: str,
+    api_key: Optional[str] = None,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Run all 5 judges and return unified results.
+    
+    Args:
+        chart_json: Original chart JSON dictionary
+        table_metadata_csv: CSV content of table metadata
+        column_metadata_csv: CSV content of column metadata
+        joining_conditions_csv: CSV content of joining conditions
+        filter_conditions_txt: Text content of filter conditions
+        definitions_csv: CSV content of definitions
+        api_key: LLM API key (optional)
+        model: LLM model name (optional)
+        base_url: LLM base URL (optional)
+        
+    Returns:
+        {
+            'tables': {
+                'confidence_score': 90,
+                'quality_issues': '...',
+                'recommendations': '...'
+            },
+            'columns': {...},
+            'joins': {...},
+            'filters': {...},
+            'definitions': {...}
+        }
+    """
+    judge = MetadataQualityJudge(api_key=api_key, model=model, base_url=base_url)
+    
+    results = {}
+    
+    # Table judge
+    if table_metadata_csv:
+        try:
+            table_report = judge.judge_table_metadata(chart_json, table_metadata_csv)
+            results['tables'] = {
+                'confidence_score': table_report.scores.get('confidence', 0),
+                'quality_issues': '; '.join(table_report.quality_issues),
+                'recommendations': '; '.join(table_report.recommendations),
+                'missing_items': table_report.missing_items,
+                'status': table_report.status
+            }
+        except RateLimitExhaustedError:
+            # FATAL: Re-raise to stop pipeline
+            raise
+        except Exception as e:
+            results['tables'] = {
+                'confidence_score': 0,
+                'quality_issues': f'Error: {str(e)}',
+                'recommendations': 'Retry evaluation',
+                'missing_items': [],
+                'status': 'ERROR'
+            }
+    
+    # Column judge
+    if column_metadata_csv:
+        try:
+            column_report = judge.judge_column_metadata(chart_json, column_metadata_csv)
+            results['columns'] = {
+                'confidence_score': column_report.scores.get('confidence', 0),
+                'quality_issues': '; '.join(column_report.quality_issues),
+                'recommendations': '; '.join(column_report.recommendations),
+                'missing_items': column_report.missing_items,
+                'status': column_report.status
+            }
+        except RateLimitExhaustedError:
+            # FATAL: Re-raise to stop pipeline
+            raise
+        except Exception as e:
+            results['columns'] = {
+                'confidence_score': 0,
+                'quality_issues': f'Error: {str(e)}',
+                'recommendations': 'Retry evaluation',
+                'missing_items': [],
+                'status': 'ERROR'
+            }
+    
+    # Joining conditions judge
+    if joining_conditions_csv:
+        try:
+            joins_report = judge.judge_joining_conditions(chart_json, joining_conditions_csv)
+            results['joins'] = {
+                'confidence_score': joins_report.scores.get('confidence', 0),
+                'quality_issues': '; '.join(joins_report.quality_issues),
+                'recommendations': '; '.join(joins_report.recommendations),
+                'missing_items': joins_report.missing_items,
+                'status': joins_report.status
+            }
+        except RateLimitExhaustedError:
+            # FATAL: Re-raise to stop pipeline
+            raise
+        except Exception as e:
+            results['joins'] = {
+                'confidence_score': 0,
+                'quality_issues': f'Error: {str(e)}',
+                'recommendations': 'Retry evaluation',
+                'missing_items': [],
+                'status': 'ERROR'
+            }
+    
+    # Filter conditions judge
+    if filter_conditions_txt:
+        try:
+            filters_report = judge.judge_filter_conditions(chart_json, filter_conditions_txt)
+            results['filters'] = {
+                'confidence_score': filters_report.scores.get('confidence', 0),
+                'quality_issues': '; '.join(filters_report.quality_issues),
+                'recommendations': '; '.join(filters_report.recommendations),
+                'missing_items': filters_report.missing_items,
+                'status': filters_report.status
+            }
+        except RateLimitExhaustedError:
+            # FATAL: Re-raise to stop pipeline
+            raise
+        except Exception as e:
+            results['filters'] = {
+                'confidence_score': 0,
+                'quality_issues': f'Error: {str(e)}',
+                'recommendations': 'Retry evaluation',
+                'missing_items': [],
+                'status': 'ERROR'
+            }
+    
+    # Definitions judge
+    if definitions_csv:
+        try:
+            defs_report = judge.judge_definitions(chart_json, definitions_csv)
+            results['definitions'] = {
+                'confidence_score': defs_report.scores.get('confidence', 0),
+                'quality_issues': '; '.join(defs_report.quality_issues),
+                'recommendations': '; '.join(defs_report.recommendations),
+                'missing_items': defs_report.missing_items,
+                'status': defs_report.status
+            }
+        except RateLimitExhaustedError:
+            # FATAL: Re-raise to stop pipeline
+            raise
+        except Exception as e:
+            results['definitions'] = {
+                'confidence_score': 0,
+                'quality_issues': f'Error: {str(e)}',
+                'recommendations': 'Retry evaluation',
+                'missing_items': [],
+                'status': 'ERROR'
+            }
+    
+    return results
+
 
 def load_chart_json(dashboard_id: int, extracted_meta_dir: str = "extracted_meta") -> Dict:
     """

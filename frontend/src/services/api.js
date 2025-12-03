@@ -355,6 +355,45 @@ export const dashboardAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Get confidence scores for a dashboard
+   * Returns confidence scores from reflexion-based validation if available
+   */
+  getDashboardConfidenceScores: async (dashboardId) => {
+    try {
+      const response = await api.get(`/api/dashboard/${dashboardId}/confidence_scores`, {
+        timeout: 5000,
+      });
+      return response.data;
+    } catch (error) {
+      // Return null if confidence scores not available (backward compatibility)
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get conflicts report from intelligent metadata merging
+   */
+  getMergedMetadataConflicts: async () => {
+    const response = await api.get('/api/merged-metadata/conflicts', {
+      timeout: 5000,
+    });
+    return response.data;
+  },
+
+  /**
+   * Download conflicts report CSV
+   */
+  downloadConflictsReport: async () => {
+    const response = await api.get('/api/merged-metadata/conflicts/download', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 export default api;

@@ -1,28 +1,31 @@
-## Category SR_511
+## P2P P2M SR_511
 
-This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
+This metric tracks the success rate (SR) of UPI transactions for Paytm ecosystem PSPs, measuring the percentage of transactions that achieve DEEMED or SUCCESS status out of total attempted transactions. The analysis is segmented between P2P (person-to-person via VPA2ACCOUNT, VPA2VPA) and P2M (person-to-merchant via VPA2MERCHANT) transaction flows. The metric filters for current month data, excludes purpose code 14 transactions, and focuses specifically on Paytm ecosystem payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). This provides insights into transaction processing reliability and user experience quality across different payment flows within the Paytm PSP network, enabling performance monitoring and operational optimization.
 
 -- tables_involved
-hive.cdo.fact_upi_transactions_snapshot_v3 txn
+cdo.fact_upi_transactions_snapshot_v3 txn
 
---- standard filters to be applied unless specifically requested for different flow categories
---- restrict to current month data for trend analysis
-txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
---- include recent transaction data for up-to-date analysis
-txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
---- focus on payment transactions only
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- transaction scope filter for payment flows only
 txn.transaction_type IN ('PAY', 'COLLECT') AND
---- exclude P2P transactions to focus on merchant payments
+--- category filter for P2P and P2M flows
 txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
---- limit to Paytm ecosystem payers
+--- payer ecosystem filter for Paytm PSPs
 lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
 
 --- specific filters
---- focus on non-P2P flow categories for merchant payment analysis
-txn.final_category IN ('Online', 'Onus', 'SnP')
+--- current month data filter for month-to-date analysis
+txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day) AND
+--- exclude purpose code 14 transactions (likely specific merchant category exclusion)
+txn.purpose_code != '14'
 
 --- calculation_logic
-(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR,
+CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
+     WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
+     ELSE NULL END AS P2P_P2M
 
 
 
@@ -87,6 +90,38 @@ grouped by DAY(day_id), date_trunc('month', day_id)
 
 
 
+## P2P P2M SR_511
+
+This metric tracks the success rate (SR) of UPI transactions for Paytm ecosystem PSPs, measuring the percentage of transactions that achieve DEEMED or SUCCESS status out of total attempted transactions. The analysis is segmented between P2P (person-to-person via VPA2ACCOUNT, VPA2VPA) and P2M (person-to-merchant via VPA2MERCHANT) transaction flows. The metric filters for current month data, excludes purpose code 14 transactions, and focuses specifically on Paytm ecosystem payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). This provides insights into transaction processing reliability and user experience quality across different payment flows within the Paytm PSP network, enabling performance monitoring and operational optimization.
+
+-- tables_involved
+cdo.fact_upi_transactions_snapshot_v3 txn
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- data freshness filter for current analysis period
+txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
+--- transaction scope filter for payment flows only
+txn.transaction_type IN ('PAY', 'COLLECT') AND
+--- category filter for P2P and P2M flows
+txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
+--- payer ecosystem filter for Paytm PSPs
+lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
+
+--- specific filters
+--- current month data filter for month-to-date analysis
+txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day) AND
+--- exclude purpose code 14 transactions (likely specific merchant category exclusion)
+txn.purpose_code != '14'
+
+--- calculation_logic
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR,
+CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
+     WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
+     ELSE NULL END AS P2P_P2M
+
+
+
+
 ## Category SR_511
 
 This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
@@ -116,66 +151,31 @@ txn.final_category IN ('Online', 'Onus', 'SnP')
 
 
 
-## P2P P2M SR_511
+## Category SR_511
 
-This metric tracks the success rate (SR) of UPI transactions for Paytm ecosystem PSPs, measuring the percentage of transactions that achieve DEEMED or SUCCESS status out of total attempted transactions. The analysis is segmented between P2P (person-to-person via VPA2ACCOUNT, VPA2VPA) and P2M (person-to-merchant via VPA2MERCHANT) transaction flows. The metric filters for current month data, excludes purpose code 14 transactions, and focuses specifically on Paytm ecosystem payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). This provides insights into transaction processing reliability and user experience quality across different payment flows within the Paytm PSP network, enabling performance monitoring and operational optimization.
+This metric tracks the Success Rate (SR) for UPI transactions in Online, Onus, and Scan & Pay (SnP) flow categories, segmented by day of the month within the Paytm ecosystem. Success Rate is calculated as the percentage of transactions with DEEMED or SUCCESS status out of total transactions. The analysis focuses on transactions where the payer belongs to Paytm's partner PSPs (paytm, ptyes, ptaxis, pthdfc, ptsbi) and excludes P2P transactions to concentrate on merchant and online payment scenarios. Data is filtered to the current month starting from the first day, providing daily trend analysis for non-P2P transaction success rates across different payment flow categories within the Paytm ecosystem.
 
 -- tables_involved
-cdo.fact_upi_transactions_snapshot_v3 txn
+hive.cdo.fact_upi_transactions_snapshot_v3 txn
 
---- standard filters to be applied unless specifically requested for a different categorical value
---- data freshness filter for current analysis period
-txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
---- transaction scope filter for payment flows only
+--- standard filters to be applied unless specifically requested for different flow categories
+--- restrict to current month data for trend analysis
+txn.day_id >= date_trunc('month', current_date - interval '01' day) AND
+--- include recent transaction data for up-to-date analysis
+txn.dl_last_updated >= date_trunc('month', current_date - interval '01' day - interval '01' month) AND
+--- focus on payment transactions only
 txn.transaction_type IN ('PAY', 'COLLECT') AND
---- category filter for P2P and P2M flows
+--- exclude P2P transactions to focus on merchant payments
 txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
---- payer ecosystem filter for Paytm PSPs
+--- limit to Paytm ecosystem payers
 lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
 
 --- specific filters
---- current month data filter for month-to-date analysis
-txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day) AND
---- exclude purpose code 14 transactions (likely specific merchant category exclusion)
-txn.purpose_code != '14'
+--- focus on non-P2P flow categories for merchant payment analysis
+txn.final_category IN ('Online', 'Onus', 'SnP')
 
 --- calculation_logic
-(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR,
-CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
-     WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
-     ELSE NULL END AS P2P_P2M
-
-
-
-
-## P2P P2M SR_511
-
-This metric tracks the success rate (SR) of UPI transactions for Paytm ecosystem PSPs, measuring the percentage of transactions that achieve DEEMED or SUCCESS status out of total attempted transactions. The analysis is segmented between P2P (person-to-person via VPA2ACCOUNT, VPA2VPA) and P2M (person-to-merchant via VPA2MERCHANT) transaction flows. The metric filters for current month data, excludes purpose code 14 transactions, and focuses specifically on Paytm ecosystem payer handles (paytm, ptyes, ptaxis, pthdfc, ptsbi). This provides insights into transaction processing reliability and user experience quality across different payment flows within the Paytm PSP network, enabling performance monitoring and operational optimization.
-
--- tables_involved
-cdo.fact_upi_transactions_snapshot_v3 txn
-
---- standard filters to be applied unless specifically requested for a different categorical value
---- data freshness filter for current analysis period
-txn.dl_last_updated >= date_trunc('month', current_date - interval '1' day - interval '1' month) AND
---- transaction scope filter for payment flows only
-txn.transaction_type IN ('PAY', 'COLLECT') AND
---- category filter for P2P and P2M flows
-txn.category IN ('VPA2ACCOUNT', 'VPA2VPA', 'VPA2MERCHANT') AND
---- payer ecosystem filter for Paytm PSPs
-lower(txn.payer_handle) IN ('paytm', 'ptyes', 'ptaxis', 'pthdfc', 'ptsbi')
-
---- specific filters
---- current month data filter for month-to-date analysis
-txn.transaction_date_key >= date_trunc('month', current_date - interval '1' day) AND
---- exclude purpose code 14 transactions (likely specific merchant category exclusion)
-txn.purpose_code != '14'
-
---- calculation_logic
-(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR,
-CASE WHEN category IN ('VPA2ACCOUNT','VPA2VPA') THEN 'P2P'
-     WHEN category IN ('VPA2MERCHANT') THEN 'P2M'
-     ELSE NULL END AS P2P_P2M
+(count(txn_id) filter(where status in('DEEMED','SUCCESS')) * 1.0000) / (count(txn_id) * 1.0000) as SR
 
 
 

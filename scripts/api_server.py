@@ -1148,6 +1148,96 @@ async def get_instruction_set_content():
         raise HTTPException(status_code=500, detail=f"Error reading instruction set: {str(e)}")
 
 
+@app.get("/api/dashboard/{dashboard_id}/confidence_scores")
+async def get_dashboard_confidence_scores(dashboard_id: int):
+    """
+    Get confidence scores for a dashboard's extracted metadata.
+    
+    Returns confidence scores from reflexion-based validation if available.
+    """
+    try:
+        # Get the script directory and construct path relative to metamind directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        metamind_dir = os.path.dirname(script_dir)
+        filepath = os.path.join(metamind_dir, "extracted_meta", str(dashboard_id), "confidence_scores.json")
+        
+        if not os.path.exists(filepath):
+            # Return default scores if confidence_scores.json doesn't exist (backward compatibility)
+            return {
+                "dashboard_id": dashboard_id,
+                "overall_confidence": None,
+                "per_metadata_type": {},
+                "per_chart_confidence": [],
+                "reflexion_stats": None,
+                "message": "Confidence scores not available (legacy extraction without reflexion)"
+            }
+        
+        with open(filepath, 'r', encoding='utf-8') as f:
+            scores = json.load(f)
+        
+        return scores
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading confidence scores: {str(e)}")
+
+
+@app.get("/api/merged-metadata/conflicts")
+async def get_merged_metadata_conflicts():
+    """
+    Get conflicts report from intelligent metadata merging.
+    
+    Returns list of conflicts detected during multi-dashboard merge.
+    """
+    import pandas as pd
+    
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        metamind_dir = os.path.dirname(script_dir)
+        filepath = os.path.join(metamind_dir, "extracted_meta", "merged_metadata", "conflicts_report.csv")
+        
+        if not os.path.exists(filepath):
+            return {
+                "conflicts": [],
+                "total_count": 0,
+                "message": "No conflicts report found. Run multi-dashboard merge first."
+            }
+        
+        df = pd.read_csv(filepath)
+        
+        return {
+            "conflicts": df.to_dict('records'),
+            "total_count": len(df),
+            "severity_summary": {
+                "high": len(df[df['severity'] == 'HIGH']) if 'severity' in df.columns else 0,
+                "medium": len(df[df['severity'] == 'MEDIUM']) if 'severity' in df.columns else 0,
+                "low": len(df[df['severity'] == 'LOW']) if 'severity' in df.columns else 0
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading conflicts report: {str(e)}")
+
+
+@app.get("/api/merged-metadata/conflicts/download")
+async def download_conflicts_report():
+    """Download the conflicts report CSV file."""
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        metamind_dir = os.path.dirname(script_dir)
+        filepath = os.path.join(metamind_dir, "extracted_meta", "merged_metadata", "conflicts_report.csv")
+        
+        if not os.path.exists(filepath):
+            raise HTTPException(status_code=404, detail="Conflicts report not found. Run multi-dashboard merge first.")
+        
+        return FileResponse(
+            filepath,
+            media_type="text/csv",
+            filename="conflicts_report.csv"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error downloading conflicts report: {str(e)}")
+
+
 @app.post("/api/knowledge-base/enable-prism")
 async def enable_on_prism():
     """Enable knowledge base on Prism"""

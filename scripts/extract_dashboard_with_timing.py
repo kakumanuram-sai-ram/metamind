@@ -1047,7 +1047,10 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         try:
             # Import quality judge
-            from metadata_quality_judge import judge_dashboard_metadata, save_quality_report
+            from metadata_quality_judge import (
+                judge_dashboard_metadata, 
+                save_quality_report
+            )
             
             # Get API key and config
             api_key = os.getenv("ANTHROPIC_API_KEY") or LLM_API_KEY
@@ -1100,12 +1103,27 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         except ImportError:
             print("  ⚠️  metadata_quality_judge module not found. Skipping quality judging.", flush=True)
         except Exception as e:
-            phase9_time = time.time() - phase9_start
-            print(f"\n❌ PHASE 9 FAILED after {phase9_time:.2f} seconds", flush=True)
-            print(f"Error: {str(e)}", flush=True)
-            import traceback
-            traceback.print_exc()
-            # Don't fail extraction if quality judging fails
+            # Check if this is a RateLimitExhaustedError by class name
+            # Using string check for robustness (avoids class identity issues across imports)
+            if type(e).__name__ == 'RateLimitExhaustedError':
+                # FATAL ERROR: Rate limit exhausted after all retries - STOP PIPELINE
+                phase9_time = time.time() - phase9_start
+                print(f"\n{'='*80}", flush=True)
+                print(f"❌ PIPELINE STOPPED - RATE LIMIT EXHAUSTED", flush=True)
+                print(f"{'='*80}", flush=True)
+                print(f"Error: {str(e)}", flush=True)
+                print(f"\nThis is a FATAL error. The pipeline has been stopped to prevent", flush=True)
+                print(f"incomplete or misleading results. Please wait and retry later.", flush=True)
+                print(f"{'='*80}", flush=True)
+                raise SystemExit(1)  # Exit immediately with error code
+            else:
+                # Non-fatal error - log and continue
+                phase9_time = time.time() - phase9_start
+                print(f"\n❌ PHASE 9 FAILED after {phase9_time:.2f} seconds", flush=True)
+                print(f"Error: {str(e)}", flush=True)
+                import traceback
+                traceback.print_exc()
+                # Don't fail extraction if quality judging fails (for non-fatal errors)
     else:
         print("\n  ℹ️  Quality judging disabled (set ENABLE_QUALITY_JUDGE=true to enable)", flush=True)
     

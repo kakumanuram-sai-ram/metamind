@@ -3,8 +3,14 @@ Main entry point for multi-dashboard metadata processing.
 
 This script orchestrates the complete workflow:
 1. Extract metadata for each dashboard individually
-2. Merge metadata from all dashboards
+2. Merge metadata from all dashboards (with intelligent LLM-based deduplication)
 3. Build knowledge base from merged metadata
+
+Features:
+- Reflexion-based validation for metadata quality
+- Per-chart context storage before merging
+- Conflict detection and reporting
+- Confidence score tracking
 """
 import os
 import sys
@@ -19,6 +25,7 @@ if _scripts_dir not in sys.path:
 from orchestrator import DashboardMetadataOrchestrator
 from merger import MetadataMerger
 from knowledge_base_builder import KnowledgeBaseBuilder
+from config import LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
 
 
 def process_multiple_dashboards(
@@ -113,31 +120,76 @@ def process_multiple_dashboards(
         print("="*80)
         
         try:
-            merger = MetadataMerger(dashboard_ids=dashboard_ids)
-            # Determine merge strategy based on metadata choices
-            if incremental_merge is None:
-                # If any dashboard is using existing metadata, we might want to merge with existing merged_metadata
-                # But if all are fresh, we create fresh merge
-                has_existing_merged = os.path.exists("extracted_meta/merged_metadata/consolidated_table_metadata.csv")
-                
-                # Check if we should merge with existing based on choices
-                # If all dashboards are fresh, don't merge with existing
-                # If some are using existing, merge with existing merged_metadata
-                if metadata_choices:
-                    all_fresh = all(not metadata_choices.get(did, False) for did in dashboard_ids)
-                    include_existing = has_existing_merged and not all_fresh
+            # Try intelligent merge first (with LLM deduplication)
+            use_intelligent_merge = os.getenv("USE_INTELLIGENT_MERGE", "false").lower() == "true"
+            
+            if use_intelligent_merge:
+                print("  📊 Using intelligent merge with LLM-based deduplication...")
+                try:
+                    from context_storage import ChartContextStore, get_context_store, reset_context_store
+                    from intelligent_merger import merge_all_metadata
+                    
+                    # Reset and load all contexts from dashboards
+                    context_store = reset_context_store()
+                    
+                    for dashboard_id in dashboard_ids:
+                        context_store.load_from_disk(dashboard_id)
+                    
+                    # Check if we have contexts to merge
+                    summary = context_store.get_store_summary()
+                    total_entities = sum(summary.values())
+                    
+                    if total_entities > 0:
+                        print(f"  📊 Loaded {total_entities} entities from {len(dashboard_ids)} dashboards")
+                        
+                        # Run intelligent merge
+                        merged_metadata, conflicts_df = merge_all_metadata(
+                            dashboard_ids=dashboard_ids,
+                            context_store=context_store,
+                            api_key=LLM_API_KEY,
+                            model=LLM_MODEL,
+                            base_url=LLM_BASE_URL
+                        )
+                        
+                        print(f"\n✅ Intelligent merge completed successfully")
+                        print(f"   Merged files saved to: extracted_meta/merged_metadata/")
+                        print(f"   Conflicts detected: {len(conflicts_df)}")
+                    else:
+                        print("  ⚠️ No contexts found, falling back to standard merge...")
+                        use_intelligent_merge = False
+                        
+                except Exception as e:
+                    print(f"  ⚠️ Intelligent merge failed: {str(e)}")
+                    print("  📊 Falling back to standard merge...")
+                    use_intelligent_merge = False
+            
+            if not use_intelligent_merge:
+                # Standard merge (existing logic)
+                merger = MetadataMerger(dashboard_ids=dashboard_ids)
+                # Determine merge strategy based on metadata choices
+                if incremental_merge is None:
+                    # If any dashboard is using existing metadata, we might want to merge with existing merged_metadata
+                    # But if all are fresh, we create fresh merge
+                    has_existing_merged = os.path.exists("extracted_meta/merged_metadata/consolidated_table_metadata.csv")
+                    
+                    # Check if we should merge with existing based on choices
+                    # If all dashboards are fresh, don't merge with existing
+                    # If some are using existing, merge with existing merged_metadata
+                    if metadata_choices:
+                        all_fresh = all(not metadata_choices.get(did, False) for did in dashboard_ids)
+                        include_existing = has_existing_merged and not all_fresh
+                    else:
+                        # Default: merge with existing if it exists
+                        include_existing = has_existing_merged
                 else:
-                    # Default: merge with existing if it exists
-                    include_existing = has_existing_merged
-            else:
-                include_existing = incremental_merge
-            
-            merged_summary = merger.merge_all(include_existing_merged=include_existing)
-            
-            print(f"\n✅ Merge completed successfully")
-            print(f"   Merged files saved to: extracted_meta/merged_metadata/")
-            if include_existing:
-                print(f"   ℹ️  Incremental merge: New dashboards merged with existing consolidated metadata")
+                    include_existing = incremental_merge
+                
+                merged_summary = merger.merge_all(include_existing_merged=include_existing)
+                
+                print(f"\n✅ Merge completed successfully")
+                print(f"   Merged files saved to: extracted_meta/merged_metadata/")
+                if include_existing:
+                    print(f"   ℹ️  Incremental merge: New dashboards merged with existing consolidated metadata")
             
         except Exception as e:
             print(f"\n❌ Merge failed: {str(e)}")

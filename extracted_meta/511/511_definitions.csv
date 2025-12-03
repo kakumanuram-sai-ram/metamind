@@ -1,23 +1,22 @@
 term,type,definition,business_alias
-SR,Metric / Calculated Field,"Success Rate calculated as the count of transactions with DEEMED or SUCCESS status divided by total transaction count, representing the percentage of successful UPI transactions",Success Rate
-P2P,Category,Person to Person transactions where individuals transfer money to other individuals using VPA to VPA or VPA to Account,"Person to Person, Peer-to-Peer, Person-to-Person"
-P2M,Category,Person to Merchant transactions where individuals make payments to merchants using VPA to Merchant flow,"Person-to-Merchant, Person to Merchant"
-P2P_P2M,Category,Transaction type classification grouping transactions into Person-to-Person (P2P) or Person-to-Merchant (P2M) categories,
-UPI,Category,Unified Payments Interface - a real-time payment system that facilitates inter-bank transactions through mobile platforms,Unified Payments Interface
-Day,Metric,"Day component extracted from the transaction date, used for daily analysis of transaction patterns",
-Month,Metric,"Month component extracted from transaction date using date_trunc function, used for monthly aggregation",
-DEEMED,Category,A transaction status category considered as successful for success rate calculations along with SUCCESS status,
-SUCCESS,Category,A transaction status indicating the transaction was completed successfully,
-txn_id,Metric,Unique transaction identifier used to count total number of UPI transactions,Transaction ID
-SnP,Category,Scan and Pay transactions including 3P QR and Paytm QR code based payments,Scan and Pay
-PSP,Category,"Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",Payment Service Provider
-payer_handle,Metric,UPI handle of the person or entity initiating the payment transaction,Payer Handle
-payee_handle,Metric,UPI handle of the person or entity receiving the payment transaction,Payee Handle
-Online,Category,"Online transactions including Intent, P2M Collect, and Mandate_Online flows",
-Onus,Category,On-us transactions including Onus_ExcMandates and Mandate_Onus flows where both payer and payee are within the same system,On-us
-Category,Category,Classification of UPI transactions into different payment flows and types,final_category
-Flow Category,Category,"Classification of UPI transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus.",
-Transaction Status,Category,"Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
-Handle,Metric,"UPI identifier handles for payer and payee, used to classify transactions by PSP (e.g., paytm, ptyes, ptaxis).","Payer Handle, UPI Handle, UPI Handle"
-Payer Handle,Metric,The UPI handle of the entity making the payment in a UPI transaction,Handle
-Paytm,Category,"Payment service provider handles including paytm, ptyes, ptaxis, pthdfc, ptsbi for payer classification",Payer as Paytm
+SR,Metric / Calculated Field,"Success Rate calculated as the count of transactions with status 'DEEMED' or 'SUCCESS' divided by total transaction count, expressed as a decimal ratio.",Success Rate
+UPI,Category,Unified Payments Interface - a real-time payment system that facilitates inter-bank transactions through mobile platforms.,Unified Payments Interface
+P2P,Category,Person-to-Person transactions including VPA2ACCOUNT and VPA2VPA transaction types in the flow category.,Person-to-Person
+SnP,Category,Scan and Pay transactions including 3P QR and Paytm QR flow categories.,Scan and Pay
+Online,Category,"Online transactions including Intent, P2M Collect, and Mandate_Online flow categories.",
+Onus,Category,On-us transactions including Onus_ExcMandates and Mandate_Onus flow categories processed within the same payment system.,On-us
+final_category,Dimension,"Categorized grouping of UPI transaction flow categories into P2P, SnP, Online, Onus, or Others based on flow_category values.",
+flow_category,Dimension,"Original transaction flow classification including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus.",Flow Category
+txn_id,Metric,Unique transaction identifier used for counting total transactions in success rate calculations.,Transaction ID
+status,Dimension,"Transaction processing status including DEEMED, SUCCESS, and other failure statuses used to determine transaction outcomes.",Transaction Status
+Day,Dimension,Day component extracted from the day_id (transaction_date_key) used for temporal analysis of success rates.,
+P2M,Category,Person-to-Merchant transactions including VPA2MERCHANT transaction category,Person-to-Merchant
+VPA2ACCOUNT,Category,UPI transaction type where payment is made from Virtual Payment Address to bank account,
+VPA2VPA,Category,UPI transaction type where payment is made between Virtual Payment Addresses,
+VPA2MERCHANT,Category,UPI transaction type where payment is made from Virtual Payment Address to merchant account,
+SUCCESS,Category,Transaction status indicating the UPI transaction was completed successfully without any errors.,
+DEEMED,Category,A transaction status indicating the transaction is considered successful or completed under specific conditions.,
+Handle SR_511,Category,A specific service request category related to UPI handle success rate analysis and monitoring.,
+payer_handle,Metric,The UPI handle identifier of the transaction initiator or payer in a UPI transaction.,Payer Handle
+purpose_code,Category,Code identifying the purpose or reason for the UPI transaction,Purpose Code
+payee_handle,Category,UPI handle or identifier of the transaction payee,Payee Handle

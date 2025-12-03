@@ -165,19 +165,32 @@ class TableNameExtractor(dspy.Signature):
 _table_name_extractor_cache = {}
 
 def _get_dspy_table_name_extractor(api_key: str, model: str, base_url: str):
-    """Get cached DSPy TableNameExtractor"""
-    cache_key = (api_key, model, base_url)
-    if cache_key not in _table_name_extractor_cache:
-        lm = dspy.LM(
-            model=model,
-            api_key=api_key,
-            api_base=base_url,
-            temperature=0.0,
-            max_tokens=500
-        )
-        dspy.configure(lm=lm)
-        _table_name_extractor_cache[cache_key] = dspy.ChainOfThought(TableNameExtractor)
-    return _table_name_extractor_cache[cache_key]
+    """Get cached DSPy TableNameExtractor (thread-safe)"""
+    global _dspy_lm
+    with _dspy_lock:
+        cache_key = (api_key, model, base_url)
+        if cache_key not in _table_name_extractor_cache:
+            # Use shared LM configuration
+            if _dspy_lm is None:
+                if base_url:
+                    model_name = f"anthropic/{model}" if not model.startswith("anthropic/") else model
+                else:
+                    model_name = model
+                
+                lm_kwargs = {
+                    "model": model_name,
+                    "api_key": api_key,
+                    "api_provider": "anthropic"
+                }
+                if base_url:
+                    clean_base_url = base_url.rstrip('/v1').rstrip('/')
+                    lm_kwargs["api_base"] = clean_base_url
+                
+                _dspy_lm = dspy.LM(**lm_kwargs)
+                dspy.configure(lm=_dspy_lm)
+            
+            _table_name_extractor_cache[cache_key] = dspy.ChainOfThought(TableNameExtractor)
+        return _table_name_extractor_cache[cache_key]
 
 
 class TableColumnExtractor(dspy.Signature):

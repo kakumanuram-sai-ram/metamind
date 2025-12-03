@@ -6,7 +6,7 @@ Uses trino.dbapi to:
 2. Then run SHOW TABLES for each valid schema to validate table existence
 3. If SHOW TABLES times out, fall back to DESCRIBE for individual tables
 """
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Tuple
 import logging
 import pandas as pd
 from trino.dbapi import connect
@@ -189,8 +189,24 @@ def validate_tables(table_list: List[str], user_email: str = "kakumanu.ram@paytm
     Returns:
         List of valid table names
     """
+    valid_tables, _ = validate_tables_with_confidence(table_list, user_email)
+    return valid_tables
+
+
+def validate_tables_with_confidence(table_list: List[str], user_email: str = "kakumanu.ram@paytm.com") -> Tuple[List[str], float]:
+    """
+    Validate tables and return confidence score.
+    
+    Args:
+        table_list: List of table names to validate
+        user_email: User email for Trino connection
+    
+    Returns:
+        Tuple of (valid_table_list, confidence_score)
+        confidence_score = len(valid_tables) / len(table_list)
+    """
     if not table_list:
-        return []
+        return ([], 0.0)
     
     # Get unique table names
     unique_tables = list(set(table_list))
@@ -299,9 +315,34 @@ def validate_tables(table_list: List[str], user_email: str = "kakumanu.ram@paytm
         if invalid_tables:
             logger.debug(f"Invalid tables: {invalid_tables}")
         
-        return valid_tables
+        # Calculate confidence score
+        confidence = len(valid_tables) / len(unique_tables) if unique_tables else 0.0
+        
+        return valid_tables, confidence
         
     except Exception as e:
         logger.error(f"Error validating tables: {e}")
         print(f"  ❌ Error validating tables: {e}")
         raise
+
+
+def get_validation_feedback(
+    table_list: List[str],
+    valid_tables: List[str]
+) -> str:
+    """
+    Generate feedback for reflexion if tables are invalid.
+    
+    Args:
+        table_list: Original list of table names
+        valid_tables: List of valid table names
+    
+    Returns:
+        Feedback string for reflexion prompt, empty if all valid
+    """
+    invalid = set(table_list) - set(valid_tables)
+    
+    if not invalid:
+        return ""
+    
+    return f"These tables don't exist in database: {list(invalid)}. Please re-scan SQL query for correct table names or check for typos."

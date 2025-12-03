@@ -1263,3 +1263,4 @@ metamind/
 **Codebase Size:** ~12,000 lines Python, ~3,000 lines JavaScript  
 **LLM Integration:** DSPy with Claude Sonnet 4 via internal proxy
 
+
