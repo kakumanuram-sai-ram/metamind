@@ -173,6 +173,11 @@ class DashboardBuilder:
         self._current_phase = phase
         return self
     
+    def with_error_message(self, error_message: str) -> 'DashboardBuilder':
+        """Set error message for failed processing"""
+        self._error_message = error_message
+        return self
+    
     def add_chart(self, chart: ChartInfo) -> 'DashboardBuilder':
         """Add a chart"""
         self._charts.append(chart)

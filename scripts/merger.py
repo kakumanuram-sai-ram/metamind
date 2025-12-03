@@ -6,8 +6,11 @@ It uses LLM-based merging with conflict detection and resolution.
 """
 import os
 import json
+import logging
 import pandas as pd
 from typing import Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 try:
     import dspy
@@ -396,7 +399,16 @@ class MetadataMerger:
         # Load table metadata
         table_file = f"{dashboard_dir}/{dashboard_id}_table_metadata.csv"
         if os.path.exists(table_file):
-            metadata['table_metadata'] = pd.read_csv(table_file)
+            try:
+                df = pd.read_csv(table_file)
+                if len(df) > 0:
+                    metadata['table_metadata'] = df
+                else:
+                    print(f"  ⚠️  Empty table_metadata file for dashboard {dashboard_id}")
+                    metadata['table_metadata'] = pd.DataFrame(columns=['table_name', 'table_description', 'refresh_frequency', 'vertical', 'partition_column', 'remarks', 'relationship_context'])
+            except (pd.errors.EmptyDataError, ValueError) as e:
+                print(f"  ⚠️  Empty or invalid table_metadata file for dashboard {dashboard_id}: {e}")
+                metadata['table_metadata'] = pd.DataFrame(columns=['table_name', 'table_description', 'refresh_frequency', 'vertical', 'partition_column', 'remarks', 'relationship_context'])
         
         # Load columns metadata
         columns_file = f"{dashboard_dir}/{dashboard_id}_columns_metadata.csv"
@@ -414,12 +426,26 @@ class MetadataMerger:
         # Load joining conditions
         joins_file = f"{dashboard_dir}/{dashboard_id}_joining_conditions.csv"
         if os.path.exists(joins_file):
-            metadata['joining_conditions'] = pd.read_csv(joins_file)
+            try:
+                df = pd.read_csv(joins_file)
+                if len(df) > 0:
+                    metadata['joining_conditions'] = df
+                else:
+                    metadata['joining_conditions'] = pd.DataFrame(columns=['left_table', 'left_column', 'right_table', 'right_column', 'join_type', 'purpose'])
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['joining_conditions'] = pd.DataFrame(columns=['left_table', 'left_column', 'right_table', 'right_column', 'join_type', 'purpose'])
         
         # Load definitions
         definitions_file = f"{dashboard_dir}/{dashboard_id}_definitions.csv"
         if os.path.exists(definitions_file):
-            metadata['definitions'] = pd.read_csv(definitions_file)
+            try:
+                df = pd.read_csv(definitions_file)
+                if len(df) > 0:
+                    metadata['definitions'] = df
+                else:
+                    metadata['definitions'] = pd.DataFrame(columns=['term', 'definition', 'term_type', 'related_terms'])
+            except (pd.errors.EmptyDataError, ValueError):
+                metadata['definitions'] = pd.DataFrame(columns=['term', 'definition', 'term_type', 'related_terms'])
         
         # Load filter conditions (text file)
         filter_file = f"{dashboard_dir}/{dashboard_id}_filter_conditions.txt"
@@ -503,7 +529,7 @@ class MetadataMerger:
         all_tables = {}
         for dashboard_id in self.dashboard_ids:
             metadata = self.load_dashboard_metadata(dashboard_id)
-            if metadata['table_metadata'] is not None:
+            if metadata['table_metadata'] is not None and len(metadata['table_metadata']) > 0:
                 df = metadata['table_metadata']
                 for _, row in df.iterrows():
                     table_name = row['table_name']
@@ -599,7 +625,7 @@ class MetadataMerger:
         all_columns = {}
         for dashboard_id in self.dashboard_ids:
             metadata = self.load_dashboard_metadata(dashboard_id)
-            if metadata['columns_metadata'] is not None:
+            if metadata['columns_metadata'] is not None and len(metadata['columns_metadata']) > 0:
                 df = metadata['columns_metadata']
                 for _, row in df.iterrows():
                     key = (row['table_name'], row['column_name'])
@@ -687,7 +713,7 @@ class MetadataMerger:
         all_joins = {}
         for dashboard_id in self.dashboard_ids:
             metadata = self.load_dashboard_metadata(dashboard_id)
-            if metadata['joining_conditions'] is not None:
+            if metadata['joining_conditions'] is not None and len(metadata['joining_conditions']) > 0:
                 df = metadata['joining_conditions']
                 for _, row in df.iterrows():
                     # Use sorted tuple as key to handle (A,B) and (B,A) as same
@@ -790,7 +816,7 @@ class MetadataMerger:
         all_terms = {}
         for dashboard_id in self.dashboard_ids:
             metadata = self.load_dashboard_metadata(dashboard_id)
-            if metadata['definitions'] is not None:
+            if metadata['definitions'] is not None and len(metadata['definitions']) > 0:
                 df = metadata['definitions']
                 for _, row in df.iterrows():
                     term = row['term']

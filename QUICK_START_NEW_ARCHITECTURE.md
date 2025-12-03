@@ -502,3 +502,4 @@ def process_charts(
 
 Start small, pick one pattern, and gradually adopt the others. The patterns work great individually and even better together!
 
+

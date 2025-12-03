@@ -1,8 +1,8 @@
 {
-  "generated_at": "2025-12-01T11:02:00.630036",
+  "generated_at": "2025-12-03T05:27:58.324489",
   "version": "2.0-fallback",
   "generation_method": "Template (LLM unavailable)",
-  "error": "litellm.AuthenticationError: AnthropicException - {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVfrTiqgE3wFuxcWQ7eP7\"}",
+  "error": "litellm.AuthenticationError: AnthropicException - {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVjCc9P7XCVVFHpHh43fB\"}",
   "purpose": "SQL Query Generation Agent Instructions",
   "context": {
     "vertical": {
@@ -30,9 +30,9 @@
   ],
   "example_queries": [],
   "metadata_summary": {
-    "tables_count": 41,
-    "columns_count": 378,
+    "tables_count": 53,
+    "columns_count": 523,
     "joins_count": 0,
-    "definitions_count": 127
+    "definitions_count": 427
   }
 }

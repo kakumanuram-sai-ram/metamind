@@ -1,0 +1,2361 @@
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the completion rates of customer support evaluation processes for soundbox and AI bot entities. It measures two key performance indicators: the percentage of active sessions that were analyzed (Analyzed %) and the percentage of analyzed sessions that completed evaluation (Eval Completed %). The analysis is filtered to include only p4bsoundbox and p4bAIBot entities, providing insights into the efficiency of the evaluation pipeline. The metric aggregates data by complete day to show daily performance trends, helping teams monitor whether sessions are progressing through the analysis and evaluation stages effectively. Both percentages include null handling to avoid division by zero errors when no sessions are present.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed se
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit analysis to soundbox and AI bot customer support entities
+se.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- aggregate data by complete day for daily trend analysis
+date_trunc('day', CAST(se.date_ AS TIMESTAMP))
+
+--- specific filters
+--- temporal filter can be applied as needed
+--- se.date_ within specified date range
+
+--- calculation_logic
+CASE WHEN SUM(se.active_sessions) = 0 THEN NULL
+ELSE SUM(se.analyzed_sessions) * 100 / SUM(se.active_sessions)
+END AS analyzed_percentage,
+CASE WHEN SUM(se.analyzed_sessions) = 0 THEN NULL
+ELSE SUM(se.eval_completed) * 100 / SUM(se.analyzed_sessions)
+END AS eval_completed_percentage
+
+
+
+
+## LLM L1 Metrics
+
+This metric tracks comprehensive LLM chatbot performance across multiple dimensions including operational volume, quality scores, user satisfaction, and failure rates. It measures active sessions as the base volume metric, along with quality indicators like evaluation scores, response relevance, empathy, and resolution achievement rates (all averaged and converted to percentages). User satisfaction is captured through MSAT percentage and positive sentiment change. Failure detection includes bad evaluation share, intent detection failures, bot repetition issues, function call failures, and topic drift metrics. The analysis is segmented by problem description categories and filtered for specific CST entities (p4bsoundbox and p4bAIBot), excluding unanalyzed data, providing stakeholders with a holistic view of AI system performance for optimization and quality assurance purposes.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for different entities
+--- limit data to previous days only, excluding current day for data completeness
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY AND
+--- filter for specific CST entities in scope for this analysis
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- exclude records that haven't been properly analyzed
+eval.description != 'Not Analyzed'
+
+--- specific filters
+--- group by problem description to analyze performance by issue category
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+SUM(active_sessions) as volume_base,
+AVG(avg_eval_score) * 100 as quality_score_pct,
+AVG(avg_response_relevance_score) * 100 as relevance_score_pct,
+AVG(avg_empathy_score) * 100 as empathy_score_pct,
+AVG(avg_resolution_achieved) * 100 as resolution_score_pct,
+AVG(avg_topic_drift) * 100 as topic_drift_score_pct,
+pattern: satisfaction_percentage_with_null_check,
+pattern: failure_rate_percentage_with_null_check
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+This metric tracks daily quality performance indicators for customer service operations, measuring evaluation scores, bot containment effectiveness, customer satisfaction, and quality issues as percentage trends. The analysis focuses on soundbox and AI bot entities (p4bsoundbox, p4bAIBot) to monitor service quality over time. Bot containment measures how well automated systems handle queries without escalation to human agents, while MSAT tracks customer satisfaction based on happy/sad feedback. Average evaluation score reflects overall service quality ratings, and bad evaluation share identifies the proportion of negative assessments. These metrics provide comprehensive quality monitoring for customer service optimization and performance management.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for different entities
+--- customer service entity filtering for soundbox and AI bot operations
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+
+--- specific filters
+--- temporal range filter available but no default applied
+--- date range can be specified using date_ column
+
+--- calculation_logic
+pattern: percentage_with_null_handling
+metrics: avg_eval_score * 100, bot_containment_rate, satisfaction_rate, bad_eval_share
+aggregation: daily (date_trunc('day', date_))
+
+
+
+
+## LLM L1 Metrics
+
+This metric tracks comprehensive LLM chatbot performance across multiple dimensions including operational volume, quality scores, user satisfaction, and failure rates. It measures active sessions as the base volume metric, along with quality indicators like evaluation scores, response relevance, empathy, and resolution achievement rates (all averaged and converted to percentages). User satisfaction is captured through MSAT percentage and positive sentiment change. Failure detection includes bad evaluation share, intent detection failures, bot repetition issues, function call failures, and topic drift metrics. The analysis is segmented by problem description categories and filtered for specific CST entities (p4bsoundbox and p4bAIBot), excluding unanalyzed data, providing stakeholders with a holistic view of AI system performance for optimization and quality assurance purposes.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for different entities
+--- limit data to previous days only, excluding current day for data completeness
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY AND
+--- filter for specific CST entities in scope for this analysis
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- exclude records that haven't been properly analyzed
+eval.description != 'Not Analyzed'
+
+--- specific filters
+--- group by problem description to analyze performance by issue category
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+SUM(active_sessions) as volume_base,
+AVG(avg_eval_score) * 100 as quality_score_pct,
+AVG(avg_response_relevance_score) * 100 as relevance_score_pct,
+AVG(avg_empathy_score) * 100 as empathy_score_pct,
+AVG(avg_resolution_achieved) * 100 as resolution_score_pct,
+AVG(avg_topic_drift) * 100 as topic_drift_score_pct,
+pattern: satisfaction_percentage_with_null_check,
+pattern: failure_rate_percentage_with_null_check
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the completion rates of customer support evaluation processes for soundbox and AI bot entities. It measures two key performance indicators: the percentage of active sessions that were analyzed (Analyzed %) and the percentage of analyzed sessions that completed evaluation (Eval Completed %). The analysis is filtered to include only p4bsoundbox and p4bAIBot entities, providing insights into the efficiency of the evaluation pipeline. The metric aggregates data by complete day to show daily performance trends, helping teams monitor whether sessions are progressing through the analysis and evaluation stages effectively. Both percentages include null handling to avoid division by zero errors when no sessions are present.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed se
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit analysis to soundbox and AI bot customer support entities
+se.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- aggregate data by complete day for daily trend analysis
+date_trunc('day', CAST(se.date_ AS TIMESTAMP))
+
+--- specific filters
+--- temporal filter can be applied as needed
+--- se.date_ within specified date range
+
+--- calculation_logic
+CASE WHEN SUM(se.active_sessions) = 0 THEN NULL
+ELSE SUM(se.analyzed_sessions) * 100 / SUM(se.active_sessions)
+END AS analyzed_percentage,
+CASE WHEN SUM(se.analyzed_sessions) = 0 THEN NULL
+ELSE SUM(se.eval_completed) * 100 / SUM(se.analyzed_sessions)
+END AS eval_completed_percentage
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+This metric tracks daily quality performance indicators for customer service operations, measuring evaluation scores, bot containment effectiveness, customer satisfaction, and quality issues as percentage trends. The analysis focuses on soundbox and AI bot entities (p4bsoundbox, p4bAIBot) to monitor service quality over time. Bot containment measures how well automated systems handle queries without escalation to human agents, while MSAT tracks customer satisfaction based on happy/sad feedback. Average evaluation score reflects overall service quality ratings, and bad evaluation share identifies the proportion of negative assessments. These metrics provide comprehensive quality monitoring for customer service optimization and performance management.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for different entities
+--- customer service entity filtering for soundbox and AI bot operations
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+
+--- specific filters
+--- temporal range filter available but no default applied
+--- date range can be specified using date_ column
+
+--- calculation_logic
+pattern: percentage_with_null_handling
+metrics: avg_eval_score * 100, bot_containment_rate, satisfaction_rate, bad_eval_share
+aggregation: daily (date_trunc('day', date_))
+
+
+
+
+## Final User Sentiment #
+
+Final User Sentiment tracks daily aggregated counts of user sentiment changes across three categories - positive, neutral, and negative feedback. This metric measures customer satisfaction and sentiment trends for specific customer service touchpoints including P4B Soundbox and AI Bot interactions. The data is filtered to include only p4bsoundbox and p4bAIBot entities, providing insights into how users perceive these automated customer service channels. The metric helps identify sentiment patterns over time, enabling teams to assess the effectiveness of customer service improvements and detect periods of increased negative feedback that may require immediate attention. Daily aggregation allows for trend analysis and performance monitoring of customer experience initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to specific customer service entities for P4B touchpoints
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,  
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as daily_period
+
+
+
+
+## Final User Sentiment #
+
+Final User Sentiment tracks daily aggregated counts of user sentiment changes across three categories - positive, neutral, and negative feedback. This metric measures customer satisfaction and sentiment trends for specific customer service touchpoints including P4B Soundbox and AI Bot interactions. The data is filtered to include only p4bsoundbox and p4bAIBot entities, providing insights into how users perceive these automated customer service channels. The metric helps identify sentiment patterns over time, enabling teams to assess the effectiveness of customer service improvements and detect periods of increased negative feedback that may require immediate attention. Daily aggregation allows for trend analysis and performance monitoring of customer experience initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to specific customer service entities for P4B touchpoints
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,  
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as daily_period
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks user sentiment distribution across P4B customer service channels including Soundbox and AI Bot interactions. It calculates the percentage breakdown of positive, negative, and neutral user sentiments to monitor customer satisfaction and service quality. The analysis is filtered to include only P4B Soundbox and P4B AI Bot entities, providing insights into how users perceive these automated customer service tools. Each sentiment category is expressed as a percentage of total sentiment responses, helping identify trends in customer experience and satisfaction levels over time for performance monitoring and improvement initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to P4B customer service entities only
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- temporal range filter (configurable, defaults to no filter)
+eval.hour_timestamp >= {start_date} AND eval.hour_timestamp <= {end_date}
+
+--- calculation_logic
+CASE WHEN (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment)) = 0 
+     THEN NULL
+     ELSE SUM({sentiment_type}_user_sentiment) * 100 / 
+          (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+END AS "{sentiment_type}_change_percent"
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks user sentiment distribution across P4B customer service channels including Soundbox and AI Bot interactions. It calculates the percentage breakdown of positive, negative, and neutral user sentiments to monitor customer satisfaction and service quality. The analysis is filtered to include only P4B Soundbox and P4B AI Bot entities, providing insights into how users perceive these automated customer service tools. Each sentiment category is expressed as a percentage of total sentiment responses, helping identify trends in customer experience and satisfaction levels over time for performance monitoring and improvement initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to P4B customer service entities only
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- temporal range filter (configurable, defaults to no filter)
+eval.hour_timestamp >= {start_date} AND eval.hour_timestamp <= {end_date}
+
+--- calculation_logic
+CASE WHEN (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment)) = 0 
+     THEN NULL
+     ELSE SUM({sentiment_type}_user_sentiment) * 100 / 
+          (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+END AS "{sentiment_type}_change_percent"
+
+
+
+
+## Overall Summary
+
+Overall Summary tracks comprehensive customer service performance metrics for soundbox and AI bot operations, providing a holistic view of service delivery effectiveness. The summary includes volume indicators (active sessions, analyzed sessions, completed evaluations), customer satisfaction feedback (happy and sad responses), support escalation metrics (agent handover tickets and service tickets), and key performance ratios (feedback rate, agent handover percentage, and service ticket percentage). This consolidated view enables stakeholders to assess overall service health, customer engagement levels, and operational efficiency across the soundbox and AI bot customer service channels, supporting data-driven decisions for service optimization and resource allocation.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to soundbox and AI bot customer service entities only
+virtual_table.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+
+--- specific filters
+--- temporal filter can be applied as needed
+virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(active_sessions) as active_sessions,
+sum(analyzed_sessions) as analyzed_sessions,
+sum(eval_completed) as eval_completed,
+sum(happy) as happy_feedback,
+sum(sad) as sad_feedback,
+sum(ah_tickets) as agent_tickets,
+sum(service_tickets) as service_tickets,
+pattern: percentage_with_null_handling
+base_metric: (sum(happy) + sum(sad)) * 100
+denominator: sum(active_sessions)
+result: feedback_rate_percent,
+pattern: percentage_with_null_handling
+base_metric: sum(ah_tickets) * 100
+denominator: sum(active_sessions)
+result: agent_handover_percent,
+pattern: percentage_with_null_handling
+base_metric: sum(service_tickets) * 100
+denominator: sum(active_sessions)
+result: service_ticket_percent
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics track the failure rates of P4B Soundbox and AI Bot systems across three critical performance dimensions. The metrics measure bot repetition percentage (when the bot repeats responses inappropriately), bot function call failure percentage (when API or function calls fail during bot operations), and intent detection failure percentage (when the bot fails to correctly identify user intent). These metrics are calculated as percentages of total completed evaluations and are essential for monitoring conversational AI quality and reliability. The data is aggregated daily and filtered specifically for P4B Soundbox and AI Bot entities to focus on core chatbot performance within the customer service technology stack.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B Soundbox and AI Bot entities only
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- temporal filter allows flexible date range selection
+eval.hour_timestamp BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+Bot Repetition %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed) END,
+Bot Failed %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed) END,
+Intent Detection Failed %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed) END
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks daily customer service quality performance across three key dimensions: empathy, resolution achievement, and response relevance for AI-powered customer service channels. The metrics measure how well the AI systems (Soundbox and AIBot) perform in customer interactions, with each score averaged daily and converted to percentage format for easy interpretation. The empathy score evaluates emotional intelligence in responses, resolution achieved measures problem-solving effectiveness, and response relevance assesses how well responses address customer queries. This consolidated view helps monitor AI customer service quality trends and identify areas for improvement in automated customer support systems.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit analysis to AI-powered customer service entities
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Overall Summary
+
+Overall Summary tracks comprehensive customer service performance metrics for soundbox and AI bot operations, providing a holistic view of service delivery effectiveness. The summary includes volume indicators (active sessions, analyzed sessions, completed evaluations), customer satisfaction feedback (happy and sad responses), support escalation metrics (agent handover tickets and service tickets), and key performance ratios (feedback rate, agent handover percentage, and service ticket percentage). This consolidated view enables stakeholders to assess overall service health, customer engagement levels, and operational efficiency across the soundbox and AI bot customer service channels, supporting data-driven decisions for service optimization and resource allocation.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to soundbox and AI bot customer service entities only
+virtual_table.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+
+--- specific filters
+--- temporal filter can be applied as needed
+virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(active_sessions) as active_sessions,
+sum(analyzed_sessions) as analyzed_sessions,
+sum(eval_completed) as eval_completed,
+sum(happy) as happy_feedback,
+sum(sad) as sad_feedback,
+sum(ah_tickets) as agent_tickets,
+sum(service_tickets) as service_tickets,
+pattern: percentage_with_null_handling
+base_metric: (sum(happy) + sum(sad)) * 100
+denominator: sum(active_sessions)
+result: feedback_rate_percent,
+pattern: percentage_with_null_handling
+base_metric: sum(ah_tickets) * 100
+denominator: sum(active_sessions)
+result: agent_handover_percent,
+pattern: percentage_with_null_handling
+base_metric: sum(service_tickets) * 100
+denominator: sum(active_sessions)
+result: service_ticket_percent
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics track the failure rates of P4B Soundbox and AI Bot systems across three critical performance dimensions. The metrics measure bot repetition percentage (when the bot repeats responses inappropriately), bot function call failure percentage (when API or function calls fail during bot operations), and intent detection failure percentage (when the bot fails to correctly identify user intent). These metrics are calculated as percentages of total completed evaluations and are essential for monitoring conversational AI quality and reliability. The data is aggregated daily and filtered specifically for P4B Soundbox and AI Bot entities to focus on core chatbot performance within the customer service technology stack.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B Soundbox and AI Bot entities only
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot') AND
+--- temporal filter allows flexible date range selection
+eval.hour_timestamp BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+Bot Repetition %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed) END,
+Bot Failed %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed) END,
+Intent Detection Failed %: CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed) END
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks daily customer service quality performance across three key dimensions: empathy, resolution achievement, and response relevance for AI-powered customer service channels. The metrics measure how well the AI systems (Soundbox and AIBot) perform in customer interactions, with each score averaged daily and converted to percentage format for easy interpretation. The empathy score evaluates emotional intelligence in responses, resolution achieved measures problem-solving effectiveness, and response relevance assesses how well responses address customer queries. This consolidated view helps monitor AI customer service quality trends and identify areas for improvement in automated customer support systems.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- limit analysis to AI-powered customer service entities
+eval.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the evaluation completion funnel for soundbox sessions, measuring both analysis coverage and evaluation completion rates on a daily basis. The "Analyzed %" shows what percentage of active sessions were successfully analyzed, while "Eval Completed %" indicates the completion rate of evaluations among analyzed sessions. This provides visibility into the evaluation pipeline efficiency and helps identify bottlenecks in the process. The metric is filtered to focus on the p4bpayoutandsettlement entity, allowing stakeholders to monitor evaluation performance for this specific business unit and track daily progress in completing soundbox evaluations.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bpayoutandsettlement entity
+virtual_table.cst_entity IN ('p4bpayoutandsettlement')
+
+--- calculation_logic
+Analyzed %: CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions) END
+Eval Completed %: CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions) END
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the evaluation completion funnel for soundbox sessions, measuring both analysis coverage and evaluation completion rates on a daily basis. The "Analyzed %" shows what percentage of active sessions were successfully analyzed, while "Eval Completed %" indicates the completion rate of evaluations among analyzed sessions. This provides visibility into the evaluation pipeline efficiency and helps identify bottlenecks in the process. The metric is filtered to focus on the p4bpayoutandsettlement entity, allowing stakeholders to monitor evaluation performance for this specific business unit and track daily progress in completing soundbox evaluations.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bpayoutandsettlement entity
+virtual_table.cst_entity IN ('p4bpayoutandsettlement')
+
+--- calculation_logic
+Analyzed %: CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions) END
+Eval Completed %: CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions) END
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Tracks daily quality metrics trends as percentages for customer support operations in the MHD evaluation system. Measures four key performance indicators: average evaluation score percentage showing overall quality assessment, bot containment percentage indicating automation effectiveness by calculating sessions resolved without human intervention, customer satisfaction (MSAT) percentage based on happy versus sad feedback ratios, and bad evaluation share percentage representing the proportion of negative evaluations. All metrics are filtered specifically for the p4bpayoutandsettlement entity and calculated with zero-division protection using conditional logic to ensure data integrity when denominators are zero.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for specific customer support entity
+eval.cst_entity = 'p4bpayoutandsettlement' AND
+--- temporal filter typically applied for date range selection
+eval.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+AVG(eval.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval.active_sessions) - SUM(eval.fd_tickets)) * 100 / SUM(eval.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval.sad) + SUM(eval.happy)) = 0 THEN NULL 
+     ELSE SUM(eval.happy) * 100 / (SUM(eval.sad) + SUM(eval.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL 
+     ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) 
+END as bad_eval_share_pct
+
+
+
+
+## Final User Sentiment Analysis
+
+Final User Sentiment Analysis tracks the percentage distribution of user sentiment across positive, negative, and neutral categories for P4B payout and settlement operations. This metric measures customer satisfaction and experience quality by analyzing sentiment feedback aggregated at daily intervals. The analysis is filtered specifically for the p4bpayoutandsettlement entity to focus on payment processing sentiment. Each percentage represents the proportion of that sentiment type relative to total sentiment responses, providing insights into customer experience trends and helping identify periods of improved or deteriorated user satisfaction. The metric handles cases where no sentiment data exists by returning null values.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B payout and settlement entity operations
+sentiment.cst_entity = 'p4bpayoutandsettlement' AND
+--- temporal grouping by day for trend analysis
+date_trunc('day', CAST(sentiment.hour_timestamp AS TIMESTAMP))
+
+--- specific filters
+--- temporal range filter (configurable, defaults to no filter)
+sentiment.hour_timestamp TEMPORAL_RANGE ({time_range}: No filter)
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: [positive_user_sentiment, negative_user_sentiment, neutral_user_sentiment]
+calculation: CASE WHEN total_sentiment = 0 THEN NULL ELSE category_sentiment * 100 / total_sentiment END
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Tracks daily quality metrics trends as percentages for customer support operations in the MHD evaluation system. Measures four key performance indicators: average evaluation score percentage showing overall quality assessment, bot containment percentage indicating automation effectiveness by calculating sessions resolved without human intervention, customer satisfaction (MSAT) percentage based on happy versus sad feedback ratios, and bad evaluation share percentage representing the proportion of negative evaluations. All metrics are filtered specifically for the p4bpayoutandsettlement entity and calculated with zero-division protection using conditional logic to ensure data integrity when denominators are zero.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for specific customer support entity
+eval.cst_entity = 'p4bpayoutandsettlement' AND
+--- temporal filter typically applied for date range selection
+eval.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+AVG(eval.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval.active_sessions) - SUM(eval.fd_tickets)) * 100 / SUM(eval.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval.sad) + SUM(eval.happy)) = 0 THEN NULL 
+     ELSE SUM(eval.happy) * 100 / (SUM(eval.sad) + SUM(eval.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL 
+     ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) 
+END as bad_eval_share_pct
+
+
+
+
+## Final User Sentiment Analysis
+
+Final User Sentiment Analysis tracks the percentage distribution of user sentiment across positive, negative, and neutral categories for P4B payout and settlement operations. This metric measures customer satisfaction and experience quality by analyzing sentiment feedback aggregated at daily intervals. The analysis is filtered specifically for the p4bpayoutandsettlement entity to focus on payment processing sentiment. Each percentage represents the proportion of that sentiment type relative to total sentiment responses, providing insights into customer experience trends and helping identify periods of improved or deteriorated user satisfaction. The metric handles cases where no sentiment data exists by returning null values.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B payout and settlement entity operations
+sentiment.cst_entity = 'p4bpayoutandsettlement' AND
+--- temporal grouping by day for trend analysis
+date_trunc('day', CAST(sentiment.hour_timestamp AS TIMESTAMP))
+
+--- specific filters
+--- temporal range filter (configurable, defaults to no filter)
+sentiment.hour_timestamp TEMPORAL_RANGE ({time_range}: No filter)
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: [positive_user_sentiment, negative_user_sentiment, neutral_user_sentiment]
+calculation: CASE WHEN total_sentiment = 0 THEN NULL ELSE category_sentiment * 100 / total_sentiment END
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment changes for the P4B Payout and Settlement service, measuring positive, negative, and neutral sentiment shifts from soundbox evaluation data. The business purpose is to monitor customer satisfaction trends and identify sentiment patterns over time for the payout and settlement functionality. The data is filtered specifically for the 'p4bpayoutandsettlement' entity and aggregated by day to provide daily sentiment change counts. This helps the product team understand user experience trends, identify periods of satisfaction or dissatisfaction, and correlate sentiment changes with product updates or service issues in the payout and settlement domain.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- restrict analysis to P4B payout and settlement service only
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+
+--- specific filters
+--- temporal range filter available but currently set to no filter (all periods)
+eval.hour_timestamp IS NOT NULL
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as day_grouping
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three core customer service quality dimensions for the p4bpayoutandsettlement entity from soundbox evaluations. Average Empathy Score measures the emotional intelligence and understanding demonstrated in customer interactions, converted to percentage scale. Average Resolution Achieved tracks the effectiveness of problem-solving and issue closure rates. Average Response Relevance Score evaluates how well responses address customer queries and concerns. These metrics are aggregated daily to monitor customer service performance trends and identify areas for improvement in automated or human-assisted customer support systems. The data specifically focuses on payout and settlement related customer service interactions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for payout and settlement entity customer service data
+eval.cst_entity = 'p4bpayoutandsettlement'
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment changes for the P4B Payout and Settlement service, measuring positive, negative, and neutral sentiment shifts from soundbox evaluation data. The business purpose is to monitor customer satisfaction trends and identify sentiment patterns over time for the payout and settlement functionality. The data is filtered specifically for the 'p4bpayoutandsettlement' entity and aggregated by day to provide daily sentiment change counts. This helps the product team understand user experience trends, identify periods of satisfaction or dissatisfaction, and correlate sentiment changes with product updates or service issues in the payout and settlement domain.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- restrict analysis to P4B payout and settlement service only
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+
+--- specific filters
+--- temporal range filter available but currently set to no filter (all periods)
+eval.hour_timestamp IS NOT NULL
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as day_grouping
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three core customer service quality dimensions for the p4bpayoutandsettlement entity from soundbox evaluations. Average Empathy Score measures the emotional intelligence and understanding demonstrated in customer interactions, converted to percentage scale. Average Resolution Achieved tracks the effectiveness of problem-solving and issue closure rates. Average Response Relevance Score evaluates how well responses address customer queries and concerns. These metrics are aggregated daily to monitor customer service performance trends and identify areas for improvement in automated or human-assisted customer support systems. The data specifically focuses on payout and settlement related customer service interactions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for payout and settlement entity customer service data
+eval.cst_entity = 'p4bpayoutandsettlement'
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## LLM L1 Metrics
+
+LLM L1 Metrics tracks comprehensive evaluation performance of customer service chatbot interactions for soundbox payment issues. This dashboard measures conversation quality through multiple dimensions including evaluation completion rates, response relevance scores, customer satisfaction (MSAT), sentiment analysis, empathy scoring, and various failure modes like intent detection errors and bot repetition. The metrics are segmented by problem description to identify specific issue types requiring attention. Data is filtered to p4bpayoutandsettlement entity operations and excludes current day data to ensure completeness. This enables customer service teams to monitor chatbot effectiveness, identify areas for improvement, and track resolution quality across different problem categories in the soundbox payment ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude current day data to ensure data completeness
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY AND
+--- filter to payout and settlement entity operations
+eval.cst_entity IN ('p4bpayoutandsettlement')
+
+--- specific filters
+--- segment by problem description for issue-specific analysis
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+Active Sessions: SUM(eval.active_sessions)
+Eval Completed %: SUM(eval.eval_completed) * 100 / SUM(eval.active_sessions)
+AVG Eval Score: AVG(eval.avg_eval_score) * 100
+AVG Response Relevance: AVG(eval.avg_response_relevance_score) * 100
+MSAT %: CASE WHEN (SUM(eval.happy) + SUM(eval.sad)) = 0 THEN NULL ELSE (SUM(eval.happy) * 100.0) / (SUM(eval.happy) + SUM(eval.sad)) END
+AVG Empathy Score: AVG(eval.avg_empathy_score) * 100
++ve Sentiment Change %: pattern: sentiment_percentage_calculation
+AVG Resolution Achieved: AVG(eval.avg_resolution_achieved) * 100
+Bad Eval Share %: pattern: binary_share_percentage
+Intent Detection Failed %: pattern: failure_rate_percentage, metric: intent_incoherence_count
+Bot Repetition %: pattern: failure_rate_percentage, metric: agent_response_repetition
+Bot Failed %: pattern: failure_rate_percentage, metric: function_call_failed
+AVG Topic Drift: AVG(eval.avg_topic_drift) * 100
+
+
+
+
+## Overall Summary
+
+This summary dashboard tracks key performance indicators for soundbox evaluation sessions within the MHD evaluation system. It measures operational metrics including total active sessions, sessions that underwent analysis, completed evaluations, customer satisfaction feedback (happy/sad counts), and agent intervention requirements. The data is filtered specifically for the p4bpayoutandsettlement entity to focus on payment and settlement related evaluations. Two calculated metrics provide insight into system performance: feedback rate percentage shows customer engagement levels, while agent handover percentage indicates when automated evaluation requires human intervention. This comprehensive view enables monitoring of evaluation system effectiveness, customer satisfaction trends, and operational efficiency across the payment settlement domain.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- filter for payment and settlement entity evaluations
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+--- temporal filter for daily aggregation
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP)) IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions,
+sum(eval.eval_completed) as eval_completed,
+sum(eval.happy) as happy_feedback,
+sum(eval.sad) as sad_feedback,
+sum(eval.ah_tickets) as agent_tickets,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+ELSE (SUM(eval.happy) + SUM(eval.sad)) * 100 / SUM(eval.active_sessions)
+END as feedback_rate_percent,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+ELSE SUM(eval.ah_tickets) * 100 / SUM(eval.active_sessions)
+END as agent_handover_percent
+
+
+
+
+## Overall Summary
+
+This summary dashboard tracks key performance indicators for soundbox evaluation sessions within the MHD evaluation system. It measures operational metrics including total active sessions, sessions that underwent analysis, completed evaluations, customer satisfaction feedback (happy/sad counts), and agent intervention requirements. The data is filtered specifically for the p4bpayoutandsettlement entity to focus on payment and settlement related evaluations. Two calculated metrics provide insight into system performance: feedback rate percentage shows customer engagement levels, while agent handover percentage indicates when automated evaluation requires human intervention. This comprehensive view enables monitoring of evaluation system effectiveness, customer satisfaction trends, and operational efficiency across the payment settlement domain.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- filter for payment and settlement entity evaluations
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+--- temporal filter for daily aggregation
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP)) IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions,
+sum(eval.eval_completed) as eval_completed,
+sum(eval.happy) as happy_feedback,
+sum(eval.sad) as sad_feedback,
+sum(eval.ah_tickets) as agent_tickets,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+ELSE (SUM(eval.happy) + SUM(eval.sad)) * 100 / SUM(eval.active_sessions)
+END as feedback_rate_percent,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+ELSE SUM(eval.ah_tickets) * 100 / SUM(eval.active_sessions)
+END as agent_handover_percent
+
+
+
+
+## LLM L1 Metrics
+
+LLM L1 Metrics tracks comprehensive evaluation performance of customer service chatbot interactions for soundbox payment issues. This dashboard measures conversation quality through multiple dimensions including evaluation completion rates, response relevance scores, customer satisfaction (MSAT), sentiment analysis, empathy scoring, and various failure modes like intent detection errors and bot repetition. The metrics are segmented by problem description to identify specific issue types requiring attention. Data is filtered to p4bpayoutandsettlement entity operations and excludes current day data to ensure completeness. This enables customer service teams to monitor chatbot effectiveness, identify areas for improvement, and track resolution quality across different problem categories in the soundbox payment ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude current day data to ensure data completeness
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY AND
+--- filter to payout and settlement entity operations
+eval.cst_entity IN ('p4bpayoutandsettlement')
+
+--- specific filters
+--- segment by problem description for issue-specific analysis
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+Active Sessions: SUM(eval.active_sessions)
+Eval Completed %: SUM(eval.eval_completed) * 100 / SUM(eval.active_sessions)
+AVG Eval Score: AVG(eval.avg_eval_score) * 100
+AVG Response Relevance: AVG(eval.avg_response_relevance_score) * 100
+MSAT %: CASE WHEN (SUM(eval.happy) + SUM(eval.sad)) = 0 THEN NULL ELSE (SUM(eval.happy) * 100.0) / (SUM(eval.happy) + SUM(eval.sad)) END
+AVG Empathy Score: AVG(eval.avg_empathy_score) * 100
++ve Sentiment Change %: pattern: sentiment_percentage_calculation
+AVG Resolution Achieved: AVG(eval.avg_resolution_achieved) * 100
+Bad Eval Share %: pattern: binary_share_percentage
+Intent Detection Failed %: pattern: failure_rate_percentage, metric: intent_incoherence_count
+Bot Repetition %: pattern: failure_rate_percentage, metric: agent_response_repetition
+Bot Failed %: pattern: failure_rate_percentage, metric: function_call_failed
+AVG Topic Drift: AVG(eval.avg_topic_drift) * 100
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Daily Quality Metrics Trend tracks four key customer service performance indicators as percentages over time for the P4B Business Loan entity. The metrics include average evaluation score percentage measuring agent performance quality, bot containment percentage indicating automated resolution effectiveness by calculating sessions not escalated to human agents, MSAT (Mobile Satisfaction) percentage representing customer satisfaction based on happy vs sad feedback ratios, and bad evaluation share percentage showing the proportion of poor quality interactions. All metrics are filtered specifically for the p4bbusinessloan customer service entity and aggregated daily to show trending patterns. The dashboard enables monitoring of service quality degradation or improvement across multiple dimensions simultaneously.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B Business Loan customer service entity
+eval.cst_entity = 'p4bbusinessloan' AND
+--- temporal grouping by day
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP))
+
+--- calculation_logic
+AVG Eval Score %: (AVG(avg_eval_score)) * 100
+Bot Containment %: CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions) END
+MSAT %: CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END
+Bad Eval Share %: CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad)) END
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the operational efficiency of soundbox evaluation processes for business loan applications within the MHD system. It measures two sequential performance indicators: the analysis completion rate (percentage of active sessions that get analyzed) and the evaluation completion rate (percentage of analyzed sessions where evaluation is fully completed). The data is filtered specifically to business loan CST entity (p4bbusinessloan) to focus on this product vertical. These metrics help monitor the evaluation pipeline effectiveness, identifying bottlenecks between session activation, analysis completion, and final evaluation. The percentages provide insight into operational capacity and process optimization opportunities for the business loan evaluation workflow.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to business loan CST entity for product-specific analysis
+sb.cst_entity = 'p4bbusinessloan'
+
+--- specific filters
+--- temporal range filter available but currently set to show all data
+--- sb.date_ [temporal filter - currently "No filter"]
+
+--- calculation_logic
+analyzed_percentage: SUM(analyzed_sessions) * 100 / SUM(active_sessions),
+eval_completed_percentage: SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the operational efficiency of soundbox evaluation processes for business loan applications within the MHD system. It measures two sequential performance indicators: the analysis completion rate (percentage of active sessions that get analyzed) and the evaluation completion rate (percentage of analyzed sessions where evaluation is fully completed). The data is filtered specifically to business loan CST entity (p4bbusinessloan) to focus on this product vertical. These metrics help monitor the evaluation pipeline effectiveness, identifying bottlenecks between session activation, analysis completion, and final evaluation. The percentages provide insight into operational capacity and process optimization opportunities for the business loan evaluation workflow.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to business loan CST entity for product-specific analysis
+sb.cst_entity = 'p4bbusinessloan'
+
+--- specific filters
+--- temporal range filter available but currently set to show all data
+--- sb.date_ [temporal filter - currently "No filter"]
+
+--- calculation_logic
+analyzed_percentage: SUM(analyzed_sessions) * 100 / SUM(active_sessions),
+eval_completed_percentage: SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Daily Quality Metrics Trend tracks four key customer service performance indicators as percentages over time for the P4B Business Loan entity. The metrics include average evaluation score percentage measuring agent performance quality, bot containment percentage indicating automated resolution effectiveness by calculating sessions not escalated to human agents, MSAT (Mobile Satisfaction) percentage representing customer satisfaction based on happy vs sad feedback ratios, and bad evaluation share percentage showing the proportion of poor quality interactions. All metrics are filtered specifically for the p4bbusinessloan customer service entity and aggregated daily to show trending patterns. The dashboard enables monitoring of service quality degradation or improvement across multiple dimensions simultaneously.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B Business Loan customer service entity
+eval.cst_entity = 'p4bbusinessloan' AND
+--- temporal grouping by day
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP))
+
+--- calculation_logic
+AVG Eval Score %: (AVG(avg_eval_score)) * 100
+Bot Containment %: CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions) END
+MSAT %: CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END
+Bad Eval Share %: CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad)) END
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks user sentiment distribution percentages for P4B Business Loan, showing the relative proportion of positive, neutral, and negative sentiment feedback over time. The analysis calculates each sentiment category as a percentage of total sentiment responses, providing insights into customer satisfaction trends and sentiment patterns. Data is aggregated daily from soundbox evaluation summaries, filtered specifically for the P4B Business Loan product entity. The percentage-based approach enables comparison of sentiment balance across different time periods and helps identify shifts in customer perception. Null values are returned when no sentiment data is available for a given period.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to P4B Business Loan product entity for focused sentiment analysis
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- temporal filter (no specific range applied, defaults to all available data)
+eval.hour_timestamp IS NOT NULL
+
+--- specific filters
+--- no additional specific filters applied beyond entity filtering
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: positive_user_sentiment, neutral_user_sentiment, negative_user_sentiment
+aggregation: SUM with percentage calculation and null handling
+
+
+
+
+## Final User Sentiment #
+
+Final User Sentiment tracks the daily distribution of customer sentiment changes across three categories (positive, negative, neutral) for P4B business loan interactions captured through the soundbox evaluation system. This metric measures customer satisfaction trends by aggregating sentiment feedback counts, helping assess the impact of product changes and service quality on user experience. The data is filtered specifically to P4B business loan entities, providing focused insights into this product vertical's customer sentiment patterns over time for business intelligence and product improvement decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to P4B business loan entity for focused product analysis
+sentiment.cst_entity IN ('p4bbusinessloan')
+
+--- specific filters
+--- temporal range filter (configurable, currently no filter applied)
+--- sentiment.hour_timestamp TEMPORAL_RANGE (no current restriction)
+
+--- calculation_logic
+sum(sentiment.positive_user_sentiment) as positive_changes,
+sum(sentiment.negative_user_sentiment) as negative_changes,
+sum(sentiment.neutral_user_sentiment) as neutral_changes,
+date_trunc('day', cast(sentiment.hour_timestamp as timestamp)) as day_grouping
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks user sentiment distribution percentages for P4B Business Loan, showing the relative proportion of positive, neutral, and negative sentiment feedback over time. The analysis calculates each sentiment category as a percentage of total sentiment responses, providing insights into customer satisfaction trends and sentiment patterns. Data is aggregated daily from soundbox evaluation summaries, filtered specifically for the P4B Business Loan product entity. The percentage-based approach enables comparison of sentiment balance across different time periods and helps identify shifts in customer perception. Null values are returned when no sentiment data is available for a given period.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to P4B Business Loan product entity for focused sentiment analysis
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- temporal filter (no specific range applied, defaults to all available data)
+eval.hour_timestamp IS NOT NULL
+
+--- specific filters
+--- no additional specific filters applied beyond entity filtering
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: positive_user_sentiment, neutral_user_sentiment, negative_user_sentiment
+aggregation: SUM with percentage calculation and null handling
+
+
+
+
+## Final User Sentiment #
+
+Final User Sentiment tracks the daily distribution of customer sentiment changes across three categories (positive, negative, neutral) for P4B business loan interactions captured through the soundbox evaluation system. This metric measures customer satisfaction trends by aggregating sentiment feedback counts, helping assess the impact of product changes and service quality on user experience. The data is filtered specifically to P4B business loan entities, providing focused insights into this product vertical's customer sentiment patterns over time for business intelligence and product improvement decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to P4B business loan entity for focused product analysis
+sentiment.cst_entity IN ('p4bbusinessloan')
+
+--- specific filters
+--- temporal range filter (configurable, currently no filter applied)
+--- sentiment.hour_timestamp TEMPORAL_RANGE (no current restriction)
+
+--- calculation_logic
+sum(sentiment.positive_user_sentiment) as positive_changes,
+sum(sentiment.negative_user_sentiment) as negative_changes,
+sum(sentiment.neutral_user_sentiment) as neutral_changes,
+date_trunc('day', cast(sentiment.hour_timestamp as timestamp)) as day_grouping
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks customer service quality performance for the p4bbusinessloan entity across three key dimensions: empathy, resolution achievement, and response relevance. The empathy score measures how well customer service representatives demonstrate understanding and compassion during interactions. Resolution achieved tracks the percentage of customer issues that are successfully resolved. Response relevance evaluates how well responses address the specific customer concerns raised. All scores are converted to percentages for easy interpretation. This comprehensive quality assessment helps monitor and improve customer service effectiveness by providing a multi-dimensional view of agent performance and customer satisfaction levels on a daily basis.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bbusinessloan customer service entity
+eval.cst_entity IN ('p4bbusinessloan')
+
+--- specific filters
+--- no additional specific filters - temporal filters set to "No filter"
+
+--- calculation_logic
+AVG(avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Bot Performance Metrics
+
+This metric tracks bot performance quality indicators for the MHD evaluation system, specifically measuring three key failure modes: bot response repetition, function call failures, and intent detection incoherence. Each percentage represents the failure rate calculated as the number of specific errors divided by total completed evaluations, multiplied by 100. The metrics are filtered to focus on the p4bbusinessloan customer service entity and aggregated by day to show daily performance trends. These indicators help identify bot quality issues and track improvement over time, with null values returned when no evaluations are completed to avoid misleading zero percentages.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for p4bbusinessloan customer service entity
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- temporal filter configurable via dashboard parameter
+eval.hour_timestamp >= {start_date} AND eval.hour_timestamp <= {end_date}
+
+--- specific filters
+--- none beyond standard entity and temporal filters
+
+--- calculation_logic
+pattern: performance_percentage_with_null_safety
+error_counts: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+base_denominator: SUM(eval_completed)
+
+
+
+
+## Bot Performance Metrics
+
+This metric tracks bot performance quality indicators for the MHD evaluation system, specifically measuring three key failure modes: bot response repetition, function call failures, and intent detection incoherence. Each percentage represents the failure rate calculated as the number of specific errors divided by total completed evaluations, multiplied by 100. The metrics are filtered to focus on the p4bbusinessloan customer service entity and aggregated by day to show daily performance trends. These indicators help identify bot quality issues and track improvement over time, with null values returned when no evaluations are completed to avoid misleading zero percentages.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for p4bbusinessloan customer service entity
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- temporal filter configurable via dashboard parameter
+eval.hour_timestamp >= {start_date} AND eval.hour_timestamp <= {end_date}
+
+--- specific filters
+--- none beyond standard entity and temporal filters
+
+--- calculation_logic
+pattern: performance_percentage_with_null_safety
+error_counts: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+base_denominator: SUM(eval_completed)
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks customer service quality performance for the p4bbusinessloan entity across three key dimensions: empathy, resolution achievement, and response relevance. The empathy score measures how well customer service representatives demonstrate understanding and compassion during interactions. Resolution achieved tracks the percentage of customer issues that are successfully resolved. Response relevance evaluates how well responses address the specific customer concerns raised. All scores are converted to percentages for easy interpretation. This comprehensive quality assessment helps monitor and improve customer service effectiveness by providing a multi-dimensional view of agent performance and customer satisfaction levels on a daily basis.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bbusinessloan customer service entity
+eval.cst_entity IN ('p4bbusinessloan')
+
+--- specific filters
+--- no additional specific filters - temporal filters set to "No filter"
+
+--- calculation_logic
+AVG(avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Overall Summary
+
+This metric provides a comprehensive daily summary of soundbox evaluation performance for the p4bbusinessloan entity within the MHD evaluation system. It tracks key operational metrics including total active sessions, sessions that underwent analysis, completed evaluations, customer feedback (both positive and negative), and tickets requiring agent intervention. The summary also calculates derived performance indicators such as feedback rate percentage (proportion of sessions receiving feedback) and agent handover percentage (proportion of sessions escalated to human agents). This consolidated view enables stakeholders to monitor overall system health, customer satisfaction levels, and operational efficiency on a daily basis, providing essential insights for performance optimization and resource allocation decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filter for p4bbusinessloan business unit
+virtual_table.cst_entity IN ('p4bbusinessloan') AND
+--- temporal grouping by day for daily aggregation
+date_trunc('day', CAST(virtual_table.date_ AS TIMESTAMP))
+
+--- specific filters
+--- temporal range filter (configurable via dashboard)
+virtual_table.date_ {temporal_range_operator} {date_range}
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as "Active Sessions",
+sum(virtual_table.analyzed_sessions) as "Analyzed Sessions", 
+sum(virtual_table.eval_completed) as "Eval Completed",
+sum(virtual_table.happy) as "Happy Feedback",
+sum(virtual_table.sad) as "Sad Feedback",
+sum(virtual_table.ah_tickets) as "Agent Tickets",
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(virtual_table.happy) + SUM(virtual_table.sad)) * 100 / SUM(virtual_table.active_sessions) 
+END as "Feedback Rate %",
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL 
+     ELSE SUM(virtual_table.ah_tickets) * 100 / SUM(virtual_table.active_sessions) 
+END as "Agent Handover %"
+
+
+
+
+## LLM L1 Metrics
+
+This comprehensive LLM evaluation dashboard tracks 13 key performance indicators for the P4B Business Loan customer service system, analyzing bot interaction quality and effectiveness. The metrics include session volume (Active Sessions), evaluation completion rates, quality assessments (evaluation scores, response relevance, empathy), user satisfaction (MSAT percentage), sentiment analysis (positive sentiment change), resolution achievement rates, and failure mode detection (bad evaluations, intent detection failures, bot repetition and failures, topic drift). Data is segmented by problem description categories to identify performance variations across different customer issue types. The analysis excludes unanalyzed interactions and current-day incomplete data, providing a complete view of LLM performance for operational optimization and quality assurance in automated customer service delivery.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed interactions from evaluation metrics
+eval.description != 'Not Analyzed' AND
+--- focus on P4B business loan customer service entity
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- exclude current day data to ensure complete evaluation cycles
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- configurable temporal range filter (defaults to "No filter")
+--- eval.date_ TEMPORAL_RANGE ({time_range})
+
+--- calculation_logic
+Active Sessions: SUM(eval.active_sessions)
+Eval Completed %: SUM(eval.eval_completed) * 100 / SUM(eval.active_sessions)
+AVG Eval Score: AVG(eval.avg_eval_score) * 100
+AVG Response Relevance: AVG(eval.avg_response_relevance_score) * 100
+MSAT %: CASE WHEN (SUM(eval.happy) + SUM(eval.sad)) = 0 THEN NULL ELSE (SUM(eval.happy) * 100.0) / (SUM(eval.happy) + SUM(eval.sad)) END
+AVG Empathy Score: AVG(eval.avg_empathy_score) * 100
++ve Sentiment Change %: CASE WHEN (SUM(eval.positive_user_sentiment)+SUM(eval.negative_user_sentiment)+SUM(eval.neutral_user_sentiment)) = 0 THEN NULL ELSE SUM(eval.positive_user_sentiment) * 100 / (SUM(eval.positive_user_sentiment)+SUM(eval.negative_user_sentiment)+SUM(eval.neutral_user_sentiment)) END
+AVG Resolution Achieved: AVG(eval.avg_resolution_achieved) * 100
+Bad Eval Share %: CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) END
+Intent Detection Failed %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.intent_incoherence_count) * 100 / SUM(eval.active_sessions) END
+Bot Repetition %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.agent_response_repetition) * 100 / SUM(eval.active_sessions) END
+Bot Failed %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.function_call_failed) * 100 / SUM(eval.active_sessions) END
+AVG Topic Drift: AVG(eval.avg_topic_drift) * 100
+
+
+
+
+## Overall Summary
+
+This metric provides a comprehensive daily summary of soundbox evaluation performance for the p4bbusinessloan entity within the MHD evaluation system. It tracks key operational metrics including total active sessions, sessions that underwent analysis, completed evaluations, customer feedback (both positive and negative), and tickets requiring agent intervention. The summary also calculates derived performance indicators such as feedback rate percentage (proportion of sessions receiving feedback) and agent handover percentage (proportion of sessions escalated to human agents). This consolidated view enables stakeholders to monitor overall system health, customer satisfaction levels, and operational efficiency on a daily basis, providing essential insights for performance optimization and resource allocation decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filter for p4bbusinessloan business unit
+virtual_table.cst_entity IN ('p4bbusinessloan') AND
+--- temporal grouping by day for daily aggregation
+date_trunc('day', CAST(virtual_table.date_ AS TIMESTAMP))
+
+--- specific filters
+--- temporal range filter (configurable via dashboard)
+virtual_table.date_ {temporal_range_operator} {date_range}
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as "Active Sessions",
+sum(virtual_table.analyzed_sessions) as "Analyzed Sessions", 
+sum(virtual_table.eval_completed) as "Eval Completed",
+sum(virtual_table.happy) as "Happy Feedback",
+sum(virtual_table.sad) as "Sad Feedback",
+sum(virtual_table.ah_tickets) as "Agent Tickets",
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(virtual_table.happy) + SUM(virtual_table.sad)) * 100 / SUM(virtual_table.active_sessions) 
+END as "Feedback Rate %",
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL 
+     ELSE SUM(virtual_table.ah_tickets) * 100 / SUM(virtual_table.active_sessions) 
+END as "Agent Handover %"
+
+
+
+
+## LLM L1 Metrics
+
+This comprehensive LLM evaluation dashboard tracks 13 key performance indicators for the P4B Business Loan customer service system, analyzing bot interaction quality and effectiveness. The metrics include session volume (Active Sessions), evaluation completion rates, quality assessments (evaluation scores, response relevance, empathy), user satisfaction (MSAT percentage), sentiment analysis (positive sentiment change), resolution achievement rates, and failure mode detection (bad evaluations, intent detection failures, bot repetition and failures, topic drift). Data is segmented by problem description categories to identify performance variations across different customer issue types. The analysis excludes unanalyzed interactions and current-day incomplete data, providing a complete view of LLM performance for operational optimization and quality assurance in automated customer service delivery.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed interactions from evaluation metrics
+eval.description != 'Not Analyzed' AND
+--- focus on P4B business loan customer service entity
+eval.cst_entity IN ('p4bbusinessloan') AND
+--- exclude current day data to ensure complete evaluation cycles
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- configurable temporal range filter (defaults to "No filter")
+--- eval.date_ TEMPORAL_RANGE ({time_range})
+
+--- calculation_logic
+Active Sessions: SUM(eval.active_sessions)
+Eval Completed %: SUM(eval.eval_completed) * 100 / SUM(eval.active_sessions)
+AVG Eval Score: AVG(eval.avg_eval_score) * 100
+AVG Response Relevance: AVG(eval.avg_response_relevance_score) * 100
+MSAT %: CASE WHEN (SUM(eval.happy) + SUM(eval.sad)) = 0 THEN NULL ELSE (SUM(eval.happy) * 100.0) / (SUM(eval.happy) + SUM(eval.sad)) END
+AVG Empathy Score: AVG(eval.avg_empathy_score) * 100
++ve Sentiment Change %: CASE WHEN (SUM(eval.positive_user_sentiment)+SUM(eval.negative_user_sentiment)+SUM(eval.neutral_user_sentiment)) = 0 THEN NULL ELSE SUM(eval.positive_user_sentiment) * 100 / (SUM(eval.positive_user_sentiment)+SUM(eval.negative_user_sentiment)+SUM(eval.neutral_user_sentiment)) END
+AVG Resolution Achieved: AVG(eval.avg_resolution_achieved) * 100
+Bad Eval Share %: CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) END
+Intent Detection Failed %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.intent_incoherence_count) * 100 / SUM(eval.active_sessions) END
+Bot Repetition %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.agent_response_repetition) * 100 / SUM(eval.active_sessions) END
+Bot Failed %: CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL ELSE SUM(eval.function_call_failed) * 100 / SUM(eval.active_sessions) END
+AVG Topic Drift: AVG(eval.avg_topic_drift) * 100
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the completion rates of soundbox evaluation processes for the p4bprofile entity. The Analyzed percentage measures what portion of active sessions have been successfully analyzed, calculated as analyzed sessions divided by total active sessions. The Eval Completed percentage measures the completion rate of evaluations among analyzed sessions, showing how many analyzed sessions have completed the full evaluation process. This operational metric helps monitor the efficiency and throughput of the soundbox evaluation pipeline, identifying potential bottlenecks in either the analysis phase or the evaluation completion phase. The metric is specifically scoped to p4bprofile entity operations and can be filtered by date ranges for temporal analysis of evaluation performance trends.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bprofile entity for focused evaluation tracking
+sb.cst_entity = 'p4bprofile' AND
+
+--- specific filters
+--- temporal filter for date-based analysis (configurable)
+--- date range filter applied on date_ column when specified
+sb.date_ {temporal_operator} {date_range}
+
+--- calculation_logic
+SUM(sb.analyzed_sessions) * 100 / SUM(sb.active_sessions) AS analyzed_percentage,
+SUM(sb.eval_completed) * 100 / SUM(sb.analyzed_sessions) AS eval_completed_percentage
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the completion rates of soundbox evaluation processes for the p4bprofile entity. The Analyzed percentage measures what portion of active sessions have been successfully analyzed, calculated as analyzed sessions divided by total active sessions. The Eval Completed percentage measures the completion rate of evaluations among analyzed sessions, showing how many analyzed sessions have completed the full evaluation process. This operational metric helps monitor the efficiency and throughput of the soundbox evaluation pipeline, identifying potential bottlenecks in either the analysis phase or the evaluation completion phase. The metric is specifically scoped to p4bprofile entity operations and can be filtered by date ranges for temporal analysis of evaluation performance trends.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bprofile entity for focused evaluation tracking
+sb.cst_entity = 'p4bprofile' AND
+
+--- specific filters
+--- temporal filter for date-based analysis (configurable)
+--- date range filter applied on date_ column when specified
+sb.date_ {temporal_operator} {date_range}
+
+--- calculation_logic
+SUM(sb.analyzed_sessions) * 100 / SUM(sb.active_sessions) AS analyzed_percentage,
+SUM(sb.eval_completed) * 100 / SUM(sb.analyzed_sessions) AS eval_completed_percentage
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+This metric tracks daily quality performance indicators for customer support operations, specifically for the p4bprofile entity. It measures four key aspects: average evaluation score percentage showing overall quality assessment, bot containment percentage indicating automated resolution effectiveness, MSAT percentage reflecting customer satisfaction rates, and bad evaluation share percentage highlighting quality issues. The metrics are calculated daily with proper null handling to avoid division by zero errors, providing trend analysis for support quality management. This comprehensive view enables monitoring of support performance across multiple quality dimensions over time.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for specific customer support entity
+eval.cst_entity IN ('p4bprofile')
+
+--- specific filters
+--- temporal filter for daily trend analysis (configurable range)
+eval.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+AVG(eval.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval.active_sessions) - SUM(eval.fd_tickets)) * 100 / SUM(eval.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval.sad) + SUM(eval.happy)) = 0 THEN NULL 
+     ELSE SUM(eval.happy) * 100 / (SUM(eval.sad) + SUM(eval.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL 
+     ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) 
+END as bad_eval_share_pct
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+This metric tracks daily quality performance indicators for customer support operations, specifically for the p4bprofile entity. It measures four key aspects: average evaluation score percentage showing overall quality assessment, bot containment percentage indicating automated resolution effectiveness, MSAT percentage reflecting customer satisfaction rates, and bad evaluation share percentage highlighting quality issues. The metrics are calculated daily with proper null handling to avoid division by zero errors, providing trend analysis for support quality management. This comprehensive view enables monitoring of support performance across multiple quality dimensions over time.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for specific customer support entity
+eval.cst_entity IN ('p4bprofile')
+
+--- specific filters
+--- temporal filter for daily trend analysis (configurable range)
+eval.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+AVG(eval.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval.active_sessions) - SUM(eval.fd_tickets)) * 100 / SUM(eval.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval.sad) + SUM(eval.happy)) = 0 THEN NULL 
+     ELSE SUM(eval.happy) * 100 / (SUM(eval.sad) + SUM(eval.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) = 0 THEN NULL 
+     ELSE SUM(eval.eval_score_bad) * 100 / (SUM(eval.eval_score_good) + SUM(eval.eval_score_bad)) 
+END as bad_eval_share_pct
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks the distribution of user sentiment feedback across positive, negative, and neutral categories for the p4bprofile customer service entity. It calculates the percentage breakdown of each sentiment type relative to total sentiment volume, providing insights into customer satisfaction trends over time. The analysis includes null handling for periods with zero sentiment data and groups results by day to show temporal patterns. This helps customer service teams monitor satisfaction levels and identify periods requiring attention or investigation into service quality issues.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 soundbox
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to p4bprofile customer service entity
+soundbox.cst_entity IN ('p4bprofile') AND
+--- temporal filter with no restrictions (configurable)
+soundbox.hour_timestamp IS NOT NULL
+
+--- specific filters
+--- none - uses standard entity filter only
+
+--- calculation_logic
+CASE WHEN (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE SUM({sentiment_type}_user_sentiment) * 100 / (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+END
+where {sentiment_type} = positive, negative, or neutral
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment distribution for P4B profile entities within the soundbox evaluation system. It measures the count of positive, neutral, and negative user sentiment changes aggregated by day, providing insights into user experience trends and satisfaction levels. The metric is filtered specifically for 'p4bprofile' entities to focus on business payment profile feedback. This helps stakeholders monitor sentiment patterns over time, identify potential issues affecting user satisfaction, and measure the impact of product changes or improvements on user perception within the payments for business ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B profile entities only
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal filter - no specific range applied (configurable)
+eval.hour_timestamp IS NOT NULL
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as day_date
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks the distribution of user sentiment feedback across positive, negative, and neutral categories for the p4bprofile customer service entity. It calculates the percentage breakdown of each sentiment type relative to total sentiment volume, providing insights into customer satisfaction trends over time. The analysis includes null handling for periods with zero sentiment data and groups results by day to show temporal patterns. This helps customer service teams monitor satisfaction levels and identify periods requiring attention or investigation into service quality issues.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 soundbox
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to p4bprofile customer service entity
+soundbox.cst_entity IN ('p4bprofile') AND
+--- temporal filter with no restrictions (configurable)
+soundbox.hour_timestamp IS NOT NULL
+
+--- specific filters
+--- none - uses standard entity filter only
+
+--- calculation_logic
+CASE WHEN (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE SUM({sentiment_type}_user_sentiment) * 100 / (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+END
+where {sentiment_type} = positive, negative, or neutral
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment distribution for P4B profile entities within the soundbox evaluation system. It measures the count of positive, neutral, and negative user sentiment changes aggregated by day, providing insights into user experience trends and satisfaction levels. The metric is filtered specifically for 'p4bprofile' entities to focus on business payment profile feedback. This helps stakeholders monitor sentiment patterns over time, identify potential issues affecting user satisfaction, and measure the impact of product changes or improvements on user perception within the payments for business ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for P4B profile entities only
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal filter - no specific range applied (configurable)
+eval.hour_timestamp IS NOT NULL
+
+--- calculation_logic
+sum(eval.neutral_user_sentiment) as neutral_change_count,
+sum(eval.positive_user_sentiment) as positive_change_count,
+sum(eval.negative_user_sentiment) as negative_change_count,
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP)) as day_date
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics tracks the failure rates of conversational AI systems within the MHD evaluation framework. This measures bot repetition percentage (when agents provide repetitive responses), bot function call failure percentage (when programmatic functions fail to execute), and intent detection failure percentage (when the system fails to correctly identify user intentions). The metrics are filtered to the 'p4bprofile' customer service entity and aggregated daily to monitor bot quality and reliability over time. Each percentage represents the ratio of specific failure events to total completed evaluations, providing insights into different aspects of bot performance degradation and helping identify areas needing improvement in the conversational AI system.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bprofile customer service entity
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP))
+
+--- specific filters
+--- optional temporal range filter (configurable in dashboard)
+eval.hour_timestamp TEMPORAL_RANGE (configurable)
+
+--- calculation_logic
+pattern: failure_rate_percentage
+base_metrics: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+denominator: eval_completed
+aggregation: SUM
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics tracks the failure rates of conversational AI systems within the MHD evaluation framework. This measures bot repetition percentage (when agents provide repetitive responses), bot function call failure percentage (when programmatic functions fail to execute), and intent detection failure percentage (when the system fails to correctly identify user intentions). The metrics are filtered to the 'p4bprofile' customer service entity and aggregated daily to monitor bot quality and reliability over time. Each percentage represents the ratio of specific failure events to total completed evaluations, providing insights into different aspects of bot performance degradation and helping identify areas needing improvement in the conversational AI system.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bprofile customer service entity
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(eval.hour_timestamp AS TIMESTAMP))
+
+--- specific filters
+--- optional temporal range filter (configurable in dashboard)
+eval.hour_timestamp TEMPORAL_RANGE (configurable)
+
+--- calculation_logic
+pattern: failure_rate_percentage
+base_metrics: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+denominator: eval_completed
+aggregation: SUM
+
+
+
+
+## LLM L1 Metrics
+
+This metric suite tracks comprehensive LLM assistant performance across multiple quality dimensions for customer support evaluation. It measures session volume, evaluation completion rates, average quality scores (evaluation, response relevance, empathy, resolution achievement, topic drift), customer satisfaction indicators (MSAT percentage, positive sentiment change), and failure analysis metrics (bad evaluation share, intent detection failures, bot repetition and failure rates). The analysis is segmented by problem description categories and focuses on analyzed interactions for the p4bprofile entity, excluding unprocessed items. These metrics enable monitoring of AI assistant effectiveness, identifying performance gaps, and tracking improvement trends across different customer issue types.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed interactions to focus on processed evaluations
+eval.description != 'Not Analyzed' AND
+--- entity scope filter for p4bprofile operations
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal filter for completed day analysis
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- grouping dimension for problem categorization
+eval.out_key_problem_desc
+
+--- calculation_logic
+-- Volume: SUM(active_sessions)
+-- Completion Rate: SUM(eval_completed) * 100 / SUM(active_sessions)
+-- Quality Scores: AVG(score_field) * 100 for avg_eval_score, avg_response_relevance_score, avg_empathy_score, avg_resolution_achieved, avg_topic_drift
+-- Satisfaction Metrics: 
+--   MSAT: CASE WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad)) END
+--   Sentiment: SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+-- Failure Analysis:
+--   Bad Eval: SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+--   Intent/Bot Failures: SUM(failure_count) * 100 / SUM(active_sessions) for intent_incoherence_count, agent_response_repetition, function_call_failed
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three core customer service quality dimensions for Soundbox evaluations within the p4bprofile entity: empathy score measuring emotional intelligence in customer interactions, resolution achieved indicating successful problem-solving rates, and response relevance assessing the appropriateness of responses to customer queries. All metrics are calculated as daily averages and converted to percentage format for standardized reporting. This consolidated view enables comprehensive assessment of customer service performance across multiple quality dimensions, helping identify areas for improvement in customer support operations and tracking overall service quality trends over time.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bprofile entity for focused analysis
+eval.cst_entity = 'p4bprofile' AND
+--- temporal filters available but not applied (No filter set)
+eval.date_ IS NOT NULL
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Overall Summary
+
+This metric tracks comprehensive soundbox evaluation performance including session activity, analysis completion, customer feedback sentiment, and agent intervention rates. It measures operational efficiency by tracking active sessions against analyzed sessions, evaluation completions, and customer satisfaction through happy/sad feedback counts. The dashboard filters for p4bprofile entity to focus on specific business profile evaluation metrics. Key performance indicators include feedback participation rate (percentage of active sessions providing feedback) and agent handover rate (percentage of sessions requiring human agent intervention), providing insights into automated evaluation effectiveness and customer satisfaction trends.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filtering for p4bprofile business profile
+virtual_table.cst_entity IN ('p4bprofile') AND
+--- temporal filtering with flexible date range capability
+virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(active_sessions) as active_sessions_total,
+sum(analyzed_sessions) as analyzed_sessions_total,
+sum(eval_completed) as eval_completed_total,
+sum(happy) as happy_feedback_total,
+sum(sad) as sad_feedback_total,
+sum(ah_tickets) as agent_tickets_total,
+CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions) END as feedback_rate_percent,
+CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(ah_tickets) * 100 / SUM(active_sessions) END as agent_handover_percent
+
+
+
+
+## LLM L1 Metrics
+
+This metric suite tracks comprehensive LLM assistant performance across multiple quality dimensions for customer support evaluation. It measures session volume, evaluation completion rates, average quality scores (evaluation, response relevance, empathy, resolution achievement, topic drift), customer satisfaction indicators (MSAT percentage, positive sentiment change), and failure analysis metrics (bad evaluation share, intent detection failures, bot repetition and failure rates). The analysis is segmented by problem description categories and focuses on analyzed interactions for the p4bprofile entity, excluding unprocessed items. These metrics enable monitoring of AI assistant effectiveness, identifying performance gaps, and tracking improvement trends across different customer issue types.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed interactions to focus on processed evaluations
+eval.description != 'Not Analyzed' AND
+--- entity scope filter for p4bprofile operations
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal filter for completed day analysis
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- grouping dimension for problem categorization
+eval.out_key_problem_desc
+
+--- calculation_logic
+-- Volume: SUM(active_sessions)
+-- Completion Rate: SUM(eval_completed) * 100 / SUM(active_sessions)
+-- Quality Scores: AVG(score_field) * 100 for avg_eval_score, avg_response_relevance_score, avg_empathy_score, avg_resolution_achieved, avg_topic_drift
+-- Satisfaction Metrics: 
+--   MSAT: CASE WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad)) END
+--   Sentiment: SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment) + SUM(negative_user_sentiment) + SUM(neutral_user_sentiment))
+-- Failure Analysis:
+--   Bad Eval: SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+--   Intent/Bot Failures: SUM(failure_count) * 100 / SUM(active_sessions) for intent_incoherence_count, agent_response_repetition, function_call_failed
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three core customer service quality dimensions for Soundbox evaluations within the p4bprofile entity: empathy score measuring emotional intelligence in customer interactions, resolution achieved indicating successful problem-solving rates, and response relevance assessing the appropriateness of responses to customer queries. All metrics are calculated as daily averages and converted to percentage format for standardized reporting. This consolidated view enables comprehensive assessment of customer service performance across multiple quality dimensions, helping identify areas for improvement in customer support operations and tracking overall service quality trends over time.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bprofile entity for focused analysis
+eval.cst_entity = 'p4bprofile' AND
+--- temporal filters available but not applied (No filter set)
+eval.date_ IS NOT NULL
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Overall Summary
+
+This metric tracks comprehensive soundbox evaluation performance including session activity, analysis completion, customer feedback sentiment, and agent intervention rates. It measures operational efficiency by tracking active sessions against analyzed sessions, evaluation completions, and customer satisfaction through happy/sad feedback counts. The dashboard filters for p4bprofile entity to focus on specific business profile evaluation metrics. Key performance indicators include feedback participation rate (percentage of active sessions providing feedback) and agent handover rate (percentage of sessions requiring human agent intervention), providing insights into automated evaluation effectiveness and customer satisfaction trends.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filtering for p4bprofile business profile
+virtual_table.cst_entity IN ('p4bprofile') AND
+--- temporal filtering with flexible date range capability
+virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(active_sessions) as active_sessions_total,
+sum(analyzed_sessions) as analyzed_sessions_total,
+sum(eval_completed) as eval_completed_total,
+sum(happy) as happy_feedback_total,
+sum(sad) as sad_feedback_total,
+sum(ah_tickets) as agent_tickets_total,
+CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions) END as feedback_rate_percent,
+CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(ah_tickets) * 100 / SUM(active_sessions) END as agent_handover_percent
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Daily Quality Metrics Trend tracks four key performance indicators for MHD evaluation system effectiveness as percentage values over time. The metrics measure average evaluation score percentage, bot containment rate (percentage of sessions handled without escalating to human agents), customer satisfaction rate (MSAT percentage based on happy vs sad feedback), and bad evaluation share percentage. All calculations include null-safety logic to handle cases where denominators are zero. The data is filtered specifically for the p4bwealth entity and aggregated daily to show quality trends. These metrics collectively provide insights into customer service automation effectiveness, agent performance quality, and overall customer satisfaction levels.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval_summary
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- filter for p4bwealth entity scope
+eval_summary.cst_entity IN ('p4bwealth') AND
+--- temporal filter for date range analysis
+eval_summary.date_ IS NOT NULL
+
+--- calculation_logic
+AVG(eval_summary.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval_summary.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval_summary.active_sessions) - SUM(eval_summary.fd_tickets)) * 100 / SUM(eval_summary.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval_summary.sad) + SUM(eval_summary.happy)) = 0 THEN NULL 
+     ELSE SUM(eval_summary.happy) * 100 / (SUM(eval_summary.sad) + SUM(eval_summary.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval_summary.eval_score_good) + SUM(eval_summary.eval_score_bad)) = 0 THEN NULL
+     ELSE SUM(eval_summary.eval_score_bad) * 100 / (SUM(eval_summary.eval_score_good) + SUM(eval_summary.eval_score_bad))
+END as bad_eval_share_pct
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the evaluation completion funnel for soundbox sessions within the MHD (Merchant Hardware Device) evaluation system. It measures two key performance indicators: the percentage of active sessions that have been analyzed, and the percentage of analyzed sessions that have completed evaluation. The metrics are specifically filtered to the p4bwealth entity and represent daily completion rates. This helps monitor the efficiency of the evaluation pipeline and identify bottlenecks in the analysis or evaluation completion process. The dual percentage view provides visibility into both the analysis coverage rate and the evaluation completion rate within the analyzed subset.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filter for p4bwealth operations
+sb.cst_entity = 'p4bwealth' AND
+--- temporal filter for date range (configurable)
+sb.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+analyzed_percentage: SUM(analyzed_sessions) * 100 / SUM(active_sessions),
+eval_completed_percentage: SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+
+
+
+
+## Analyzed + Eval Completed % - Complete Day
+
+This metric tracks the evaluation completion funnel for soundbox sessions within the MHD (Merchant Hardware Device) evaluation system. It measures two key performance indicators: the percentage of active sessions that have been analyzed, and the percentage of analyzed sessions that have completed evaluation. The metrics are specifically filtered to the p4bwealth entity and represent daily completion rates. This helps monitor the efficiency of the evaluation pipeline and identify bottlenecks in the analysis or evaluation completion process. The dual percentage view provides visibility into both the analysis coverage rate and the evaluation completion rate within the analyzed subset.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed sb
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- entity filter for p4bwealth operations
+sb.cst_entity = 'p4bwealth' AND
+--- temporal filter for date range (configurable)
+sb.date_ BETWEEN {start_date} AND {end_date}
+
+--- calculation_logic
+analyzed_percentage: SUM(analyzed_sessions) * 100 / SUM(active_sessions),
+eval_completed_percentage: SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks the distribution of user sentiment feedback as percentages (positive, negative, neutral) for customer service touchpoints within the p4bwealth entity ecosystem. It measures sentiment analysis results from the soundbox evaluation system, providing daily aggregated views of customer satisfaction patterns. The metric calculates each sentiment category as a percentage of total sentiment responses, helping identify trends in customer experience and satisfaction levels. It serves as a key performance indicator for customer service quality monitoring and enables proactive identification of satisfaction issues or improvements in user experience across different time periods.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth customer entity
+sentiment.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- temporal range filter available but no default restriction applied
+--- sentiment.hour_timestamp can be filtered using TEMPORAL_RANGE operator
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: [positive_user_sentiment, negative_user_sentiment, neutral_user_sentiment]
+aggregation: daily (date_trunc('day', hour_timestamp))
+
+
+
+
+## Daily Quality Metrics Trend (%)
+
+Daily Quality Metrics Trend tracks four key performance indicators for MHD evaluation system effectiveness as percentage values over time. The metrics measure average evaluation score percentage, bot containment rate (percentage of sessions handled without escalating to human agents), customer satisfaction rate (MSAT percentage based on happy vs sad feedback), and bad evaluation share percentage. All calculations include null-safety logic to handle cases where denominators are zero. The data is filtered specifically for the p4bwealth entity and aggregated daily to show quality trends. These metrics collectively provide insights into customer service automation effectiveness, agent performance quality, and overall customer satisfaction levels.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval_summary
+
+--- standard filters to be applied unless specifically requested for a different entity
+--- filter for p4bwealth entity scope
+eval_summary.cst_entity IN ('p4bwealth') AND
+--- temporal filter for date range analysis
+eval_summary.date_ IS NOT NULL
+
+--- calculation_logic
+AVG(eval_summary.avg_eval_score) * 100 as avg_eval_score_pct,
+CASE WHEN SUM(eval_summary.active_sessions) = 0 THEN NULL 
+     ELSE (SUM(eval_summary.active_sessions) - SUM(eval_summary.fd_tickets)) * 100 / SUM(eval_summary.active_sessions) 
+END as bot_containment_pct,
+CASE WHEN (SUM(eval_summary.sad) + SUM(eval_summary.happy)) = 0 THEN NULL 
+     ELSE SUM(eval_summary.happy) * 100 / (SUM(eval_summary.sad) + SUM(eval_summary.happy)) 
+END as msat_pct,
+CASE WHEN (SUM(eval_summary.eval_score_good) + SUM(eval_summary.eval_score_bad)) = 0 THEN NULL
+     ELSE SUM(eval_summary.eval_score_bad) * 100 / (SUM(eval_summary.eval_score_good) + SUM(eval_summary.eval_score_bad))
+END as bad_eval_share_pct
+
+
+
+
+## Final User Sentiment Analysis
+
+This metric tracks the distribution of user sentiment feedback as percentages (positive, negative, neutral) for customer service touchpoints within the p4bwealth entity ecosystem. It measures sentiment analysis results from the soundbox evaluation system, providing daily aggregated views of customer satisfaction patterns. The metric calculates each sentiment category as a percentage of total sentiment responses, helping identify trends in customer experience and satisfaction levels. It serves as a key performance indicator for customer service quality monitoring and enables proactive identification of satisfaction issues or improvements in user experience across different time periods.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 sentiment
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth customer entity
+sentiment.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- temporal range filter available but no default restriction applied
+--- sentiment.hour_timestamp can be filtered using TEMPORAL_RANGE operator
+
+--- calculation_logic
+pattern: sentiment_percentage_distribution
+base_metrics: [positive_user_sentiment, negative_user_sentiment, neutral_user_sentiment]
+aggregation: daily (date_trunc('day', hour_timestamp))
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment changes across three categories (positive, negative, neutral) for the p4bwealth entity within the MHD evaluation system. It measures the volume of sentiment feedback by aggregating sentiment counts per day, providing insights into user satisfaction trends and reaction patterns. The metric is filtered specifically for p4bwealth operations to enable focused analysis of this particular business unit's user experience performance. This enables stakeholders to monitor sentiment distribution patterns, identify periods of positive or negative user feedback spikes, and assess overall user satisfaction trajectory for strategic decision-making and product improvement initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 soundbox
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth entity only
+soundbox.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- no temporal restrictions applied (temporal range set to "No filter")
+--- date grouping by day using hour_timestamp field
+date_trunc('day', CAST(soundbox.hour_timestamp AS TIMESTAMP))
+
+--- calculation_logic
+sum(soundbox.neutral_user_sentiment) as neutral_change_count,
+sum(soundbox.positive_user_sentiment) as positive_change_count,
+sum(soundbox.negative_user_sentiment) as negative_change_count
+
+
+
+
+## Final User Sentiment #
+
+This metric tracks daily user sentiment changes across three categories (positive, negative, neutral) for the p4bwealth entity within the MHD evaluation system. It measures the volume of sentiment feedback by aggregating sentiment counts per day, providing insights into user satisfaction trends and reaction patterns. The metric is filtered specifically for p4bwealth operations to enable focused analysis of this particular business unit's user experience performance. This enables stakeholders to monitor sentiment distribution patterns, identify periods of positive or negative user feedback spikes, and assess overall user satisfaction trajectory for strategic decision-making and product improvement initiatives.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 soundbox
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth entity only
+soundbox.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- no temporal restrictions applied (temporal range set to "No filter")
+--- date grouping by day using hour_timestamp field
+date_trunc('day', CAST(soundbox.hour_timestamp AS TIMESTAMP))
+
+--- calculation_logic
+sum(soundbox.neutral_user_sentiment) as neutral_change_count,
+sum(soundbox.positive_user_sentiment) as positive_change_count,
+sum(soundbox.negative_user_sentiment) as negative_change_count
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics track three critical quality indicators for chatbot interactions in the MHD evaluation system. Bot Repetition % measures how often the bot provides repetitive responses, Bot Failed % tracks function call failures during bot operations, and Intent Detection Failed % monitors cases where the bot fails to correctly identify user intent. These metrics are calculated as percentages of total completed evaluations and are filtered specifically for the p4bwealth entity. The metrics provide daily aggregated views to monitor bot performance trends and identify quality degradation patterns that may require intervention or model retraining.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth entity for focused evaluation scope
+eval.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- temporal filtering available but set to 'No filter' by default
+--- eval.hour_timestamp can be filtered using TEMPORAL_RANGE operator
+
+--- calculation_logic
+pattern: error_rate_percentage
+base_denominator: SUM(eval_completed)
+error_numerators: [SUM(agent_response_repetition), SUM(function_call_failed), SUM(intent_incoherence_count)]
+grouping: date_trunc('day', CAST(hour_timestamp AS TIMESTAMP))
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics track three critical quality indicators for chatbot interactions in the MHD evaluation system. Bot Repetition % measures how often the bot provides repetitive responses, Bot Failed % tracks function call failures during bot operations, and Intent Detection Failed % monitors cases where the bot fails to correctly identify user intent. These metrics are calculated as percentages of total completed evaluations and are filtered specifically for the p4bwealth entity. The metrics provide daily aggregated views to monitor bot performance trends and identify quality degradation patterns that may require intervention or model retraining.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth entity for focused evaluation scope
+eval.cst_entity IN ('p4bwealth')
+
+--- specific filters
+--- temporal filtering available but set to 'No filter' by default
+--- eval.hour_timestamp can be filtered using TEMPORAL_RANGE operator
+
+--- calculation_logic
+pattern: error_rate_percentage
+base_denominator: SUM(eval_completed)
+error_numerators: [SUM(agent_response_repetition), SUM(function_call_failed), SUM(intent_incoherence_count)]
+grouping: date_trunc('day', CAST(hour_timestamp AS TIMESTAMP))
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three key customer service evaluation scores for the p4bwealth entity: empathy score measuring emotional support quality, resolution achieved rate indicating problem-solving effectiveness, and response relevance score assessing answer appropriateness. These metrics are calculated as daily averages and presented as percentages to evaluate customer support team performance. The data comes from Level 1 evaluation summaries and helps identify trends in service quality across different aspects of customer interaction. Results are ordered by empathy score to prioritize emotional support performance in the analysis.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth business entity
+eval.cst_entity IN ('p4bwealth')
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## LLM L1 Metrics
+
+This metric tracks comprehensive LLM evaluation performance across customer service interactions, segmented by problem description categories for the P4B Wealth entity. It measures session activity, evaluation completion rates, quality scores including evaluation accuracy and response relevance, customer satisfaction through MSAT percentages, sentiment analysis outcomes, resolution achievement rates, and various failure modes including intent detection failures, bot repetition, and function call failures. The metrics provide operational insights into LLM performance across different problem types, enabling identification of areas needing improvement. Data excludes unanalyzed sessions and current-day incomplete data to ensure accurate historical performance assessment. This consolidated view supports quality monitoring and performance optimization decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed sessions from evaluation metrics
+eval.description != 'Not Analyzed' AND
+--- focus on P4B Wealth entity performance
+eval.cst_entity IN ('p4bwealth') AND
+--- exclude current day to avoid incomplete data in daily reporting
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- segment by problem description for category-wise analysis
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+SUM(active_sessions) as active_sessions_total,
+SUM(eval_completed) * 100 / SUM(active_sessions) as eval_completion_rate,
+AVG(avg_eval_score) * 100 as avg_eval_score_pct,
+AVG(avg_response_relevance_score) * 100 as avg_response_relevance_pct,
+CASE WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad)) END as msat_percentage,
+AVG(avg_empathy_score) * 100 as avg_empathy_score_pct,
+pattern: sentiment_distribution_percentage,
+AVG(avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+pattern: binary_quality_percentage with eval_score_bad/eval_score_good,
+pattern: failure_rate_percentage with intent_incoherence_count,
+pattern: failure_rate_percentage with agent_response_repetition,
+pattern: failure_rate_percentage with function_call_failed,
+AVG(avg_topic_drift) * 100 as avg_topic_drift_pct
+
+
+
+
+## LLM L1 Metrics
+
+This metric tracks comprehensive LLM evaluation performance across customer service interactions, segmented by problem description categories for the P4B Wealth entity. It measures session activity, evaluation completion rates, quality scores including evaluation accuracy and response relevance, customer satisfaction through MSAT percentages, sentiment analysis outcomes, resolution achievement rates, and various failure modes including intent detection failures, bot repetition, and function call failures. The metrics provide operational insights into LLM performance across different problem types, enabling identification of areas needing improvement. Data excludes unanalyzed sessions and current-day incomplete data to ensure accurate historical performance assessment. This consolidated view supports quality monitoring and performance optimization decisions.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_llm_l1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- exclude unanalyzed sessions from evaluation metrics
+eval.description != 'Not Analyzed' AND
+--- focus on P4B Wealth entity performance
+eval.cst_entity IN ('p4bwealth') AND
+--- exclude current day to avoid incomplete data in daily reporting
+eval.date_ <= CURRENT_DATE - INTERVAL '1' DAY
+
+--- specific filters
+--- segment by problem description for category-wise analysis
+GROUP BY eval.out_key_problem_desc
+
+--- calculation_logic
+SUM(active_sessions) as active_sessions_total,
+SUM(eval_completed) * 100 / SUM(active_sessions) as eval_completion_rate,
+AVG(avg_eval_score) * 100 as avg_eval_score_pct,
+AVG(avg_response_relevance_score) * 100 as avg_response_relevance_pct,
+CASE WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad)) END as msat_percentage,
+AVG(avg_empathy_score) * 100 as avg_empathy_score_pct,
+pattern: sentiment_distribution_percentage,
+AVG(avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+pattern: binary_quality_percentage with eval_score_bad/eval_score_good,
+pattern: failure_rate_percentage with intent_incoherence_count,
+pattern: failure_rate_percentage with agent_response_repetition,
+pattern: failure_rate_percentage with function_call_failed,
+AVG(avg_topic_drift) * 100 as avg_topic_drift_pct
+
+
+
+
+## AVG Empathy Score + Resolution Achieved + Response Relevance
+
+This metric tracks three key customer service evaluation scores for the p4bwealth entity: empathy score measuring emotional support quality, resolution achieved rate indicating problem-solving effectiveness, and response relevance score assessing answer appropriateness. These metrics are calculated as daily averages and presented as percentages to evaluate customer support team performance. The data comes from Level 1 evaluation summaries and helps identify trends in service quality across different aspects of customer interaction. Results are ordered by empathy score to prioritize emotional support performance in the analysis.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict analysis to p4bwealth business entity
+eval.cst_entity IN ('p4bwealth')
+
+--- calculation_logic
+AVG(eval.avg_empathy_score) * 100 as avg_empathy_score_pct,
+AVG(eval.avg_resolution_achieved) * 100 as avg_resolution_achieved_pct,
+AVG(eval.avg_response_relevance_score) * 100 as avg_response_relevance_pct
+
+
+
+
+## Overall Summary
+
+Overall Summary tracks comprehensive customer service performance metrics for the p4bwealth entity including active sessions, analyzed sessions, evaluation completions, customer feedback (happy and sad responses), and agent handover tickets. The chart calculates derived metrics including feedback rate percentage (total feedback responses as percentage of active sessions) and agent handover percentage (agent tickets as percentage of active sessions). This summary view provides daily aggregated insights into customer service operational efficiency, customer satisfaction levels, and escalation patterns. Data is filtered specifically for the p4bwealth business entity and presents time-series analysis of key performance indicators for management oversight and operational decision-making.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bwealth business entity for focused analysis
+eval.cst_entity IN ('p4bwealth') AND
+--- temporal filter for date range analysis (configurable)
+eval.date_ {temporal_range_condition}
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions, 
+sum(eval.eval_completed) as eval_completed,
+sum(eval.happy) as happy_feedback,
+sum(eval.sad) as sad_feedback,
+sum(eval.ah_tickets) as agent_tickets,
+CASE WHEN sum(eval.active_sessions) = 0 THEN NULL
+     ELSE (sum(eval.happy) + sum(eval.sad)) * 100 / sum(eval.active_sessions)
+END as feedback_rate_percent,
+CASE WHEN sum(eval.active_sessions) = 0 THEN NULL
+     ELSE sum(eval.ah_tickets) * 100 / sum(eval.active_sessions)
+END as agent_handover_percent
+
+
+
+
+## Overall Summary
+
+Overall Summary tracks comprehensive customer service performance metrics for the p4bwealth entity including active sessions, analyzed sessions, evaluation completions, customer feedback (happy and sad responses), and agent handover tickets. The chart calculates derived metrics including feedback rate percentage (total feedback responses as percentage of active sessions) and agent handover percentage (agent tickets as percentage of active sessions). This summary view provides daily aggregated insights into customer service operational efficiency, customer satisfaction levels, and escalation patterns. Data is filtered specifically for the p4bwealth business entity and presents time-series analysis of key performance indicators for management oversight and operational decision-making.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to p4bwealth business entity for focused analysis
+eval.cst_entity IN ('p4bwealth') AND
+--- temporal filter for date range analysis (configurable)
+eval.date_ {temporal_range_condition}
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions, 
+sum(eval.eval_completed) as eval_completed,
+sum(eval.happy) as happy_feedback,
+sum(eval.sad) as sad_feedback,
+sum(eval.ah_tickets) as agent_tickets,
+CASE WHEN sum(eval.active_sessions) = 0 THEN NULL
+     ELSE (sum(eval.happy) + sum(eval.sad)) * 100 / sum(eval.active_sessions)
+END as feedback_rate_percent,
+CASE WHEN sum(eval.active_sessions) = 0 THEN NULL
+     ELSE sum(eval.ah_tickets) * 100 / sum(eval.active_sessions)
+END as agent_handover_percent
+
+
+
+
+## Payout & Settlement Eval Summary
+
+Tracks evaluation funnel performance for the Payout & Settlement business unit within the MHD system, measuring the progression from active merchant sessions through analysis completion to final evaluation. The metric provides visibility into operational efficiency by showing how many active sessions are successfully analyzed and what percentage of analyzed sessions complete the full evaluation process. Data is filtered specifically to the Payout & Settlement entity (p4bpayoutandsettlement) and aggregated by day to track daily performance trends. The funnel includes conversion percentages calculated as analyzed sessions divided by active sessions, and eval completed divided by analyzed sessions, providing insights into process bottlenecks and completion rates for merchant help desk operations focused on payout and settlement issues.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to payout and settlement business unit evaluations
+virtual_table.cst_entity IN ('p4bpayoutandsettlement')
+
+--- calculation_logic
+sum(active_sessions) as "Active Sessions",
+sum(analyzed_sessions) as "Analyzed Sessions", 
+sum(eval_completed) as "Eval Completed",
+CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END as "Analyzed %",
+CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END as "Eval Completed %"
+
+
+
+
+## Device Eval Summary
+
+The Device Eval Summary tracks the complete evaluation funnel for mobile healthcare devices, measuring system performance across active sessions, analysis completion, and evaluation outcomes. This metric monitors operational efficiency by calculating the percentage of active sessions that get analyzed and the percentage of analyzed sessions that complete evaluation. The data is filtered to include only p4bsoundbox and p4bAIBot entities, providing focused insights into these specific device types. The summary enables monitoring of conversion rates through the evaluation pipeline, identifying bottlenecks in the analysis or evaluation completion processes, and ensuring quality assurance standards are maintained across the MHD ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus on specific CST entity types for targeted evaluation tracking
+virtual_table.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- specific filters
+--- temporal range filter available for date-based analysis
+--- virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as active_sessions,
+sum(virtual_table.analyzed_sessions) as analyzed_sessions,
+sum(virtual_table.eval_completed) as eval_completed,
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL
+ELSE SUM(virtual_table.analyzed_sessions) * 100 / SUM(virtual_table.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(virtual_table.analyzed_sessions) = 0 THEN NULL
+ELSE SUM(virtual_table.eval_completed) * 100 / SUM(virtual_table.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## Device Eval Summary
+
+The Device Eval Summary tracks the complete evaluation funnel for mobile healthcare devices, measuring system performance across active sessions, analysis completion, and evaluation outcomes. This metric monitors operational efficiency by calculating the percentage of active sessions that get analyzed and the percentage of analyzed sessions that complete evaluation. The data is filtered to include only p4bsoundbox and p4bAIBot entities, providing focused insights into these specific device types. The summary enables monitoring of conversion rates through the evaluation pipeline, identifying bottlenecks in the analysis or evaluation completion processes, and ensuring quality assurance standards are maintained across the MHD ecosystem.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- focus on specific CST entity types for targeted evaluation tracking
+virtual_table.cst_entity IN ('p4bsoundbox', 'p4bAIBot')
+
+--- specific filters
+--- temporal range filter available for date-based analysis
+--- virtual_table.date_ {temporal_range_filter}
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as active_sessions,
+sum(virtual_table.analyzed_sessions) as analyzed_sessions,
+sum(virtual_table.eval_completed) as eval_completed,
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL
+ELSE SUM(virtual_table.analyzed_sessions) * 100 / SUM(virtual_table.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(virtual_table.analyzed_sessions) = 0 THEN NULL
+ELSE SUM(virtual_table.eval_completed) * 100 / SUM(virtual_table.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## Payout & Settlement Eval Summary
+
+Tracks evaluation funnel performance for the Payout & Settlement business unit within the MHD system, measuring the progression from active merchant sessions through analysis completion to final evaluation. The metric provides visibility into operational efficiency by showing how many active sessions are successfully analyzed and what percentage of analyzed sessions complete the full evaluation process. Data is filtered specifically to the Payout & Settlement entity (p4bpayoutandsettlement) and aggregated by day to track daily performance trends. The funnel includes conversion percentages calculated as analyzed sessions divided by active sessions, and eval completed divided by analyzed sessions, providing insights into process bottlenecks and completion rates for merchant help desk operations focused on payout and settlement issues.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to payout and settlement business unit evaluations
+virtual_table.cst_entity IN ('p4bpayoutandsettlement')
+
+--- calculation_logic
+sum(active_sessions) as "Active Sessions",
+sum(analyzed_sessions) as "Analyzed Sessions", 
+sum(eval_completed) as "Eval Completed",
+CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END as "Analyzed %",
+CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END as "Eval Completed %"
+
+
+
+
+## Profile Eval Summary
+
+Profile Evaluation Summary tracks the evaluation funnel for soundbox profile analysis, measuring progression from active sessions through analysis to completion. This metric monitors active sessions that enter the evaluation process, how many get analyzed, and how many complete the full evaluation cycle. The data is filtered specifically for the p4bprofile entity and aggregated daily to show evaluation performance trends. Key performance indicators include the percentage of active sessions that get analyzed and the percentage of analyzed sessions that complete evaluation, providing insight into funnel efficiency and potential bottlenecks in the profile evaluation process.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for profile evaluation entity
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP)) IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as "Active Sessions",
+sum(eval.analyzed_sessions) as "Analyzed Sessions", 
+sum(eval.eval_completed) as "Eval Completed",
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as "Analyzed %",
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)  
+END as "Eval Completed %"
+
+
+
+
+## Profile Eval Summary
+
+Profile Evaluation Summary tracks the evaluation funnel for soundbox profile analysis, measuring progression from active sessions through analysis to completion. This metric monitors active sessions that enter the evaluation process, how many get analyzed, and how many complete the full evaluation cycle. The data is filtered specifically for the p4bprofile entity and aggregated daily to show evaluation performance trends. Key performance indicators include the percentage of active sessions that get analyzed and the percentage of analyzed sessions that complete evaluation, providing insight into funnel efficiency and potential bottlenecks in the profile evaluation process.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter for profile evaluation entity
+eval.cst_entity IN ('p4bprofile') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP)) IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as "Active Sessions",
+sum(eval.analyzed_sessions) as "Analyzed Sessions", 
+sum(eval.eval_completed) as "Eval Completed",
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as "Analyzed %",
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)  
+END as "Eval Completed %"
+
+
+
+
+## MHD Overall Eval Summary
+
+This metric tracks the MHD evaluation pipeline performance by measuring the progression from active sessions through analysis to completion. It provides both absolute counts (Active Sessions, Analyzed Sessions, Eval Completed) and conversion percentages (Analyzed % and Eval Completed %) to monitor the efficiency of the evaluation process. The data is aggregated daily from the soundbox evaluation system, allowing teams to monitor how well sessions are being processed through the analysis pipeline and how many evaluations are successfully completed. The percentage calculations include null-safe division to handle cases where denominators are zero, ensuring reliable reporting.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- temporal range filter for date-based analysis
+eval.date_ IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions,
+sum(eval.eval_completed) as eval_completed,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## MHD Overall Eval Summary
+
+This metric tracks the MHD evaluation pipeline performance by measuring the progression from active sessions through analysis to completion. It provides both absolute counts (Active Sessions, Analyzed Sessions, Eval Completed) and conversion percentages (Analyzed % and Eval Completed %) to monitor the efficiency of the evaluation process. The data is aggregated daily from the soundbox evaluation system, allowing teams to monitor how well sessions are being processed through the analysis pipeline and how many evaluations are successfully completed. The percentage calculations include null-safe division to handle cases where denominators are zero, ensuring reliable reporting.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- temporal range filter for date-based analysis
+eval.date_ IS NOT NULL
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions,
+sum(eval.eval_completed) as eval_completed,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## Business Loan Eval Summary
+
+This metric tracks the business loan evaluation funnel for P4B (Pay for Business) loan products, measuring the progression from initial active sessions through analysis completion. It provides key performance indicators including total active sessions, sessions that underwent analysis, completed evaluations, and conversion rates at each stage. The Analyzed % shows what portion of active sessions proceed to analysis, while Eval Completed % indicates the completion rate of analyzed sessions. This helps monitor the efficiency and bottlenecks in the loan evaluation process, enabling teams to identify where potential borrowers drop off and optimize the evaluation workflow for better conversion rates.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to business loan evaluation entity
+virtual_table.cst_entity IN ('p4bbusinessloan') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(virtual_table.date_ AS TIMESTAMP))
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as active_sessions,
+sum(virtual_table.analyzed_sessions) as analyzed_sessions,
+sum(virtual_table.eval_completed) as eval_completed,
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL ELSE SUM(virtual_table.analyzed_sessions) * 100 / SUM(virtual_table.active_sessions) END as analyzed_percentage,
+CASE WHEN SUM(virtual_table.analyzed_sessions) = 0 THEN NULL ELSE SUM(virtual_table.eval_completed) * 100 / SUM(virtual_table.analyzed_sessions) END as eval_completed_percentage
+
+
+
+
+## Business Loan Eval Summary
+
+This metric tracks the business loan evaluation funnel for P4B (Pay for Business) loan products, measuring the progression from initial active sessions through analysis completion. It provides key performance indicators including total active sessions, sessions that underwent analysis, completed evaluations, and conversion rates at each stage. The Analyzed % shows what portion of active sessions proceed to analysis, while Eval Completed % indicates the completion rate of analyzed sessions. This helps monitor the efficiency and bottlenecks in the loan evaluation process, enabling teams to identify where potential borrowers drop off and optimize the evaluation workflow for better conversion rates.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed virtual_table
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to business loan evaluation entity
+virtual_table.cst_entity IN ('p4bbusinessloan') AND
+--- temporal aggregation by day
+date_trunc('day', CAST(virtual_table.date_ AS TIMESTAMP))
+
+--- calculation_logic
+sum(virtual_table.active_sessions) as active_sessions,
+sum(virtual_table.analyzed_sessions) as analyzed_sessions,
+sum(virtual_table.eval_completed) as eval_completed,
+CASE WHEN SUM(virtual_table.active_sessions) = 0 THEN NULL ELSE SUM(virtual_table.analyzed_sessions) * 100 / SUM(virtual_table.active_sessions) END as analyzed_percentage,
+CASE WHEN SUM(virtual_table.analyzed_sessions) = 0 THEN NULL ELSE SUM(virtual_table.eval_completed) * 100 / SUM(virtual_table.analyzed_sessions) END as eval_completed_percentage
+
+
+
+
+## Wealth Eval Summary
+
+Wealth Evaluation Summary tracks the complete evaluation funnel for the p4bwealth entity, measuring customer engagement progression from initial active sessions through analysis completion. The metrics monitor active sessions (total customer sessions), analyzed sessions (sessions that underwent evaluation), and eval completed (successful evaluation completions), along with conversion percentages at each stage. This provides insights into evaluation process efficiency and customer engagement rates. The data is filtered specifically to p4bwealth entity and aggregated daily to track performance trends over time, enabling monitoring of evaluation completion rates and identifying potential bottlenecks in the wealth evaluation workflow.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to p4bwealth entity for wealth-specific evaluation tracking
+eval.cst_entity IN ('p4bwealth') AND
+--- temporal aggregation by day for trend analysis
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP))
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions, 
+sum(eval.eval_completed) as eval_completed,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## Wealth Eval Summary
+
+Wealth Evaluation Summary tracks the complete evaluation funnel for the p4bwealth entity, measuring customer engagement progression from initial active sessions through analysis completion. The metrics monitor active sessions (total customer sessions), analyzed sessions (sessions that underwent evaluation), and eval completed (successful evaluation completions), along with conversion percentages at each stage. This provides insights into evaluation process efficiency and customer engagement rates. The data is filtered specifically to p4bwealth entity and aggregated daily to track performance trends over time, enabling monitoring of evaluation completion rates and identifying potential bottlenecks in the wealth evaluation workflow.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_completed eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- filter to p4bwealth entity for wealth-specific evaluation tracking
+eval.cst_entity IN ('p4bwealth') AND
+--- temporal aggregation by day for trend analysis
+date_trunc('day', CAST(eval.date_ AS TIMESTAMP))
+
+--- calculation_logic
+sum(eval.active_sessions) as active_sessions,
+sum(eval.analyzed_sessions) as analyzed_sessions, 
+sum(eval.eval_completed) as eval_completed,
+CASE WHEN SUM(eval.active_sessions) = 0 THEN NULL
+     ELSE SUM(eval.analyzed_sessions) * 100 / SUM(eval.active_sessions)
+END as analyzed_percentage,
+CASE WHEN SUM(eval.analyzed_sessions) = 0 THEN NULL
+     ELSE SUM(eval.eval_completed) * 100 / SUM(eval.analyzed_sessions)
+END as eval_completed_percentage
+
+
+
+
+## Bot Performance Metrics
+
+This metric tracks bot performance quality by measuring three key failure rates: repetition percentage (when bot gives repetitive responses), function call failure percentage (when bot fails to execute functions), and intent detection failure percentage (when bot fails to understand user intent). All metrics are calculated as percentages of completed evaluations, providing insights into different aspects of bot effectiveness. The analysis is filtered to the p4bpayoutandsettlement entity, focusing on payment and settlement related customer service interactions. These metrics help identify specific areas where the bot needs improvement and track performance trends over time.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to payment and settlement entity evaluation data
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+--- temporal filter configurable based on analysis period
+eval.hour_timestamp {temporal_range_filter}
+
+--- calculation_logic
+pattern: percentage_from_completed_evaluations
+base_metrics: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+denominator: eval_completed
+
+
+
+
+## Bot Performance Metrics
+
+Bot Performance Metrics tracks the failure rates of chatbot responses within the soundbox evaluation system for the p4bpayoutandsettlement entity. This measures three critical performance indicators: bot repetition percentage (when responses are repetitive), bot failure percentage (when function calls fail), and intent detection failure percentage (when the bot fails to understand user intent). The metrics help evaluate chatbot effectiveness and identify areas needing improvement in automated customer service interactions. All percentages are calculated against completed evaluations, providing reliable performance baselines for bot optimization efforts.
+
+-- tables_involved
+hive.team_cst_mhd_product.soundbox_eval_l1_summary1 eval
+
+--- standard filters to be applied unless specifically requested for a different categorical value
+--- restrict to specific customer service entity for targeted analysis
+eval.cst_entity IN ('p4bpayoutandsettlement') AND
+--- no temporal restrictions applied (filter set to "No filter")
+1=1
+
+--- calculation_logic
+pattern: percentage_failure_rate
+base_denominator: SUM(eval_completed)
+failure_metrics: [agent_response_repetition, function_call_failed, intent_incoherence_count]
+
+
+

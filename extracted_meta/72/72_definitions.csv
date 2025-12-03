@@ -1,0 +1,68 @@
+term,type,definition,business_alias
+Analyzed %,Metric / Calculated Field,"Percentage of active sessions that progressed to analysis phase, calculated as (Analyzed Sessions / Active Sessions) * 100",Analyzed Percentage
+Eval Completed %,Metric / Calculated Field,"Percentage of active sessions where evaluation was completed, calculated as (Total Evaluations Completed / Total Active Sessions) * 100",Evaluation Completion Rate
+Active Sessions,Metric,Total count of active sessions in the soundbox evaluation system for payout and settlement operations.,
+Analyzed Sessions,Metric,Total count of sessions that have been processed through the analysis phase of the MHD evaluation system.,
+Eval Completed,Metric,Total count of sessions that have successfully completed the entire wealth evaluation process,Evaluation Completed
+MHD,Category,Business context identifier for the evaluation system being monitored in this dashboard,
+CST Entity,Dimension,"Entity type dimension for filtering data, includes p4bsoundbox and p4bAIBot",
+AVG Eval Score %,Metric / Calculated Field,Average evaluation score converted to percentage. Calculated as the average of avg_eval_score multiplied by 100.,
+Bot Containment %,Metric / Calculated Field,"Percentage of customer sessions handled by bot without escalation to human agents. Calculated as (Total Active Sessions - FD Tickets) divided by Total Active Sessions, multiplied by 100.",
+MSAT %,Metric / Calculated Field,"Customer satisfaction percentage based on feedback responses. Calculated as Happy responses divided by (Happy + Sad responses), multiplied by 100.","Customer Satisfaction Rate, also referred as MSAT, MSAT also referred as Customer Satisfaction, Customer Satisfaction Score, Mean Satisfaction, Customer Satisfaction Percentage"
+Bad Eval Share %,Metric / Calculated Field,"Percentage of evaluations marked as bad quality. Calculated as Bad Evaluation Scores divided by (Good + Bad Evaluation Scores), multiplied by 100.",Bad Evaluation Rate
+FD Tickets,Metric,Number of tickets escalated to human agents (likely Front Desk tickets).,"Front Desk Tickets, First Desk Tickets, FD also referred as Front Desk"
+Happy,Metric,Count of positive customer feedback responses indicating satisfaction.,"Positive Feedback, Positive Responses"
+Sad,Metric,Count of negative customer feedback responses indicating dissatisfaction.,"Negative Feedback, Negative Responses"
+Eval Score Good,Metric,Number of evaluations classified as good quality.,Good Evaluations
+Eval Score Bad,Metric,Number of evaluations classified as bad quality.,Bad Evaluations
+Quality Metrics,Category,"Collection of performance indicators measuring service quality including evaluation scores, bot containment, customer satisfaction, and evaluation quality distribution.",Service Quality KPIs
+positive_user_sentiment,Metric,Count of users expressing positive sentiment towards the evaluated system or service,
+negative_user_sentiment,Metric,Count of users expressing negative sentiment towards the evaluated system or service,
+neutral_user_sentiment,Metric,Count of users expressing neutral sentiment towards the evaluated system or service,
+Positive Change %,Metric / Calculated Field,"Percentage of positive user sentiment out of total user sentiment, calculated as sum of positive user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+Negative Change %,Metric / Calculated Field,"Percentage of negative user sentiment out of total user sentiment, calculated as sum of negative user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+Neutral Change %,Metric / Calculated Field,"Percentage of neutral user sentiment out of total user sentiment, calculated as sum of neutral user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+User Sentiment Analysis,Category,"Collection of metrics measuring and analyzing user sentiment distribution including positive, negative, and neutral sentiment percentages",Final User Sentiment Analysis
+cst_entity,Dimension,"Entity identifier for different systems or services being evaluated, such as p4bsoundbox and p4bAIBot",
+Final User Sentiment,Category,"Collection of metrics measuring different types of user sentiment changes including neutral, positive, and negative changes.",
+Neutral Change #,Metric,"Sum of neutral user sentiment changes aggregated by day, representing users whose sentiment remained unchanged or neutral.",Neutral Change Count
+Positive Change #,Metric,"Sum of positive user sentiment changes aggregated by day, representing users whose sentiment improved or became more favorable.",Positive Change Count
+Negative Change #,Metric,"Sum of negative user sentiment changes aggregated by day, representing users whose sentiment declined or became less favorable.",Negative Change Count
+User Sentiment,Category,"Collection of metrics measuring changes in user attitudes and feelings, including Positive Change #, Negative Change #, and Neutral Change #.",
+MHD Eval,Category,"Evaluation dashboard category containing quality assessment metrics for service interactions, including empathy, resolution, and response relevance scores","Mobile Handheld Device Evaluation, Mental Health Dashboard Evaluation"
+Bot Repetition %,Metric / Calculated Field,"Percentage of completed evaluations where the bot provided repetitive responses, calculated as (agent_response_repetition count / total eval_completed) * 100",Bot Response Repetition Rate
+Bot Failed %,Metric / Calculated Field,"Percentage of completed evaluations where the bot failed to execute function calls properly, calculated as (function_call_failed / eval_completed) * 100",Bot Function Failure Rate
+Intent Detection Failed %,Metric / Calculated Field,"Percentage of completed evaluations where the bot failed to correctly detect user intent, calculated as (intent_incoherence_count / total eval_completed) * 100",Intent Detection Failure Rate
+eval_completed,Metric,Total number of bot evaluations that were successfully completed and can be used for performance analysis,
+agent_response_repetition,Metric,Count of instances where the bot agent provided repetitive or redundant responses during evaluations,
+function_call_failed,Metric,Count of instances where the bot failed to successfully execute required function calls during evaluations,
+intent_incoherence_count,Metric,Count of instances where the bot incorrectly detected or failed to detect user intent during evaluations,
+Bot Performance Metrics,Category,"Collection of key performance indicators measuring bot effectiveness including repetition rates, failure rates, and intent detection accuracy",
+Avg Empathy Score,Metric / Calculated Field,"Average empathy score across conversations, converted to percentage scale (0-100), measuring how well the AI demonstrates emotional understanding and appropriate responsiveness to customer emotions and concerns.",Average Empathy Score
+Avg Resolution Achieved,Metric / Calculated Field,"Average resolution achievement score across all evaluations, converted to percentage format by multiplying the base average by 100. Measures how effectively customer issues are resolved.",Average Resolution Achieved
+Avg Response Relevance,Metric / Calculated Field,"Average response relevance score across all evaluations, converted to percentage format by multiplying the base average by 100. Measures how relevant and appropriate responses are to customer inquiries.","Average Response Relevance, Avg Response Relevance Score"
+Soundbox Evaluation,Category,"Evaluation system for soundbox and AI bot customer service interactions, tracking quality metrics across multiple performance dimensions.",
+Happy Feedback,Metric,Total count of positive customer feedback responses received during sessions.,
+Sad Feedback,Metric,Total count of negative customer feedback responses received during sessions.,
+Agent Tickets,Metric,Total count of tickets or cases that required human agent intervention or handover.,"AH Tickets, Agent Handover Tickets, AH Tickets, also referred as Agent Handover Tickets"
+Service Tickets,Metric,Total count of service tickets created for customer issues or requests,
+Feedback Rate %,Metric / Calculated Field,"Percentage of active sessions that resulted in customer feedback, calculated as (Happy Feedback + Sad Feedback) * 100 / Active Sessions.",
+Agent Handover %,Metric / Calculated Field,"Percentage of active sessions that were escalated to human agents, calculated as Agent Tickets * 100 / Active Sessions","AH %, Agent Handover Rate"
+Service Ticket %,Metric / Calculated Field,"Percentage of active sessions that resulted in service ticket creation, calculated as Service Tickets * 100 / Active Sessions",
+Final User Sentiment #,Category,"A grouping of metrics that tracks the count of users experiencing different types of sentiment changes, including neutral, positive, and negative changes.",
+avg_empathy_score,Metric,"Base empathy score metric used in calculations, measuring empathy levels in customer service interactions before percentage conversion.",
+avg_resolution_achieved,Metric,"Base resolution achieved metric from the database, representing raw resolution effectiveness scores before percentage conversion",
+avg_response_relevance_score,Metric,"Base response relevance score metric from the soundbox evaluation data, used to calculate the average response relevance percentage",
+MHD Evaluation Metrics,Category,"Collection of customer service evaluation metrics including empathy scores, resolution achievement, and response relevance used to assess service quality.",MHD Eval
+AVG Eval Score,Metric / Calculated Field,"Average evaluation score across all sessions, expressed as percentage (Average of eval scores * 100)",Average Evaluation Score
+AVG Response Relevance,Metric / Calculated Field,"Average relevance score of bot responses to user queries, expressed as percentage (Average of response relevance scores * 100)",Average Response Relevance Score
+AVG Empathy Score,Metric / Calculated Field,"Average empathy score of LLM responses, measuring how empathetic the chatbot responses are, expressed as a percentage",Average Empathy Score
++ve Sentiment Change %,Metric / Calculated Field,Percentage of positive user sentiment changes calculated as (Positive sentiment count / Total sentiment changes) * 100,"Positive Sentiment Change %, Positive Sentiment Change Rate"
+AVG Resolution Achieved,Metric / Calculated Field,"Average resolution achievement score across sessions, expressed as percentage (Average of resolution achieved * 100)",Average Resolution Achievement Rate
+AVG Topic Drift,Metric / Calculated Field,"Average topic drift score measuring how much conversations deviate from intended topics, expressed as percentage (Average of topic drift * 100)",Average Topic Drift Score
+LLM L1 Metrics,Category,"Primary level metrics for Large Language Model evaluation including performance, quality, satisfaction, and failure indicators",LLM Level 1 Metrics
+MHD Evaluation,Category,Mental Health Detection evaluation process metrics including session analysis and completion tracking.,MHD Eval
+MHD Overall Eval Summary,Category,"Summary metrics tracking the evaluation workflow including Active Sessions, Analyzed Sessions, Eval Completed, and their completion percentages",MHD Evaluation Metrics
+Agent Response Repetition,Metric,Count of bot evaluations where the agent provided repetitive or duplicate responses,
+Function Call Failed,Metric,Count of bot evaluations where function calls executed by the bot failed to complete successfully,
+Intent Incoherence Count,Metric,Count of bot evaluations where intent detection was incoherent or failed to properly identify user intent,

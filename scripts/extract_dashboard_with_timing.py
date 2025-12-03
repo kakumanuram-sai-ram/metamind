@@ -98,7 +98,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         step_time = time.time() - step_start
         json_file = f"{dashboard_dir}/{dashboard_id}_json.json"
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {json_file}", flush=True)
+        print(f"  Saved to: {json_file}", flush=True)
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_json.json")
         
@@ -115,7 +115,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         step_time = time.time() - step_start
         csv_file = f"{dashboard_dir}/{dashboard_id}_csv.csv"
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {csv_file}", flush=True)
+        print(f"  Saved to: {csv_file}", flush=True)
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_csv.csv")
         
@@ -132,7 +132,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         step_time = time.time() - step_start
         sql_file = f"{dashboard_dir}/{dashboard_id}_queries.sql"
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {sql_file}", flush=True)
+        print(f"  Saved to: {sql_file}", flush=True)
         if progress_tracker:
             progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_queries.sql")
         
@@ -168,7 +168,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         base_url = LLM_BASE_URL
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  🔑 API Key: {'*' * 20}...{api_key[-4:] if len(api_key) > 4 else '****'}", flush=True)
+        print(f"  API Key: {'*' * 20}...{api_key[-4:] if len(api_key) > 4 else '****'}", flush=True)
         print(f"  🤖 Model: {model}", flush=True)
         print(f"  🌐 Base URL: {base_url}", flush=True)
         
@@ -201,7 +201,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         mapping_df.to_csv(mapping_file, index=False)
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {mapping_file}", flush=True)
+        print(f"  Saved to: {mapping_file}", flush=True)
         print(f"  📊 Rows: {len(mapping_df)}", flush=True)
         print(f"  📋 Columns: {', '.join(mapping_df.columns.tolist())}", flush=True)
         
@@ -212,7 +212,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         mapping_df.to_json(json_file, orient='records', indent=2)
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {json_file}", flush=True)
+        print(f"  Saved to: {json_file}", flush=True)
         
         phase2_time = time.time() - phase2_start
         print(f"\n{'─'*80}", flush=True)
@@ -335,6 +335,13 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
                 df['table_normalized'] = df['tables_involved'].apply(normalize_table_name)
                 schema_df['table_normalized'] = schema_df['table_name'].apply(normalize_table_name)
                 
+                # Filter df to only include valid tables (validated at Step 3.3.1)
+                original_row_count = len(df)
+                df = df[df['table_normalized'].isin(valid_tables)].copy()
+                filtered_row_count = len(df)
+                if original_row_count != filtered_row_count:
+                    print(f"  Filtered {original_row_count} -> {filtered_row_count} rows (removed {original_row_count - filtered_row_count} invalid table rows)", flush=True)
+                
                 # Merge schema information into original dataframe
                 # Match on normalized table name and column name
                 df_enriched = df.merge(
@@ -370,7 +377,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
                 df_enriched.to_csv(enriched_file, index=False)
                 step_time = time.time() - step_start
                 print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-                print(f"  💾 Saved to: {enriched_file}", flush=True)
+                print(f"  Saved to: {enriched_file}", flush=True)
                 print(f"  📋 Columns: {', '.join(df_enriched.columns.tolist())}", flush=True)
                 if progress_tracker:
                     progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_tables_columns_enriched.csv")
@@ -382,7 +389,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
                 
                 # Also update the original CSV with enriched data
                 df_enriched.to_csv(mapping_file, index=False)
-                print(f"  💾 Updated original CSV: {mapping_file}", flush=True)
+                print(f"  Updated original CSV: {mapping_file}", flush=True)
                 
                 phase3_time = time.time() - phase3_start
                 print(f"\n{'─'*80}", flush=True)
@@ -517,7 +524,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {metadata_file}", flush=True)
+        print(f"  Saved to: {metadata_file}", flush=True)
         print(f"  📊 Rows: {len(metadata_df)}", flush=True)
         print(f"  📋 Columns: {', '.join(metadata_df.columns.tolist())}", flush=True)
         
@@ -629,7 +636,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {metadata_file}", flush=True)
+        print(f"  Saved to: {metadata_file}", flush=True)
         print(f"  📊 Rows: {len(metadata_df)}", flush=True)
         print(f"  📋 Columns: {', '.join(metadata_df.columns.tolist())}", flush=True)
         
@@ -743,7 +750,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             
             step_time = time.time() - step_start
             print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-            print(f"  💾 Saved to: {joins_file}", flush=True)
+            print(f"  Saved to: {joins_file}", flush=True)
             print(f"  📊 Rows: {len(joins_df)}", flush=True)
             print(f"  📋 Columns: {', '.join(joins_df.columns.tolist())}", flush=True)
             if progress_tracker:
@@ -755,7 +762,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             empty_df.to_csv(joins_file, index=False)
             step_time = time.time() - step_start
             print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-            print(f"  💾 Saved empty file to: {joins_file} (no multi-table joins found)", flush=True)
+            print(f"  Saved empty file to: {joins_file} (no multi-table joins found)", flush=True)
             if progress_tracker:
                 progress_tracker.add_completed_file(dashboard_id, f"{dashboard_id}_joining_conditions.csv")
                 progress_tracker.update_dashboard_status(
@@ -858,7 +865,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
         
         step_time = time.time() - step_start
         print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-        print(f"  💾 Saved to: {filter_file}", flush=True)
+        print(f"  Saved to: {filter_file}", flush=True)
         print(f"  📄 File size: {len(filter_conditions_content)} characters", flush=True)
         
         # Validate: filter_conditions must not be empty
@@ -980,7 +987,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             
             step_time = time.time() - step_start
             print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-            print(f"  💾 Saved to: {terms_file}", flush=True)
+            print(f"  Saved to: {terms_file}", flush=True)
             print(f"  📊 Rows: {len(terms_df)}", flush=True)
             print(f"  📋 Columns: {', '.join(terms_df.columns.tolist())}", flush=True)
             
@@ -1007,7 +1014,7 @@ def extract_dashboard_with_timing(dashboard_id: int, progress_tracker=None):
             empty_df.to_csv(terms_file, index=False)
             step_time = time.time() - step_start
             print(f"  ✅ Completed in {step_time:.2f} seconds", flush=True)
-            print(f"  💾 Saved empty file to: {terms_file} (no terms extracted)", flush=True)
+            print(f"  Saved empty file to: {terms_file} (no terms extracted)", flush=True)
             
             # Validate: definitions must not be empty
             raise ValueError(f"CRITICAL: definitions.csv is empty for dashboard {dashboard_id}. Extraction failed.")

@@ -6,7 +6,6 @@ then merges chart-level results into dashboard-level metadata.
 """
 import os
 import json
-import re
 import pandas as pd
 from typing import Dict, List, Optional, Tuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,15 +13,18 @@ from dataclasses import dataclass
 from config import LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
 from llm_extractor import (
     _get_dspy_table_metadata_extractor,
+    _get_dspy_table_name_extractor,
     _get_dspy_column_metadata_extractor,
     _get_dspy_joining_condition_extractor,
     _get_dspy_filter_conditions_extractor,
     _get_dspy_term_definition_extractor,
     TableMetadataExtractor,
+    TableNameExtractor,
     ColumnMetadataExtractor,
     JoiningConditionExtractor,
     FilterConditionsExtractor,
-    TermDefinitionExtractor
+    TermDefinitionExtractor,
+    call_llm_with_retry
 )
 from starburst_schema_fetcher import normalize_table_name
 
@@ -60,6 +62,7 @@ def extract_table_metadata_for_chart(
         List of table metadata dicts for tables used in this chart
     """
     extractor = _get_dspy_table_metadata_extractor(api_key, model, base_url)
+    table_name_extractor = _get_dspy_table_name_extractor(api_key, model, base_url)
     
     chart_name = chart.get('chart_name', 'Unknown')
     sql_query = chart.get('sql_query', '')
@@ -68,31 +71,28 @@ def extract_table_metadata_for_chart(
     if not sql_query:
         return []
     
-    # Extract tables from SQL (simple parsing)
+    # Extract tables from SQL using LLM
     tables_used = set()
-    sql_lower = sql_query.lower()
-    
-    # Common table patterns
-    from_clause_match = sql_lower.find('from')
-    if from_clause_match != -1:
-        # Extract table names after FROM
-        from_part = sql_query[from_clause_match + 4:]
-        # Look for table patterns like schema.table or table
-        import re
-        # Match patterns like hive.schema.table or just table
-        table_patterns = re.findall(r'from\s+([a-zA-Z0-9_\.]+)', sql_lower)
-        for pattern in table_patterns:
-            if '.' in pattern:
-                tables_used.add(pattern)
-            else:
-                # Try to find schema from context
-                tables_used.add(pattern)
-    
-    # Also check JOIN clauses
-    join_patterns = re.findall(r'join\s+([a-zA-Z0-9_\.]+)', sql_lower)
-    for pattern in join_patterns:
-        if '.' in pattern:
-            tables_used.add(pattern)
+    try:
+        # Truncate SQL if extremely long (keep most for context)
+        sql_for_extraction = sql_query[:4000] if len(sql_query) > 4000 else sql_query
+        
+        # Call LLM to extract table names
+        result = call_llm_with_retry(
+            table_name_extractor,
+            sql_query=sql_for_extraction
+        )
+        
+        # Parse comma-separated table names
+        if result.table_names:
+            for table in result.table_names.split(','):
+                table = table.strip().lower()
+                # Validate it looks like a table name (has at least one dot)
+                if table and '.' in table:
+                    tables_used.add(table)
+    except Exception as e:
+        print(f"    ⚠️  Error extracting table names via LLM for chart {chart_name}: {str(e)}")
+        # Fall back to empty set - will return empty results
     
     if not tables_used:
         return []
@@ -118,8 +118,9 @@ def extract_table_metadata_for_chart(
             # Truncate SQL if too long
             sql_context = sql_query[:2000] if len(sql_query) > 2000 else sql_query
             
-            # Call LLM for this table
-            result = extractor(
+            # Call LLM for this table (with retry on rate limit)
+            result = call_llm_with_retry(
+                extractor,
                 dashboard_title=dashboard_title,
                 chart_names_and_labels=chart_context,
                 table_name=normalized_table,
@@ -230,7 +231,9 @@ def extract_column_metadata_for_chart(
             # Truncate SQL context
             sql_context = sql_query[:1500] if len(sql_query) > 1500 else sql_query
             
-            result = extractor(
+            # Call LLM (with retry on rate limit)
+            result = call_llm_with_retry(
+                extractor,
                 column_name=column_name,
                 table_name=table_name,
                 column_datatype=variable_type or 'unknown',
@@ -322,7 +325,9 @@ def extract_joining_conditions_for_chart(
         # Truncate SQL if too long
         sql_context = sql_query[:3000] if len(sql_query) > 3000 else sql_query
         
-        result = extractor(
+        # Call LLM (with retry on rate limit)
+        result = call_llm_with_retry(
+            extractor,
             dashboard_title=dashboard_title,
             chart_name=chart_name,
             sql_query=sql_context,
@@ -403,7 +408,9 @@ def extract_filter_conditions_for_chart(
         # Truncate SQL if too long
         sql_context = sql_query[:4000] if len(sql_query) > 4000 else sql_query
         
-        result = extractor(
+        # Call LLM (with retry on rate limit)
+        result = call_llm_with_retry(
+            extractor,
             chart_name=chart_name,
             chart_metrics=chart_metrics_json,
             sql_query=sql_context,
@@ -493,7 +500,9 @@ def extract_definitions_for_chart(
     }], indent=2) if metric_details else json.dumps([], indent=2)
     
     try:
-        result = extractor(
+        # Call LLM (with retry on rate limit)
+        result = call_llm_with_retry(
+            extractor,
             dashboard_title=dashboard_title,
             chart_names_and_labels=chart_names_and_labels,
             sql_queries=sql_queries,

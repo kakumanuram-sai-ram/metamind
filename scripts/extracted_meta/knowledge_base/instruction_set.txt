@@ -1,0 +1,50 @@
+================================================================================
+SQL QUERY GENERATION AGENT - INSTRUCTION SET
+================================================================================
+
+Generated: 2025-12-03T05:27:09.988761
+Version: 2.0-fallback
+Generation Method: Template (LLM unavailable)
+
+----------------------------------------
+BUSINESS CONTEXT
+----------------------------------------
+Vertical: General Analytics
+
+----------------------------------------
+INSTRUCTIONS
+----------------------------------------
+
+### Available Tables [HIGH]
+
+The following tables are available:
+
+
+
+### Join Patterns [MEDIUM]
+
+Use these join patterns:
+
+
+
+### General Guidelines [HIGH]
+
+
+1. Always use fully qualified table names (catalog.schema.table)
+2. Include partition filters (dt or day_id) for performance
+3. Use CTEs for complex queries
+4. Round percentages to 2 decimal places
+5. Order results by date then primary dimension
+
+
+----------------------------------------
+METADATA SUMMARY
+----------------------------------------
+Tables: 0
+Columns: 0
+Joins: 0
+Definitions: 0
+
+================================================================================
+END OF INSTRUCTION SET
+================================================================================

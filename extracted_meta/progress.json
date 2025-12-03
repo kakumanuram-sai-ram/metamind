@@ -1,50 +1,45 @@
 {
-  "status": "completed",
-  "current_operation": null,
+  "status": "merging",
+  "current_operation": "merge",
   "total_dashboards": 1,
   "completed_dashboards": 1,
   "failed_dashboards": 0,
   "dashboards": {
-    "511": {
-      "dashboard_id": 511,
+    "72": {
+      "dashboard_id": 72,
       "status": "completed",
       "current_phase": "Completed",
-      "current_file": "511_definitions.csv",
+      "current_file": "72_definitions.csv",
       "completed_files": [
-        "511_json.json",
-        "511_csv.csv",
-        "511_queries.sql",
-        "511_tables_columns_enriched.csv",
-        "511_table_metadata.csv",
-        "511_columns_metadata.csv",
-        "511_joining_conditions.csv",
-        "511_filter_conditions.txt",
-        "511_definitions.csv",
-        "511_quality_report.json",
-        "511_tables_columns.csv"
+        "72_json.json",
+        "72_csv.csv",
+        "72_queries.sql",
+        "72_tables_columns_enriched.csv",
+        "72_columns_metadata.csv",
+        "72_joining_conditions.csv",
+        "72_filter_conditions.txt",
+        "72_definitions.csv",
+        "72_tables_columns.csv",
+        "72_table_metadata.csv"
       ],
       "total_files": 11,
-      "completed_files_count": 11,
+      "completed_files_count": 10,
       "error": null,
-      "start_time": "2025-12-01T10:57:24.169170",
-      "end_time": "2025-12-01T10:59:44.723803"
+      "start_time": "2025-12-03T05:30:22.191289",
+      "end_time": "2025-12-03T05:42:42.696934"
     }
   },
   "merge_status": {
-    "status": "completed",
-    "current_step": null,
+    "status": "processing",
+    "current_step": "columns_metadata",
     "completed_steps": [
-      "table_metadata",
-      "columns_metadata",
-      "joining_conditions",
-      "definitions",
-      "filter_conditions"
+      "table_metadata"
     ]
   },
   "kb_build_status": {
-    "status": "completed",
-    "current_step": null
+    "status": "processing",
+    "current_step": "filter_conditions"
   },
-  "start_time": "2025-12-01T10:57:24.168748",
-  "last_update": "2025-12-01T11:02:09.758214"
+  "start_time": "2025-12-03T05:30:22.190836",
+  "last_update": "2025-12-03T06:26:57.752476"
 }

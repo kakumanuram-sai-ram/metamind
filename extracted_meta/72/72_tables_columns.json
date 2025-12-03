@@ -1,0 +1,744 @@
+[
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"Active Sessions",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(active_sessions)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"Agent Handover %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(ah_tickets) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"Analyzed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(analyzed_sessions) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"Feedback Rate %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(happy) + SUM(sad)) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"Service Ticket %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(service_tickets) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"active_sessions",
+    "alias_column_name":"active_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"ah_tickets",
+    "alias_column_name":"Agent Tickets",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(ah_tickets)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"ah_tickets",
+    "alias_column_name":"ah_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"analyzed_sessions",
+    "alias_column_name":"Analyzed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(analyzed_sessions) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"analyzed_sessions",
+    "alias_column_name":"Analyzed Sessions",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(analyzed_sessions)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"analyzed_sessions",
+    "alias_column_name":"Eval Completed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL ELSE SUM(eval_completed) * 100 \/ SUM(analyzed_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"analyzed_sessions",
+    "alias_column_name":"analyzed_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"cst_entity",
+    "alias_column_name":"cst_entity",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"date_",
+    "alias_column_name":"date_",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"date_",
+    "alias_column_name":"date___",
+    "source_or_derived":"derived",
+    "derived_column_logic":"date_trunc('day', CAST(date_ AS TIMESTAMP))"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"eval_completed",
+    "alias_column_name":"Eval Completed",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(eval_completed)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"eval_completed",
+    "alias_column_name":"Eval Completed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL ELSE SUM(eval_completed) * 100 \/ SUM(analyzed_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"eval_completed",
+    "alias_column_name":"eval_completed",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"fd_tickets",
+    "alias_column_name":"fd_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"fd_tickets_og",
+    "alias_column_name":"fd_tickets_og",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"happy",
+    "alias_column_name":"Happy Feedback",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(happy)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"happy",
+    "alias_column_name":"happy",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"hour_timestamp",
+    "alias_column_name":"hour_timestamp",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"sad",
+    "alias_column_name":"Sad Feedback",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(sad)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"sad",
+    "alias_column_name":"sad",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"service_tickets",
+    "alias_column_name":"Service Tickets",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(service_tickets)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"service_tickets",
+    "alias_column_name":"service_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_completed",
+    "column_names":"total_sessions",
+    "alias_column_name":"total_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"active_sessions",
+    "alias_column_name":"Bot Containment %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE (SUM(active_sessions) - SUM(fd_tickets)) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"active_sessions",
+    "alias_column_name":"active_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"agent_response_repetition",
+    "alias_column_name":"Bot Repetition %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(agent_response_repetition) * 100.0 \/ SUM(eval_completed) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"agent_response_repetition",
+    "alias_column_name":"agent_response_repetition",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"ah_tickets",
+    "alias_column_name":"ah_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"analyzed_sessions",
+    "alias_column_name":"analyzed_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_empathy_score",
+    "alias_column_name":"Avg Empathy Score",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_empathy_score) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_empathy_score",
+    "alias_column_name":"avg_empathy_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_eval_score",
+    "alias_column_name":"AVG Eval Score %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"(AVG(avg_eval_score)) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_eval_score",
+    "alias_column_name":"avg_eval_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_resolution_achieved",
+    "alias_column_name":"Avg Resolution Achieved",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_resolution_achieved) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_resolution_achieved",
+    "alias_column_name":"avg_resolution_achieved",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_response_relevance_score",
+    "alias_column_name":"Avg Response Relevance",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_response_relevance_score) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_response_relevance_score",
+    "alias_column_name":"avg_response_relevance_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_sentiment_change",
+    "alias_column_name":"avg_sentiment_change",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"avg_topic_drift",
+    "alias_column_name":"avg_topic_drift",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"cst_entity",
+    "alias_column_name":"cst_entity",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"date_",
+    "alias_column_name":"date_",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"eval_completed",
+    "alias_column_name":"eval_completed",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"eval_score_bad",
+    "alias_column_name":"Bad Eval Share %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL ELSE SUM(eval_score_bad) * 100 \/ (SUM(eval_score_good) + SUM(eval_score_bad)) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"eval_score_bad",
+    "alias_column_name":"eval_score_bad",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"eval_score_good",
+    "alias_column_name":"eval_score_good",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"eval_score_neutral",
+    "alias_column_name":"eval_score_neutral",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"fd_tickets",
+    "alias_column_name":"fd_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"fd_tickets_og",
+    "alias_column_name":"fd_tickets_og",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"function_call_failed",
+    "alias_column_name":"Bot Failed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(function_call_failed) * 100.0 \/ SUM(eval_completed) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"function_call_failed",
+    "alias_column_name":"function_call_failed",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"happy",
+    "alias_column_name":"MSAT %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL ELSE SUM(happy) * 100 \/(SUM(sad)+SUM(happy)) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"happy",
+    "alias_column_name":"happy",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"hour_",
+    "alias_column_name":"hour_",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"hour_timestamp",
+    "alias_column_name":"hour_timestamp",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"intent_incoherence_count",
+    "alias_column_name":"Intent Detection Failed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(eval_completed) = 0 THEN NULL ELSE SUM(intent_incoherence_count) * 100.0 \/ SUM(eval_completed) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"intent_incoherence_count",
+    "alias_column_name":"intent_incoherence_count",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"negative_user_sentiment",
+    "alias_column_name":"Negative Change #",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(negative_user_sentiment)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"negative_user_sentiment",
+    "alias_column_name":"Negative Change %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL\nELSE\nSUM(negative_user_sentiment) * 100 \/ (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))\nEND"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"negative_user_sentiment",
+    "alias_column_name":"negative_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"neutral_user_sentiment",
+    "alias_column_name":"Neutral Change #",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(neutral_user_sentiment)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"neutral_user_sentiment",
+    "alias_column_name":"Neutral Change %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL\nELSE\nSUM(neutral_user_sentiment) * 100 \/ (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))\nEND"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"neutral_user_sentiment",
+    "alias_column_name":"neutral_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"positive_user_sentiment",
+    "alias_column_name":"Positive Change #",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(positive_user_sentiment)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"positive_user_sentiment",
+    "alias_column_name":"Positive Change %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL\nELSE\nSUM(positive_user_sentiment) * 100 \/ (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))\nEND"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"positive_user_sentiment",
+    "alias_column_name":"positive_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"sad",
+    "alias_column_name":"sad",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"service_tickets",
+    "alias_column_name":"service_tickets",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_l1_summary1",
+    "column_names":"total_sessions",
+    "alias_column_name":"total_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"active_sessions",
+    "alias_column_name":"Active Sessions",
+    "source_or_derived":"derived",
+    "derived_column_logic":"sum(active_sessions)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"active_sessions",
+    "alias_column_name":"active_sessions",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"agent_response_repetition",
+    "alias_column_name":"Bot Repetition %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(agent_response_repetition) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"agent_response_repetition",
+    "alias_column_name":"agent_response_repetition",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_empathy_score",
+    "alias_column_name":"AVG Empathy Score",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_empathy_score) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_empathy_score",
+    "alias_column_name":"avg_empathy_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_eval_score",
+    "alias_column_name":"AVG Eval Score",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_eval_score) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_eval_score",
+    "alias_column_name":"avg_eval_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_resolution_achieved",
+    "alias_column_name":"AVG Resolution Achieved",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_resolution_achieved) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_resolution_achieved",
+    "alias_column_name":"avg_resolution_achieved",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_response_relevance_score",
+    "alias_column_name":"AVG Response Relevance",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_response_relevance_score) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_response_relevance_score",
+    "alias_column_name":"avg_response_relevance_score",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_topic_drift",
+    "alias_column_name":"AVG Topic Drift",
+    "source_or_derived":"derived",
+    "derived_column_logic":"AVG(avg_topic_drift) * 100"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"avg_topic_drift",
+    "alias_column_name":"avg_topic_drift",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"cst_entity",
+    "alias_column_name":"cst_entity",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"date_",
+    "alias_column_name":"date_",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"eval_completed",
+    "alias_column_name":"Eval Completed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"SUM(eval_completed) * 100\/ SUM(active_sessions)"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"eval_completed",
+    "alias_column_name":"eval_completed",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"eval_score_bad",
+    "alias_column_name":"Bad Eval Share %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL ELSE SUM(eval_score_bad) * 100 \/ (SUM(eval_score_good) + SUM(eval_score_bad)) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"eval_score_bad",
+    "alias_column_name":"eval_score_bad",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"eval_score_good",
+    "alias_column_name":"eval_score_good",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"function_call_failed",
+    "alias_column_name":"Bot Failed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(function_call_failed) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"function_call_failed",
+    "alias_column_name":"function_call_failed",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"happy",
+    "alias_column_name":"MSAT %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL ELSE (SUM(happy) * 100.0) \/ (SUM(happy) + SUM(sad)) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"happy",
+    "alias_column_name":"happy",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"intent_incoherence_count",
+    "alias_column_name":"Intent Detection Failed %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE SUM(intent_incoherence_count) * 100 \/ SUM(active_sessions) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"intent_incoherence_count",
+    "alias_column_name":"intent_incoherence_count",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"negative_user_sentiment",
+    "alias_column_name":"negative_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"neutral_user_sentiment",
+    "alias_column_name":"neutral_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"out_key_problem_desc",
+    "alias_column_name":"out_key_problem_desc",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"positive_user_sentiment",
+    "alias_column_name":"+ve Sentiment Change %",
+    "source_or_derived":"derived",
+    "derived_column_logic":"CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL ELSE SUM(positive_user_sentiment) * 100 \/ (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) END"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"positive_user_sentiment",
+    "alias_column_name":"positive_user_sentiment",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  },
+  {
+    "tables_involved":"hive.team_cst_mhd_product.soundbox_eval_llm_l1",
+    "column_names":"sad",
+    "alias_column_name":"sad",
+    "source_or_derived":"source",
+    "derived_column_logic":"NA"
+  }
+]

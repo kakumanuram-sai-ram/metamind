@@ -1,0 +1,1105 @@
+chart_id,chart_name,sql_query,dashboard_id,dashboard_title,chart_type,dataset_id,dataset_name,database_name,time_range
+480,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+480,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+534,Analyzed + Eval Completed % - Complete Day,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Analyzed %"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+534,Analyzed + Eval Completed % - Complete Day,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Analyzed %"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+537,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+537,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+538,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+538,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+539,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+539,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+540,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+540,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+541,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+541,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+542,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", SUM(service_tickets) AS ""Service Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(service_tickets) * 100 / SUM(active_sessions)
+END AS ""Service Ticket %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+542,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", SUM(service_tickets) AS ""Service Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(service_tickets) * 100 / SUM(active_sessions)
+END AS ""Service Ticket %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bsoundbox', 'p4bAIBot'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+595,Analyzed + Eval Completed % - Complete Day,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Analyzed %"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+595,Analyzed + Eval Completed % - Complete Day,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Analyzed %"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+596,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+596,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+598,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+598,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+599,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+599,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+600,Bot Performance Metrics,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+600,Bot Performance Metrics,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+601,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+601,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+602,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+602,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+603,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+603,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bpayoutandsettlement'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+605,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+605,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+607,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+607,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+608,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+608,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+609,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+609,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+610,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+610,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+611,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+611,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+612,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+612,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+613,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+613,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bbusinessloan'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+615,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+615,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+616,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+616,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+618,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+618,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+622,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+622,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+623,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+623,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+624,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+624,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+625,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+625,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+626,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+626,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bprofile'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+628,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+628,Analyzed + Eval Completed % - Complete Day,"SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC;",72,MHD Eval Dashboard,echarts_timeseries_smooth,73,sb_eval_completed,Trino,
+630,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+630,Daily Quality Metrics Trend (%),"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, (AVG(avg_eval_score)) * 100 AS ""AVG Eval Score %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL ELSE
+(SUM(active_sessions) - SUM(fd_tickets)) * 100 / SUM(active_sessions)
+END AS ""Bot Containment %"", CASE WHEN (SUM(sad)+SUM(happy)) = 0 THEN NULL 
+ELSE SUM(happy) * 100 /(SUM(sad)+SUM(happy)) END AS ""MSAT %"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""AVG Eval Score %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+631,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+631,Final User Sentiment Analysis,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(neutral_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Neutral Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Positive Change %"", CASE WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+ELSE
+SUM(negative_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""Negative Change %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+632,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+632,Final User Sentiment #,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, sum(neutral_user_sentiment) AS ""Neutral Change #"", sum(positive_user_sentiment) AS ""Positive Change #"", sum(negative_user_sentiment) AS ""Negative Change #"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Neutral Change #"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+633,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+633,Bot Performance Metrics,"SELECT date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) AS hour_timestamp, CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(agent_response_repetition) * 100.0 / SUM(eval_completed)
+END AS ""Bot Repetition %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(function_call_failed) * 100.0 / SUM(eval_completed)
+END AS ""Bot Failed %"", CASE
+  WHEN SUM(eval_completed) = 0 THEN NULL
+  ELSE SUM(intent_incoherence_count) * 100.0 / SUM(eval_completed)
+END AS ""Intent Detection Failed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(hour_timestamp AS TIMESTAMP)) ORDER BY ""Bot Repetition %"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+634,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+634,AVG Empathy Score + Resolution Achieved + Response Relevance,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, AVG(avg_empathy_score) * 100 AS ""Avg Empathy Score"", AVG(avg_resolution_achieved) * 100 AS ""Avg Resolution Achieved"", AVG(avg_response_relevance_score) * 100 AS ""Avg Response Relevance"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_l1_summary1"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Avg Empathy Score"" DESC
+LIMIT 10000;
+
+",72,MHD Eval Dashboard,echarts_timeseries_smooth,64,soundbox_eval_metrics,Trino,
+635,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+635,LLM L1 Metrics,"SELECT out_key_problem_desc AS out_key_problem_desc, sum(active_sessions) AS ""Active Sessions"", SUM(eval_completed) * 100/ SUM(active_sessions) AS ""Eval Completed %"", AVG(avg_eval_score) * 100 AS ""AVG Eval Score"", AVG(avg_response_relevance_score) * 100 AS ""AVG Response Relevance"", CASE 
+    WHEN (SUM(happy) + SUM(sad)) = 0 THEN NULL
+    ELSE (SUM(happy) * 100.0) / (SUM(happy) + SUM(sad))
+END AS ""MSAT %"", AVG(avg_empathy_score) * 100 AS ""AVG Empathy Score"", CASE 
+    WHEN (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment)) = 0 THEN NULL
+    ELSE SUM(positive_user_sentiment) * 100 / (SUM(positive_user_sentiment)+SUM(negative_user_sentiment)+SUM(neutral_user_sentiment))
+END AS ""+ve Sentiment Change %"", AVG(avg_resolution_achieved) * 100 AS ""AVG Resolution Achieved"", CASE WHEN (SUM(eval_score_good) + SUM(eval_score_bad)) = 0 THEN NULL
+ELSE SUM(eval_score_bad) * 100 / (SUM(eval_score_good) + SUM(eval_score_bad))
+END AS ""Bad Eval Share %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(intent_incoherence_count) * 100 / SUM(active_sessions)
+END AS ""Intent Detection Failed %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(agent_response_repetition) * 100 / SUM(active_sessions)
+END AS ""Bot Repetition %"", CASE 
+    WHEN SUM(active_sessions) = 0 THEN NULL
+    ELSE SUM(function_call_failed) * 100 / SUM(active_sessions)
+END AS ""Bot Failed %"", AVG(avg_topic_drift) * 100 AS ""AVG Topic Drift"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_llm_l1"" 
+WHERE date_ <= CURRENT_DATE - INTERVAL '1' DAY
+ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY out_key_problem_desc ORDER BY ""Active Sessions"" DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,76,sb_eval_llm_l1,Trino,
+636,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+636,Overall Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", sum(happy) AS ""Happy Feedback"", sum(sad) AS ""Sad Feedback"", SUM(ah_tickets) AS ""Agent Tickets"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE (SUM(happy) + SUM(sad)) * 100 / SUM(active_sessions)
+END AS ""Feedback Rate %"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(ah_tickets) * 100 / SUM(active_sessions)
+END AS ""Agent Handover %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE ((cst_entity IN ('p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+638,Device Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+638,Device Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bsoundbox', 'p4bAIBot') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+640,Payout & Settlement Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bpayoutandsettlement') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+640,Payout & Settlement Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bpayoutandsettlement') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+642,Profile Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bprofile') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+642,Profile Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bprofile') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+644,MHD Overall Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+644,MHD Overall Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+749,Business Loan Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bbusinessloan') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+749,Business Loan Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bbusinessloan') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+750,Wealth Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bwealth') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,
+750,Wealth Eval Summary,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(active_sessions) AS ""Active Sessions"", sum(analyzed_sessions) AS ""Analyzed Sessions"", sum(eval_completed) AS ""Eval Completed"", CASE WHEN SUM(active_sessions) = 0 THEN NULL
+ELSE SUM(analyzed_sessions) * 100 / SUM(active_sessions)
+END AS ""Analyzed %"", CASE WHEN SUM(analyzed_sessions) = 0 THEN NULL
+ELSE SUM(eval_completed) * 100 / SUM(analyzed_sessions)
+END AS ""Eval Completed %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""soundbox_eval_completed"" ORDER BY 1, 2 DESC
+) AS virtual_table 
+WHERE cst_entity IN ('p4bwealth') GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY MAX(date_) DESC
+LIMIT 1000;
+
+",72,MHD Eval Dashboard,table,73,sb_eval_completed,Trino,

@@ -371,3 +371,4 @@ class ExtractionResult:
         """Check if extraction failed"""
         return not self.success
 
+

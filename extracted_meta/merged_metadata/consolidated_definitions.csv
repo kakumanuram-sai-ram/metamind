@@ -4,14 +4,14 @@ UPI,Category,"Unified Payments Interface - India's instant real-time payment sys
 P2P,Category,"Person-to-Person transactions - UPI payments made between individual users, including VPA2ACCOUNT and VPA2VPA transaction categories. These transactions represent payments made directly between individual users through the UPI system where individuals transfer money to other individuals using VPA to VPA or VPA to Account.","Person-to-Person, Person to Person, Peer-to-Peer"
 P2M,Category,"Person-to-Merchant transactions - payments made from users to merchants/businesses. Specifically includes VPA2MERCHANT transaction types in UPI payment systems where individuals make payments to merchants using VPA to Merchant flow. This category encompasses all payment flows from individual users to business entities or merchants across different dashboard contexts, with particular focus on UPI payments made from individuals to merchants.","Person-to-Merchant, Person to Merchant"
 SnP,Category,"Scan and Pay transactions, including 3P QR and Paytm QR payments and flow categories. This category encompasses all Scan and Pay transaction types across different payment flows, as consistently defined across multiple dashboards.",Scan and Pay
-Transaction Status,Category,"Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",None
+Transaction Status,Category,"Status classifications for UPI transactions including SUCCESS, DEEMED, and other failure statuses.",
 PSP,Category,"Payment Service Provider - entities that facilitate UPI transactions, categorized as Paytm or Others based on handle classification.",Payment Service Provider
 Flow Category,Category,"Classification system for UPI transactions that encompasses multiple categorization approaches: (1) Transaction types including P2P, 3P QR, Paytm QR, Intent, P2M Collect, Mandate_Online, Onus_ExcMandates, and Mandate_Onus (Dashboard 511), and (2) Transaction flows including VPA2MERCHANT, VPA2VPA, and VPA2ACCOUNT categories (Dashboard 476). This term represents different but complementary ways to classify UPI transaction patterns and processing methods.",Transaction Flow Type
 Online,Category,"Online transaction category for UPI transactions including Intent, P2M Collect, and Mandate_Online flow categories/flows. Used across multiple dashboards to categorize online payment transactions and flows, encompassing various online UPI transaction types and payment flows.",
 Onus,Category,"On-us transaction category including Onus_ExcMandates and Mandate_Onus flow categories where both payer and payee are within the same payment system or bank. These transactions occur when both parties involved are served by the same financial institution. This encompasses flows within the same bank as well as broader payment system contexts, covering both bank-level and payment system-level on-us transactions.",On-us
 P2P_P2M,Category,Transaction categorization field that classifies transactions (including UPI transactions) as either Person-to-Person (P2P) or Person-to-Merchant (P2M) based on transaction category and type classification grouping,
 Day,Metric,"The day of the month extracted from the transaction date, used for daily trend analysis and daily analysis of transaction patterns.",
-Month,Metric,"Month component extracted from transaction date using date_trunc function for monthly analysis and aggregation. This metric truncates the transaction date to the month level, enabling monthly trend analysis and reporting.",
+Month,Dimension,"Time dimension representing monthly grouping for trend analysis and reporting. Month component extracted from transaction date using date_trunc function for monthly analysis and aggregation in transaction contexts, and used for monthly grouping of customer service metrics for trend analysis. This dimension truncates dates to the month level, enabling monthly trend analysis and reporting across different business areas.",
 DEEMED,Metric,A transaction status category considered as successful for success rate calculations along with SUCCESS status,
 Success (synonyms: SUCCESS),Metric,A transaction status indicating the transaction was completed successfully. Specifically refers to count of UPI transactions with status 'success' or 'deemed'. Used across dashboards to track successful transaction completions.,Success_txn
 Category,Category,Classification of UPI transactions into different payment flows and types,final_category
@@ -126,3 +126,306 @@ p2m_p2p_flag,Metric / Calculated Field,Calculated field that categorizes transac
 txn_id,Metric,Unique transaction identifier used to count total number of UPI transactions,Transaction ID
 payer_handle,Metric,UPI handle of the person or entity initiating the payment transaction,Payer Handle
 payee_handle,Metric,UPI handle of the person or entity receiving the payment transaction,Payee Handle
+COUNT(id),Metric / Calculated Field,"Total count of unique case IDs or records, representing the number of cases in the system",
+days_bucket,Dimension,Time-based grouping dimension that categorizes cases based on the number of days they have been pending,
+final_stage,Dimension,The ultimate stage or status that a case has reached in the workflow process,
+substage,Dimension,"Sub-level stages within the main workflow stages, providing more granular tracking of case progress",
+Pendency,Category,"Cases or processes that are awaiting action, approval, or completion, tracked across different time periods and stages",
+QS_SB,Category,"Quality Service and Service Board processes, representing the operational framework being monitored","QR_SB, also referred as Quality Review Service Board"
+QS_SB Pendency,Category,"Query Service and Service Book pendency tracking category, encompassing all metrics related to case resolution timeframes","QS/Query Service, SB/Service Book"
+Case Pendency,Category,Time-based analysis of unresolved cases across different workflow stages and time periods,
+Pending for Callback,Category,Status indicating cases waiting for callback to be made to merchants or customers,
+CallAttempted,Category,Status indicating that a call attempt has been made to the merchant or customer,
+OTHER ISSUES,Category,Status for cases that don't fit into standard categories and require special handling,
+Merchant Setup,Category,Cases related to setting up new merchant accounts or merchant onboarding issues,
+Gold Investment Plan,Category,Cases related to gold investment product issues and inquiries,
+MHD-Riskops-QR,Category,Cases assigned to MHD Risk Operations team for QR-related issues,MHD Risk Operations QR
+MHD Offline Chargeback cases,Category,Cases related to offline chargeback disputes and resolution,
+Merchant Dependency,Category,Cases where resolution is pending due to required information or action from the merchant,Details pending from Merchant
+Pending with other Department,Category,Cases that have been escalated to or are waiting for response from other internal departments,
+Re-Open,Category,Previously closed cases that have been reopened for further investigation or resolution,
+Merchant Response Received,Category,Cases where merchant has provided requested information and awaiting next action,
+DIY,Category,Do-it-yourself cases for Payout & Settlement and Merchant Profile issues where confirmation is pending,Do It Yourself
+Pending for Loan Disbursement,Category,Business loan cases waiting for loan disbursement confirmation,
+Assign to retention,Category,Cases assigned to the retention team for customer retention activities,P2P - Assigned to Retention
+Payout & Settlement,Category,"Percentage of payout and settlement tickets escalated to first-line defense, calculated as (payout settlement FD tickets / total payout settlement tickets) * 100",
+Merchant Profile,Category,Issue category for cases related to merchant profile setup and management,
+Business Loan,Category,"Percentage of business loan tickets escalated to first-line defense, calculated as (business loan FD tickets / total business loan tickets) * 100",
+Bot Ticket Count,Metric,"Count of tickets or interactions processed by automated bot systems, including both completed and dropped-off interactions.",
+SUM(bot_ticket_count),Metric / Calculated Field,"Total aggregated count of all bot ticket interactions across all records, calculated by summing individual bot ticket counts.",Bot Tickets Counts
+LOB,Category,"Line of Business - a business dimension used to categorize and segment data by different business units or product lines. Specifically used to segment and analyze service satisfaction metrics across different business units, excluding Enterprise, Retail Mid-Market, and Government segments.","Line of Business, LOB, Business Line"
+Dropoff,Category,Category indicating incomplete or abandoned bot interactions where users did not complete the full ticket process.,
+Bot Tickets Count,Metric / Calculated Field,"Total sum of bot tickets from active sessions, aggregated across the selected time period and grouped by line of business","Bot Tickets, Bot Active Ticket Count"
+Active Sessions,Metric,Total count of active sessions within a given time period. In customer service context: represents user interactions with the care system. In soundbox evaluation context: represents active sessions in the soundbox evaluation system for payout and settlement operations.,
+bot_active_ticket_count,Metric,"Total count of active tickets generated from bot interactions, used as denominator for passthrough calculations",
+MHD,Category,"System or service identifier used in healthcare and business contexts. In Care Dashboard systems, it represents a specific healthcare or care management system component. In evaluation systems, it serves as a business context identifier for monitoring purposes and specifically functions as a business context identifier for the evaluation system being monitored. The term encompasses various healthcare and system management applications across different operational contexts.","Mental Health Dashboard, Mental Health Digital, Mobile Handset Device, Mental Health Department, Medical Health Department, Mental Health Division, Mental Health Disorders, Medical/Healthcare Division, Merchant Help Desk, Multi-Home Device"
+Bot MSAT,Metric / Calculated Field,"Bot satisfaction percentage calculated as (positive bot responses / total bot responses) * 100, measuring the rate of positive customer interactions with automated bot services",Bot Satisfaction
+bot_positive_response,Metric,Count of positive customer responses or feedback received from bot interactions,
+bot_total_responses,Metric,"Total count of all responses received from bot interactions, including both positive and negative feedback",
+Bot MSAT (%),Metric / Calculated Field,"Bot satisfaction percentage calculated as (positive bot responses / total bot responses) * 100, measuring the percentage of positive feedback received from bot interactions",MSAT
+MSAT,Synonym,"Member satisfaction rate showing the percentage of received feedback that was satisfied, calculated as (service tickets with MSAT received / total service tickets with feedback received) × 100","Member Satisfaction, Customer Satisfaction, Member Satisfaction, Medical Health Department Satisfaction, Mean Satisfaction, also referred as Bot Satisfaction Rate, Member Satisfaction, also referred as Medical Satisfaction, Customer Satisfaction, Mean Satisfaction, Bot Satisfaction Rate, Monthly Satisfaction, also referred as MSAT(%), Customer Satisfaction Rate, Satisfaction Score, Customer Satisfaction, Merchant Satisfaction, Agent Satisfaction, Customer Satisfaction Score, Merchant Satisfaction, Satisfaction Score, Satisfaction Measurement, Member Satisfaction, Mobile Satisfaction"
+Bot Passthrough (%),Metric / Calculated Field,"Percentage of bot-active tickets that are passed through to human agents, calculated as (agent_ticket_count_bot / bot_active_ticket_count) * 100",Bot Escalation Rate
+agent_ticket_count_bot,Metric,Total count of tickets that were initially handled by bots but then transferred to human agents,
+IVR Calls,Metric,"Total count of calls handled by Interactive Voice Response system, an automated phone system that interacts with callers","IVR, Interactive Voice Response Calls"
+IVR Calls Count,Metric,Total number of calls handled by the Interactive Voice Response system during the specified time period,"IVR Calls, SUM(ivr_calls)"
+Care Dashboard-MHD,Category,Healthcare dashboard category focusing on IVR call metrics for medical/healthcare services,MHD Care Metrics
+Ticket Count,Metric,"The number of support tickets, representing individual customer service requests or issues.",
+Service,Category,"Percentage of active bot tickets that are passed through to service team, calculated as (bot_to_service_ticket_count / bot_active_ticket_count) * 100","IVR to Service Ticket Count, Serivce, IVR to Service Tickets, Bot to Service Ticket Count"
+total_ticket_count,Metric,Base field containing the count of tickets that gets aggregated in reporting,
+Total Ticket Count,Metric,"The total number of support tickets across all categories, representing the volume of customer service requests.",
+Service Ticket Count,Metric,The total number of service tickets recorded in the system for customer support or service requests.,
+SUM(service_ticket_count),Metric / Calculated Field,"The aggregated sum of all service ticket counts, typically grouped by dimensions such as line of business.",Total Service Tickets
+MHD Agent,Category,"Percentage of bot tickets transferred to Mental Health Department agents, calculated as (agent_ticket_count_bot / bot_active_ticket_count) * 100","MHD Agent Ticket Count, Mental Health Department Agent Tickets, MHD/Merchant Help Desk Agent, Mental Health Department Agent"
+agent_ticket_count,Metric,Number of tickets handled or processed by individual agents,
+SUM(agent_ticket_count),Metric / Calculated Field,"Total aggregated count of all tickets processed by agents, calculated by summing individual agent ticket counts",
+Agent Ticket Count,Metric,"Total count of tickets handled by agents, representing the volume of customer service interactions processed through support channels.",
+Ticket Count (Service),Synonym,Service Ticket Count,
+MSAT(%) Agent,Metric / Calculated Field,"Percentage of agent tickets that received positive satisfaction feedback, calculated as (Total satisfied agent tickets / Total agent tickets with feedback) * 100","MSAT, Agent Satisfaction Rate, Agent Satisfaction Rate, Agent MSAT Percentage"
+agent_tickets_msat_received,Metric,Total count of agent tickets that received positive customer satisfaction feedback,
+agent_tickets_feedback_received,Metric,Total count of agent tickets that received any type of feedback responses,
+Agent,Category,Customer service representatives who handle customer tickets and interactions,"Customer Service Agent, Support Agent"
+Agent Tickets MSAT Received,Metric,Total count of agent-handled tickets that received positive satisfaction ratings from customers,
+Agent Tickets Feedback Received,Metric,Total count of agent-handled tickets for which customer feedback was received (both positive and negative),
+MSAT (%),Metric / Calculated Field,Customer satisfaction percentage calculated as (bot positive responses + MSAT tickets received) divided by (total bot responses + total feedback tickets received) multiplied by 100,"MSAT Percentage, Satisfaction Rate, Member Satisfaction Percentage, MSAT"
+Total Tickets MSAT Received,Metric,Total count of tickets where customers indicated satisfaction (MSAT) in their feedback,"Satisfied Tickets, MSAT Tickets"
+Total Tickets Feedback Received,Metric,"Total count of tickets where customer feedback was received, regardless of satisfaction level","Feedback Tickets, Total Responses"
+MHD+Service,Category,Combined category encompassing Medical Health Department operations and general service activities,"MHD and Service, Healthcare Services"
+total_tickets_msat_received,Metric,Total count of support tickets that received satisfactory ratings from customers,"Satisfied Tickets, Tickets MSAT Received"
+total_tickets_feedback_received,Metric,Total count of support tickets that received any form of customer feedback or rating,"Feedback Tickets, Tickets Feedback Received"
+MSAT(%) Service,Metric / Calculated Field,"Service satisfaction percentage calculated as (service_tickets_msat_received / service_tickets_feedback_received) * 100, representing the percentage of satisfied customers out of total feedback received for service tickets","MSAT, Service Satisfaction Rate, Service Satisfaction Rate"
+service_tickets_msat_received,Metric,Total count of service tickets that received positive satisfaction feedback or met satisfaction criteria,
+service_tickets_feedback_received,Metric,"Total count of service tickets for which feedback was received, serving as the denominator for satisfaction calculations",
+Bot (Active+Dropoff),Metric,"Total sum of unique merchants who interacted with the bot system, including both merchants with active sessions and those who dropped off during the interaction",
+Bot- Active Sessions,Metric,Total sum of unique merchants who maintained active sessions while interacting with the bot system,Bot Active Sessions
+Unique Merchant Count,Category,Distinct count of merchants who accessed support services through various channels during a specific time period,
+Bot,Category,Automated system that handles initial customer service interactions and tickets before potential escalation to human agents,"Chatbot, Virtual Assistant, Chatbot, Automated Assistant"
+TAT,Metric,Turnaround Time - the duration between when a ticket or request is received and when it is resolved or completed,"Turn Around Time, Turnaround Time, Turnaround Time"
+Avg TAT,Metric / Calculated Field,"Average Turnaround Time calculated as total TAT days divided by the number of tickets, representing the mean time to resolve tickets",Average Turnaround Time
+Human Agent,Category,Category referring to tickets or services handled by human customer service representatives as opposed to automated systems,
+sum_tat_days,Metric,Total sum of turnaround time days across all tickets in the measurement period,
+tat_denominatior_tickets,Metric,"Count of tickets used as denominator in TAT calculations, representing the total number of tickets processed",TAT Denominator Tickets
+Avg TAT (Days) Human Agent,Metric / Calculated Field,"Average turnaround time in days for tickets handled by human agents, calculated as total TAT days divided by total number of tickets",Average Turnaround Time for Human Agent
+Bot Active Ticket Count,Metric,The count of active tickets currently being handled by the bot system,
+SUM(bot_active_ticket_count),Metric / Calculated Field,"Total aggregated count of all active bot-related support tickets, calculated by summing individual bot_active_ticket_count values.",
+Issue Mapping,Dimension,Classification system that categorizes support tickets into specific issue types or problem categories for tracking and analysis purposes.,
+Top Issue on Bot,Category,Analysis of the most frequently occurring issues handled by the bot system based on active ticket volume,
+issue_mapping,Dimension,Categorical classification or mapping of different types of customer issues or problems for support ticket organization,
+Unique Merchant Counts,Category,Metrics tracking the count of distinct merchants served through different service channels including bot interactions and service transfers,
+Care Dashboard,Category,Healthcare service quality metrics including response rates and member satisfaction scores for the MHD department,"Care Dashboard-MHD, MHD Dashboard, MHD/Merchant Help Desk Dashboard, MHD Care Dashboard"
+Bot Passthrough %,Category,"Percentage of bot interactions that are transferred to human agents or service teams, calculated as the ratio of transferred tickets to total active bot tickets multiplied by 100",
+bot_to_service_ticket_count,Metric,Total count of bot interactions that were escalated or passed through to human service agents,
+Response Rate,Metric / Calculated Field,"Percentage of agent tickets that received feedback out of total tickets eligible for response, calculated as (agent_tickets_feedback_received / agent_tickets_for_response) * 100",
+Bot Total Responses,Metric,Total number of responses generated by the bot system,
+Bot Positive Response,Metric,Number of positive/satisfactory responses received from bot interactions,
+Feedback % - Bot,Category,"Percentage of bot interactions that received feedback responses, calculated as (Total Bot Responses / Bot Active Ticket Count) * 100",Bot Feedback Rate
+Total Tickets For Response,Metric,Total count of support tickets that were eligible to receive customer feedback responses,
+Feedback %,Category,Collection of percentage-based metrics related to agent feedback collection and customer satisfaction,
+Human Agent Feedback Metrics,Category,Group of metrics measuring human agent performance through customer feedback collection and satisfaction scoring,
+agent_tickets_for_response,Metric,Total count of agent tickets that were eligible or required to receive customer response/feedback,
+service_tickets_for_response,Metric,Total count of service tickets that are eligible or expected to receive a response/feedback,
+Feedback % - Service,Category,Group of metrics measuring service feedback performance including response rates and satisfaction percentages,
+Service Tickets,Metric,"Individual service requests or support cases submitted by members, patients, or customers in the system. Total count of service tickets created for customer issues or requests, including healthcare-specific cases submitted by members or patients.","fd_tickets, FD Tickets, Support Tickets"
+Feedback,Metric,Customer or patient responses and evaluations provided for completed service tickets,
+Avg TAT (Days),Metric / Calculated Field,"Average Turnaround Time in days calculated by dividing total MHD TAT days by the number of tickets processed, measuring the average time taken to resolve tickets by MHD agents","TAT, also referred as Turnaround Time, Average Turn Around Time, Average Turnaround Time, Average Turnaround Time, also referred as TAT"
+sum_mhd_tat_days,Metric,"Total sum of turnaround time days for all MHD tickets, representing the cumulative time spent on resolving tickets",
+mhd_tat_denominatior_tickets,Metric,"Total count of MHD tickets used as denominator in TAT calculations, representing the number of tickets processed","MHD TAT Denominator Tickets, TAT denominator tickets"
+Avg TAT - Service Agent,Metric / Calculated Field,"Average Turnaround Time for Service Agents, calculated as total service TAT days divided by total number of tickets with TAT data",Average Turnaround Time - Service Agent
+Service Agent,Category,Healthcare service representatives who handle patient care requests and service tickets in the Mental Health Department,
+sum_service_tat_days,Metric,Total cumulative days spent in turnaround time across all service tickets,Total Service TAT Days
+service_tat_denominatior_tickets,Metric,"Count of tickets used as denominator in TAT calculations, representing tickets with valid TAT data",Service TAT Denominator Tickets
+created_date,Dimension,Date when the ticket or record was initially created in the system,Creation Date
+L1 Issues,Category,Level 1 support issues representing the first tier of customer service problems that are typically handled by front-line support agents.,Level 1 Issues
+SUM(total_ticket_count),Metric / Calculated Field,"Total aggregated count of all support tickets, calculated by summing individual ticket counts across different issue categories",
+BOT (Active+Drop off),Metric,"Total count of bot tickets including both active sessions and dropped-off sessions, representing the complete volume of bot interactions.",Bot Total Tickets
+Bot - Active Session,Metric,"Count of bot tickets where the session remained active, representing successful ongoing bot interactions without dropoff.",Active Bot Sessions
+Ticket Counts,Category,Group of metrics measuring the volume and types of support tickets processed through bot interactions.,
+Bot Ticket,Metric,Individual support ticket handled through automated bot interaction system.,
+Bot Contact Ratio,Metric / Calculated Field,"Percentage of bot-handled tickets relative to total contact ratio base count, calculated as 100*SUM(bot_ticket_count)/max(cr_base_count)",
+bot_ticket_count,Metric,"Total count of tickets or interactions handled by the bot system, including all session types",Bot Tickets
+cr_base_count,Metric,"Base count used as denominator for contact ratio calculation, represents the total population or eligible base for contact ratio measurement.","Contact Ratio Base Count, Contact Ratio base count"
+Total Volume,Metric / Calculated Field,"Combined count of IVR calls and bot tickets, calculated as sum(bot_ticket_count) + SUM(ivr_calls), representing total customer service interactions",
+Bot Tickets,Metric,Total count of support tickets generated through automated chatbot interactions,Chatbot Tickets
+Contact Ratio,Metric / Calculated Field,"Percentage calculated as (bot ticket count + IVR calls) divided by base count, multiplied by 100. Measures the ratio of customer service contacts relative to the base population.","Engagement Rate, Channel Distribution"
+ivr_calls,Metric,Total count of calls handled through Interactive Voice Response (IVR) systems.,"IVR calls, IVR Calls"
+IVR Contact Ratio,Metric / Calculated Field,"Percentage ratio calculated as total IVR calls divided by the base count, representing the proportion of interactions handled through Interactive Voice Response systems",IVR Contact Ratio (%)
+CR Base Count,Metric,Contact Ratio base count representing the total volume used as denominator for contact ratio calculations,Contact Ratio Base Count
+Avg TAT (Days) Service Agent,Metric / Calculated Field,"Average turnaround time in days for service agents, calculated as total service TAT days divided by the number of tickets with TAT data","TAT also referred as Turnaround Time, TAT, also referred as Turnaround Time"
+Bot - Active Sessions,Metric / Calculated Field,"Percentage of active bot ticket interactions where users remained engaged, calculated as: (Active Bot Tickets / Base Count) × 100",
+Avg TAT (Days) MHD Agent,Metric / Calculated Field,"Average Turnaround Time in days for MHD agents, calculated as total MHD TAT days divided by the number of tickets with TAT data","Average Turnaround Time, TAT"
+Bot L2 Issues,Category,Second-level bot-related issues or problems that require escalation beyond initial bot handling,
+bot_l2,Dimension,Level 2 bot issue categorization used for grouping and analyzing different types of bot-related problems or escalations,"Bot Level 2, L2 Bot Issues, L2 Bot Issues"
+Top Bot L2 Issues,Category,The most significant or frequently occurring Level 2 bot issues ranked by active ticket count.,
+DSAT,Synonym,"Dissatisfaction, typically referring to customer dissatisfaction scores or negative feedback in customer service contexts",Dissatisfaction
+Bot Negative Response,Metric,"Total count of negative responses received from bot interactions, indicating customer dissatisfaction with automated service",
+sum(bot_negative_response),Metric / Calculated Field,"Total aggregated count of all negative bot responses, calculated by summing all bot_negative_response values",
+Bot L2,Category,Level 2 categorization of bot issues or bot interaction types used for grouping dissatisfaction reasons,"Bot Level 2, bot_l2"
+Top DSAT Reason,Category,"Ranking of primary causes for customer dissatisfaction, specifically related to bot interactions",
+bot_negative_response,Metric,Count of negative responses or dissatisfied interactions from bot customer service sessions,
+Final MSAT %,Metric / Calculated Field,"Customer satisfaction percentage calculated as the number of happy/satisfied responses divided by total feedback responses, multiplied by 100. Formula: (SUM(happy) * 100 / SUM(feedback_given))","MSAT %, Customer Satisfaction Percentage, MSAT Percentage"
+feedback_given,Metric,Total count of all feedback responses (positive and negative) provided by users to the bot,
+Happy,Metric,Count of positive/satisfied customer feedback responses indicating customer satisfaction and happiness with the service. This metric tracks positive customer feedback responses across different contexts to measure overall customer satisfaction levels.,"satisfied responses, Positive Feedback, Satisfied Responses, Happy Responses, Satisfied Users, Positive Responses"
+cst_entity,Dimension,"Customer entity type that serves as both a categorization system for different business units or service categories and an entity identifier for different systems or services being evaluated. This dimension categorizes various customer service entities (excludes ivr-merchant, p4bsoundbox, all_others, p4bwealth) while also identifying specific systems such as p4bsoundbox and p4bAIBot for evaluation purposes.","Intent Category, Customer Service Entity, Customer Entity, customer service entity, customer entity, Service Entity"
+Intent wise,Category,Analysis or segmentation based on customer intent or purpose of interaction with the care/support system.,"By Intent, Intent-based"
+Intent,Category,Customer service interaction categories or types that classify the purpose or reason for customer contact,
+Bot to Service Passthrough (%),Metric / Calculated Field,"Percentage of bot interactions that are escalated to human service agents, calculated as (bot_to_service_ticket_count / bot_active_ticket_count) * 100","Bot Service Escalation Rate, Bot to Service Escalation Rate"
+SR%,Metric / Calculated Field,"Success Rate percentage calculated as (successful attempts / total attempts) * 100, measuring the effectiveness of function calls",Success Rate percentage
+Raise Service Request SR%,Metric / Calculated Field,"Success rate percentage for raising service requests, calculated as (raiseservicerequest_success / raiseservicerequest_attempts) * 100",
+Settlement & Payments SR%,Metric / Calculated Field,"Success rate percentage for settlement and payment information retrieval, calculated as (get_settlement_and_payment_info_success / get_settlement_and_payment_info_attempts) * 100",
+Agent Handover SR%,Metric / Calculated Field,"Success rate percentage for agent handover processes, calculated as (agent_handover_success / agent_handover_attempts) * 100",
+Check Soundbox HW SR%,Metric / Calculated Field,"Success rate percentage for checking soundbox hardware, calculated as (checksoundboxhardware_success / checksoundboxhardware_attempts) * 100",Check Soundbox Hardware SR%
+Test Broadcast SR%,Metric / Calculated Field,"Success rate percentage for test broadcast functionality, calculated as (testbroadcast_success / testbroadcast_attempts) * 100",
+Function Call Success Rates,Category,"Collection of success rate metrics measuring the effectiveness of different customer care functions including service requests, payments, agent handover, and hardware checks",
+Soundbox,Category,"Hardware device that requires monitoring and testing, includes hardware checking and broadcast testing functions",SB
+IVR,Category,Interactive Voice Response system - automated phone system that allows customers to interact with services through voice commands or keypad inputs.,Interactive Voice Response
+Phone,Category,Communication channel representing voice-based customer interactions through telephone systems including traditional calls and IVR.,
+Service Tickets Count (IVR),Metric,"Total count of service tickets generated from Interactive Voice Response (IVR) system calls, representing customer service requests initiated through automated phone systems.",
+ivr_call_to_service_ticket,Metric,Number of service tickets created as a result of IVR calls,
+Agent Tickets,Metric,"Total number of tickets escalated to human agents for assistance, representing cases that required human intervention beyond automated support. This includes all tickets or cases that required human agent intervention or handover from automated systems. Measured as total count of tickets or cases that required human agent intervention or handover.","Agent Handover, AH Tickets, Agent Handover Tickets"
+agent_ticket_count_phone,Metric,Total count of tickets handled by agents through phone/voice channels,Phone Agent Tickets
+SUM(agent_ticket_count_phone),Metric / Calculated Field,Total aggregated count of all phone-based agent tickets across selected time period and dimensions,Total Phone Agent Tickets
+Merchant Count,Metric,Count of merchants who have interacted with or used IVR services,
+SUM(ivr_merchant_count),Metric / Calculated Field,"Total aggregated count of merchants using IVR services, summed across weekly intervals",
+Unique Merchant Count - IVR,Metric / Calculated Field,"Total sum of merchants who interacted through the Interactive Voice Response (IVR) system, aggregated weekly",
+IVR Merchant Count,Metric,Count of individual merchants using the Interactive Voice Response system for care services,
+AVG Latency,Metric / Calculated Field,"Average of all latency measurements calculated using AVG(all_avg_latency), representing the mean response time in seconds",
+Latency,Metric,"Time delay between a request being sent and the response being received, typically measured in milliseconds or seconds.","Response Time, Response Time, Request Delay"
+Monthly,Category,Time aggregation level grouping metrics by calendar month for trend analysis and reporting purposes.,"Month-over-Month, Monthly Aggregation"
+Year+Month,Metric / Calculated Field,"Combined temporal identifier calculated as Year multiplied by 100 plus Month number, used for chronological sorting.",
+Median Latency,Metric,"Average of median latency values measured in the healthcare system, representing the middle value of response times or delays aggregated by month",
+Monthly Median Latency,Metric / Calculated Field,"Average of median latency values calculated for each month, showing the monthly trend of typical response times.",
+P95 Latency,Metric / Calculated Field,"The 95th percentile latency measurement, representing the response time below which 95% of requests are completed, calculated as the average of p95_latency values over the time period",P95
+P99,Metric / Calculated Field,"Average of the 99th percentile latency values, calculated as AVG(p99_latency). Represents the average response time where 99% of requests are faster than this value.","P99 Latency, 99th Percentile Latency"
+P99 Latency,Metric,"The 99th percentile of response times, indicating that 99% of requests complete faster than this threshold value.",
+P95,Metric / Calculated Field,"95th percentile latency averaged over time periods, calculated as AVG(p95_latency)",
+P90,Metric / Calculated Field,"Average of p90_latency values, representing the 90th percentile latency where 90% of requests complete faster than this measured time.","90th Percentile Latency, 90th Percentile"
+P90 Latency,Metric,"Performance metric measuring the 90th percentile response time, indicating that 90% of system requests complete within this latency threshold.","90th Percentile Response Time, 90th Percentile Latency"
+Sessions,Metric,"Count of distinct support tickets in the system, representing unique support interactions or cases",
+CST,Category,Customer Support Team - support tickets and interactions related to customer users (role_type = 1),Customer Support Team
+Tickets,Metric,Distinct count of support ticket IDs representing unique support cases or interactions,
+Question Language Code,Dimension,"The language selected or used for support questions, mapped from language codes (en, hi, te, etc.) to readable language names (English, Hindi, Telugu, etc.)",
+Role Type,Dimension,User classification where role_type = 1 indicates Customer users and role_type = 2 indicates Merchant users,
+Support Language,Category,"Available languages for support including English, Hindi, Telugu, Marathi, Tamil, Kannada, Gujarati, Bengali, Malayalam, Punjabi, and Others",
+Language Select,Category,"Language selection data showing the question language codes chosen during support ticket conversations, mapped to language names like English, Hindi, Telugu, etc.",
+TAT(In Days),Metric / Calculated Field,Overall Turnaround Time calculated as total TAT days divided by total tickets with TAT data,"TAT, Turnaround Time"
+MHD (TAT),Metric / Calculated Field,MHD agent Turnaround Time calculated as sum of MHD TAT days divided by MHD tickets with TAT data,MHD Turnaround Time
+Service (TAT),Metric / Calculated Field,Service provider Turnaround Time calculated as sum of service TAT days divided by service tickets with TAT data,Service Turnaround Time
+Overall MSAT%,Metric / Calculated Field,"Overall customer satisfaction percentage calculated as total satisfied tickets divided by total tickets with feedback, multiplied by 100","MSAT, Customer Satisfaction Percentage"
+Agent MSAT,Metric / Calculated Field,"MHD agent customer satisfaction percentage calculated as agent satisfied tickets divided by agent tickets with feedback, multiplied by 100",Agent Customer Satisfaction
+Service MSAT,Metric / Calculated Field,"Service provider customer satisfaction percentage calculated as service satisfied tickets divided by service tickets with feedback, multiplied by 100",Service Customer Satisfaction
+issue_l1,Dimension,Primary level issue category classification for customer service tickets,Issue Level 1
+issue_l2,Dimension,Secondary level issue category classification providing more detailed issue categorization,Issue Level 2
+Feedback Received %,Metric / Calculated Field,"Percentage of service tickets that received customer feedback, calculated as total feedback given divided by total tickets multiplied by 100","Response Rate %, Feedback Rate %"
+MSAT %,Metric / Calculated Field,"Customer satisfaction percentage calculated from feedback responses. Represents the rate of satisfied customers by dividing positive/happy feedback responses by total feedback responses and multiplying by 100. Specifically calculated as Happy responses divided by (Happy + Sad responses), multiplied by 100. Used across dashboards to measure satisfaction rates among service respondents.","Mobile Satisfaction %, Customer Satisfaction %, Member Satisfaction Rate, Member Satisfaction %, Mental Health Satisfaction %, Bot satisfaction rate, Monthly Satisfaction %, Customer Satisfaction Percentage, Mean Satisfaction, Customer Satisfaction Rate, Customer Satisfaction Score, Customer Satisfaction, MSAT"
+Feedback Given,Metric,Total count of sessions where users provided feedback or satisfaction ratings,
+Care Dashboard Metrics,Category,"Collection of customer service and support metrics including sessions, agent handovers, and service tickets",MHD Metrics
+Intent wise Tickets Creation %,Category,"Percentage breakdown of ticket creation across different service intent categories, showing the distribution of customer service requests by business area",
+Profile,Metric / Calculated Field,"Percentage of profile-related tickets escalated to first-line defense, calculated as (profile FD tickets / total profile tickets) * 100",
+Wealth,Metric / Calculated Field,"Percentage of wealth management tickets escalated to first-line defense, calculated as (wealth FD tickets / total wealth tickets) * 100",
+SB Service Tickets,Metric / Calculated Field,"Percentage of Soundbox service tickets escalated to first-line defense, calculated as (soundbox FD tickets / total soundbox tickets) * 100",Soundbox Service Tickets
+SB Agent Handover,Metric / Calculated Field,"Percentage of Soundbox tickets that required handover from AI bot to human agent, calculated as AI bot forwarded tickets divided by total Soundbox tickets",Soundbox Agent Handover
+FD Tickets,Metric,"First deflection tickets or forwarded tickets that require escalation or additional handling beyond initial automated response. These are tickets escalated to human agents, often referred to as Front Desk tickets. The term encompasses tickets that cannot be resolved through initial automated systems and need human intervention or further escalation. Represents the number of tickets escalated to human agents across different dashboard contexts.","First Defense Tickets, First Desk Tickets, First Deflection Tickets, Forwarded Tickets, FD, Front Desk, Front Desk Tickets"
+FetchMerchantDetails,Metric,Total count of sessions where merchant details were fetched or retrieved from the system.,
+AgentHandover,Metric,Total number of attempts where customer interactions were transferred or handed over to human agents.,
+RaiseServiceRequest,Metric,Total number of attempts to raise or create service requests in the system.,
+SettlementAndPaymentInfo,Metric,Total number of attempts to retrieve settlement and payment information for merchants.,
+CheckSoundboxHardware,Metric,Total number of attempts to check or validate Soundbox hardware status.,
+TestBroadcast,Metric,Total number of attempts to perform test broadcasts on the system.,
+Function Call Metrics,Category,"Collection of metrics tracking various customer service function calls including merchant details retrieval, agent handovers, service requests, payment info, hardware checks, and test broadcasts.",
+Function Calls,Category,"Collection of various customer service function calls including merchant details fetching, agent handovers, service requests, payment information retrieval, hardware checks, and test broadcasts.",
+Total Tickets,Metric,Complete count of customer service tickets created for each intent category,
+AI Bot,Category,Automated customer service system that handles initial ticket processing before potential handover to human agents,AIBot
+# Language Change,Metric,Total count of language transitions aggregated by summing individual transition counts from the language transition data.,Language Change
+Language Change,Synonym,# Language Change,
+Language Transition,Category,"The specific type or category of language change being tracked, used as a grouping dimension for analyzing transition patterns.",
+Transition Count,Metric,Individual count of language transition events that are aggregated to calculate total language changes.,
+Bot MSAT %,Metric / Calculated Field,"Customer satisfaction percentage for bot interactions, calculated as (Total bot happy responses * 100) divided by Total bot feedback given, representing the percentage of positive feedback for bot customer service interactions","Bot Satisfaction Percentage, also referred as Bot MSAT, Bot MSAT Percentage, Bot Satisfaction Rate, Bot Satisfaction Percentage, Bot Merchant Satisfaction Percentage"
+bot_happy,Metric,Total count of positive/satisfied feedback responses received from bot interactions,"Bot Positive Feedback, Positive Bot Feedback"
+bot_feedback_given,Metric,Total count of sessions where users provided feedback to the bot,"Total Bot Feedback, Bot Total Feedback"
+Bot Feedback Given,Metric,Total count of bot sessions where users provided feedback,
+Bot Happy,Metric,Total count of positive/satisfied feedback responses from bot users,
+Bot Satisfaction Metrics,Category,Collection of metrics measuring user satisfaction and engagement with bot services including feedback rates and satisfaction percentages,
+fd_tickets,Metric,Total count of tickets processed by the system,Freshdesk tickets
+agent_feedback_given,Metric,"Total count of feedback instances provided by agents, used as denominator for satisfaction calculations",
+agent_happy,Metric,Count of positive or satisfied feedback responses from agents indicating happy customer interactions.,Positive Agent Feedback
+active_sessions,Metric,Total count of active user sessions with the bot system,
+Intent wise Ticket,Category,Customer service tickets categorized by customer intent or purpose of the interaction,Ticket by Intent
+Intent wise Ticket Only,Category,Category of customer satisfaction metrics focused specifically on ticket-based interactions analyzed by customer intent.,
+Service Feedback,Metric,Total count of feedback responses provided by customers on service tickets.,"Customer Feedback, Service Responses"
+Service Happy,Metric,Total count of positive or satisfied feedback responses from customers regarding service quality.,"Positive Feedback, Satisfied Responses"
+Service Feedback Given,Metric,Total count of customer feedback responses received for service tickets,
+Service Ticket Metrics,Category,Collection of metrics related to customer service performance including feedback rates and satisfaction scores,
+CTA Displayed #,Metric,Total count of unique users who were shown a Call-to-Action (CTA) during the specified time period.,"CTA Shown, Users Shown"
+CTA Clicked #,Metric,Total count of unique users who clicked on a Call-to-Action (CTA) during the specified time period.,"CTA Engaged, Users Clicked"
+CTR %,Metric / Calculated Field,"Click-through rate calculated as (CTA Clicked # × 100) ÷ CTA Displayed #, representing the percentage of users who clicked after being shown a CTA.","Click-Through Rate, Bot CTR, Click-through rate"
+CTA,Category,"Call-to-Action elements displayed to users, representing interactive prompts designed to encourage specific user actions.",Call-to-Action
+Bot CTR,Category,"Bot Click-Through Rate metrics measuring user engagement with automated chat interface elements including CTA displays, clicks, and conversion rates",Chatbot Performance Metrics
+Week of the year,Metric,"The week number within a calendar year, used as a time dimension for tracking weekly performance trends",
+IVR Contact Ratio (%),Metric / Calculated Field,"Percentage of total IVR calls relative to the contact ratio base count, calculated as (Total IVR Calls * 100) / Contact Ratio Base Count",
+Bot Contact Ratio(%),Metric / Calculated Field,"Percentage of bot tickets relative to the contact ratio base count, calculated as (Total Bot Tickets * 100) / Contact Ratio Base Count",
+Bot MSAT(%),Metric / Calculated Field,"Bot satisfaction percentage based on positive responses, calculated as (Bot Positive Responses / Total Bot Responses) * 100","Bot Satisfaction Score, MSAT also referred as Customer Satisfaction, Bot Satisfaction Rate"
+Bot to MHD Passthrough(%),Metric / Calculated Field,"Percentage of bot interactions that were escalated to MHD agents, calculated as (Agent Ticket Count Bot * 100) / Bot Active Ticket Count","Bot to MHD Escalation Rate, Bot MHD Escalation Rate"
+Feedback % - MHD Agent,Metric / Calculated Field,"Percentage of MHD agent interactions that received customer feedback, calculated as (Agent Tickets Feedback Received * 100) / Agent Tickets For Response",MHD Agent Feedback Rate
+Agent Ticket Count - Bot (MHD & Service),Metric / Calculated Field,"Total number of tickets escalated from bot to both MHD agents and service department, calculated as Agent Ticket Count Bot + Bot to Service Ticket Count","Total Agent Escalations, Total Bot Escalations"
+Agent Ticket Count - Bot MHD,Metric,Total number of tickets escalated from bot interactions specifically to MHD agents,"Bot MHD Escalations, Bot to MHD Tickets, MHD Escalations"
+Agent Ticket Count- Bot Service,Metric,Total number of tickets escalated from bot interactions specifically to Service team agents,"Service Escalations, Bot Service Escalations, Bot to Service Tickets"
+MSAT(%) MHD Agent,Metric / Calculated Field,"MHD Agent satisfaction percentage based on positive feedback, calculated as (Agent Tickets MSAT Received / Agent Tickets Feedback Received) * 100","MSAT also referred as Customer Satisfaction, MHD Agent Satisfaction Rate, MHD Agent Satisfaction Score"
+Passthrough,Category,"Process of escalating or transferring tickets from one service channel to another (e.g., from Bot to Agent)","Escalation, Transfer, Escalation Rate"
+Feedback Percentage,Category,Metrics tracking the percentage of service interactions that received customer feedback responses,Response Rate
+Month of the year,Dimension,Time dimension representing the calendar month when customer service activities occurred,"Monthly Period, Month"
+Passthrough Rate,Category,"Metrics measuring the percentage of interactions escalated from one service channel to another (Bot to MHD, Bot to Service)",Escalation Rate
+AVG Eval Score %,Metric / Calculated Field,Average evaluation score converted to percentage. Calculated as the average of avg_eval_score multiplied by 100.,
+Bot Containment %,Metric / Calculated Field,"Percentage of customer sessions handled by bot without escalation to human agents. Calculated as (Total Active Sessions - FD Tickets) divided by Total Active Sessions, multiplied by 100.",
+Bad Eval Share %,Metric / Calculated Field,"Percentage of evaluations marked as bad quality. Calculated as Bad Evaluation Scores divided by (Good + Bad Evaluation Scores), multiplied by 100.",Bad Evaluation Rate
+Sad,Metric,Count of negative customer feedback responses indicating dissatisfaction.,"Negative Feedback, Negative Responses"
+Eval Score Good,Metric,Number of evaluations classified as good quality.,Good Evaluations
+Eval Score Bad,Metric,Number of evaluations classified as bad quality.,Bad Evaluations
+Quality Metrics,Category,"Collection of performance indicators measuring service quality including evaluation scores, bot containment, customer satisfaction, and evaluation quality distribution.",Service Quality KPIs
+Analyzed %,Metric / Calculated Field,"Percentage of active sessions that progressed to analysis phase, calculated as (Analyzed Sessions / Active Sessions) * 100",Analyzed Percentage
+Eval Completed %,Metric / Calculated Field,"Percentage of active sessions where evaluation was completed, calculated as (Total Evaluations Completed / Total Active Sessions) * 100",Evaluation Completion Rate
+Analyzed Sessions,Metric,Total count of sessions that have been processed through the analysis phase of the MHD evaluation system.,
+Eval Completed,Metric,Total count of sessions that have successfully completed the entire wealth evaluation process,
+CST Entity,Dimension,"Entity type dimension for filtering data, includes p4bsoundbox and p4bAIBot",
+positive_user_sentiment,Metric,Count of users expressing positive sentiment towards the evaluated system or service,
+negative_user_sentiment,Metric,Count of users expressing negative sentiment towards the evaluated system or service,
+neutral_user_sentiment,Metric,Count of users expressing neutral sentiment towards the evaluated system or service,
+Positive Change %,Metric / Calculated Field,"Percentage of positive user sentiment out of total user sentiment, calculated as sum of positive user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+Negative Change %,Metric / Calculated Field,"Percentage of negative user sentiment out of total user sentiment, calculated as sum of negative user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+Neutral Change %,Metric / Calculated Field,"Percentage of neutral user sentiment out of total user sentiment, calculated as sum of neutral user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+User Sentiment Analysis,Category,"Collection of metrics measuring and analyzing user sentiment distribution including positive, negative, and neutral sentiment percentages",Final User Sentiment Analysis
+Final User Sentiment,Category,"Collection of metrics measuring different types of user sentiment changes including neutral, positive, and negative changes.",
+Neutral Change #,Metric,"Sum of neutral user sentiment changes aggregated by day, representing users whose sentiment remained unchanged or neutral.",Neutral Change Count
+Positive Change #,Metric,"Sum of positive user sentiment changes aggregated by day, representing users whose sentiment improved or became more favorable.",Positive Change Count
+Negative Change #,Metric,"Sum of negative user sentiment changes aggregated by day, representing users whose sentiment declined or became less favorable.",Negative Change Count
+User Sentiment,Category,"Collection of metrics measuring changes in user attitudes and feelings, including Positive Change #, Negative Change #, and Neutral Change #.",
+MHD Eval,Category,"Evaluation dashboard category containing quality assessment metrics for service interactions, including empathy, resolution, and response relevance scores","Mobile Handheld Device Evaluation, Mental Health Dashboard Evaluation"
+Bot Repetition %,Metric / Calculated Field,"Percentage of completed evaluations where the bot provided repetitive responses, calculated as (agent_response_repetition count / total eval_completed) * 100",Bot Response Repetition Rate
+Bot Failed %,Metric / Calculated Field,"Percentage of completed evaluations where the bot failed to execute function calls properly, calculated as (function_call_failed / eval_completed) * 100",Bot Function Failure Rate
+Intent Detection Failed %,Metric / Calculated Field,"Percentage of completed evaluations where the bot failed to correctly detect user intent, calculated as (intent_incoherence_count / total eval_completed) * 100",Intent Detection Failure Rate
+eval_completed,Metric,Total number of bot evaluations that were successfully completed and can be used for performance analysis,
+agent_response_repetition,Metric,Count of instances where the bot agent provided repetitive or redundant responses during evaluations,
+function_call_failed,Metric,Count of instances where the bot failed to successfully execute required function calls during evaluations,
+intent_incoherence_count,Metric,Count of instances where the bot incorrectly detected or failed to detect user intent during evaluations,
+Bot Performance Metrics,Category,"Collection of percentage-based metrics measuring different aspects of conversational bot failures including repetition, function failures, and intent detection issues",
+Avg Empathy Score (synonyms: AVG Empathy Score),Metric / Calculated Field,"Average empathy score across conversations, converted to percentage scale (0-100), measuring how well the AI demonstrates emotional understanding and appropriate responsiveness to customer emotions and concerns. This metric measures how empathetic the chatbot responses are, expressed as a percentage.",Average Empathy Score
+Avg Resolution Achieved (AVG Resolution Achieved),Metric / Calculated Field,"Average resolution achievement score across all evaluations/sessions, converted to percentage format by multiplying the base average by 100. Measures how effectively customer issues are resolved and represents the average resolution achievement rate across all assessments.","Average Resolution Achieved, Average Resolution Achievement Rate"
+Avg Response Relevance (also: AVG Response Relevance),Metric / Calculated Field,"Average response relevance score across all evaluations, converted to percentage format by multiplying the base average by 100. Measures how relevant and appropriate bot responses are to user queries and customer inquiries.","Avg Response Relevance Score, Average Response Relevance, Average Response Relevance Score"
+Soundbox Evaluation,Category,"Evaluation system for soundbox and AI bot customer service interactions, tracking quality metrics across multiple performance dimensions.",
+Happy Feedback,Metric,Total count of positive customer feedback responses received during sessions.,
+Sad Feedback,Metric,Total count of negative customer feedback responses received during sessions.,
+Feedback Rate %,Metric / Calculated Field,"Percentage of active sessions that resulted in customer feedback, calculated as (Happy Feedback + Sad Feedback) * 100 / Active Sessions.",
+Agent Handover %,Metric / Calculated Field,"Percentage of active sessions that were escalated to human agents, calculated as Agent Tickets * 100 / Active Sessions","Agent Handover Rate, AH %"
+Service Ticket %,Metric / Calculated Field,"Percentage of active sessions that resulted in service ticket creation, calculated as Service Tickets * 100 / Active Sessions",
+Final User Sentiment #,Category,"A grouping of metrics that tracks the count of users experiencing different types of sentiment changes, including neutral, positive, and negative changes.",
+avg_empathy_score,Metric,"Base empathy score metric used in calculations, measuring empathy levels in customer service interactions before percentage conversion.",
+avg_resolution_achieved,Metric,"Base resolution achieved metric from the database, representing raw resolution effectiveness scores before percentage conversion",
+avg_response_relevance_score,Metric,"Base response relevance score metric from the soundbox evaluation data, used to calculate the average response relevance percentage",
+MHD Evaluation Metrics,Category,"Collection of customer service evaluation metrics including empathy scores, resolution achievement, and response relevance used to assess service quality.",MHD Eval
+AVG Eval Score,Metric / Calculated Field,"Average evaluation score across all sessions, expressed as percentage (Average of eval scores * 100)",Average Evaluation Score
++ve Sentiment Change %,Metric / Calculated Field,Percentage of positive user sentiment changes calculated as (Positive sentiment count / Total sentiment changes) * 100,"Positive Sentiment Change %, Positive Sentiment Change Rate"
+AVG Topic Drift,Metric / Calculated Field,"Average topic drift score measuring how much conversations deviate from intended topics, expressed as percentage (Average of topic drift * 100)",Average Topic Drift Score
+LLM L1 Metrics,Category,"Primary level metrics for Large Language Model evaluation including performance, quality, satisfaction, and failure indicators",LLM Level 1 Metrics
+MHD Evaluation,Category,Mental Health Detection evaluation process metrics including session analysis and completion tracking.,MHD Eval
+MHD Overall Eval Summary,Category,"Summary metrics tracking the evaluation workflow including Active Sessions, Analyzed Sessions, Eval Completed, and their completion percentages",MHD Evaluation Metrics
+Avg Empathy Score (synonyms: AVG Empathy Score),Metric / Calculated Field,"Average empathy score across conversations, converted to percentage scale (0-100), measuring how well the AI demonstrates emotional understanding and appropriate responsiveness to customer emotions and concerns. This metric measures how empathetic the chatbot responses are, expressed as a percentage.",Average Empathy Score
+Avg Resolution Achieved (AVG Resolution Achieved),Metric / Calculated Field,"Average resolution achievement score across all evaluations/sessions, converted to percentage format by multiplying the base average by 100. Measures how effectively customer issues are resolved and represents the average resolution achievement rate across all assessments.","Average Resolution Achieved, Average Resolution Achievement Rate"
+Avg Response Relevance,Metric / Calculated Field,"Average response relevance score across all evaluations, converted to percentage format by multiplying the base average by 100. Measures how relevant and appropriate bot responses are to user queries and customer inquiries.","Average Response Relevance, Avg Response Relevance Score, Average Response Relevance Score"

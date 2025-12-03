@@ -1,0 +1,2345 @@
+chart_id,chart_name,sql_query,dashboard_id,dashboard_title,chart_type,dataset_id,dataset_name,database_name,time_range
+188,QS_SB Pendency_final_stage_eventtime,"WITH subquery AS (
+  SELECT
+    id,
+    CASE status
+      WHEN '129' THEN 'Pending for Callback'
+      WHEN '130' THEN 'CallAttempted'
+      WHEN '145' THEN 'OTHER ISSUES'
+      WHEN '152' THEN 'Parked to Merchant Loan IO team'
+      ELSE status
+    END AS status,
+    CASE
+      WHEN assign__c IN (
+        'Merchant Setup',
+        'Gold Investment Plan',
+        'MHD-Riskops-QR',
+        'MHD Offline Chargeback cases'
+      ) THEN 'Merchant Setup/Risk_ops/Chargeback/Gold Investment'
+      WHEN status = 'Details pending from Merchant' THEN 'Merchant Dependency'
+      WHEN status IN (
+        'Pending with Other Department',
+        'Responded from Department'
+      ) THEN 'Pending with other Department'
+      WHEN status = 'Re-Open' THEN 'Re-Open'
+      WHEN status = 'Merchant Response Received' THEN 'Merchant Response Received'
+      WHEN status = 'Pending for Resolution'
+           AND issue_L1 IN ('Payout & Settlement', 'Merchant Profile')
+           AND assign__c = 'Confirmation Pending'
+      THEN 'DIY'
+      WHEN status = 'Pending for Resolution'
+           AND issue_L1 = 'Business Loan'
+           AND assign__c = 'Confirmation Pending'
+      THEN 'Pending for Loan Disbursement'
+      WHEN assign__c = 'P2P - Assigned to Retention'
+           AND fsm_status__c IS NULL
+      THEN 'Assign to retention'
+      WHEN status IN (
+        'Callback 1st Attempt Done',
+        'Callback 2nd Attempt Done',
+        'Callback 3rd Attempt Done',
+        'CallAttempted',
+        'Pending for Callback',
+        'Merchant Uncontactable',
+        'Language Barrier',
+        'Callback Required',
+        'Callback needed post getting exact solution',
+        'Bank Account Change - Details Pending'
+      )
+      THEN CASE
+        WHEN fsm_status__c IS NULL
+             OR fsm_status__c IN (
+               'Resolved by Service Agent',
+               'Assigned to Service Agent',
+               'OTHER ISSUES',
+               'Pending with Service Team',
+               'Pending with Courier Team'
+             )
+        THEN 'Call Back Cases'
+        WHEN fsm_status__c = 'Merchant Uncontactable'
+        THEN 'NSTP Calling'
+        ELSE 'Call Back Cases'
+      END
+      WHEN status = 'Pending With Agent'
+           AND issue_L3 = 'Paytm handle disabled_FSE visit required'
+      THEN 'KYC Update'
+      WHEN service_request_type__c = 'KYC Update'
+           AND status IN (
+             'Pending with Service Team',
+             'Assigned to Service Agent',
+             '145',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'KYC Update'
+      WHEN service_request_type__c = 'MCC Update'
+           AND status IN (
+             'Pending with Service Team',
+             'Assigned to Service Agent',
+             '145',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'MCC Update'
+      WHEN status IN (
+        'Assigned to Service Agent',
+        '145',
+        'Pending with Service Team'
+      )
+           AND fsm_status__c IN (
+             'OTHER ISSUES',
+             'Assigned to Service Agent',
+             'Merchant Uncontactable',
+             'Pending with Service Team',
+             'Resolved by Service Agent',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'Pending with Service'
+      WHEN status IN (
+        'Pickup Done by Courier',
+        'Reverse Pickup Under Process',
+        'New Soundbox mapped & shipped',
+        'Pending with Courier Team'
+      )
+           AND fsm_status__c IN (
+             'Pending with Courier Team',
+             'Pending for Self-ship',
+             'Resolved by Service Agent',
+             'Merchant Uncontactable',
+             'Pending with Service Team',
+             'Assigned to Service Agent'
+           )
+      THEN 'Pending with Courier'
+      WHEN status IN ('NSS', 'Pending for Self-ship')
+           AND fsm_status__c IN (
+             'Pending for Self-ship',
+             'Pending with Courier Team',
+             'Resolved by Service Agent'
+           )
+      THEN 'NSS'
+      WHEN coalesce(assign__c, 'NULL') IN (
+        '', 'MHD Reopen', 'P2P L1 Queue', 'P2P L2 Queue', 'P2P - Regional L2',
+        'P2P - Language Barrier', 'SB Service Queue', 'MHD Offline Call Back Queue',
+        'NULL', 'P2P - Assigned to Retention', 'CHD_Admin', 'Bot CHD Admin',
+        'Uncontactable Courier cases at L2', 'Profile change request- L3',
+        'Risk - Outcalling', 'Smart retail L2', 'Add on services', 'Smart Retail',
+        'Smart Retail - Non Voice', 'Smart retail - Assigned to Retention',
+        'Pending for change', 'SNB Bot - Premium', 'Social Retention Queue',
+        'Parked to FSM', 'Force Closed', 'Logistics', 'MHD_Service Uncontactable',
+        'P2P to External L3 Desk', 'Super Merchant', 'Re-Parked to FSM'
+      )
+           AND status IN ('Open', 'Assign to L2 queue')
+      THEN 'Fresh Cases'
+      WHEN assign__c IN (
+        'P2P L3 Queue',
+        'MHD IO cases',
+        'Payout and Settlement L3 team',
+        'Insurance Business',
+        'Business Loan L3 Team',
+        'L3 Out calling Queue',
+        'Merchant Termination',
+        'MHD FSE/SO cases',
+        'UPHD_Admin',
+        'Urgent_SB',
+        'MHD MCA Grievance cases',
+        'UPHD_Midmarket',
+        'Smart retail L3',
+        'PHD Email L3',
+        'Uncontactable Courier cases at L3',
+        'Smart Retail Email L3',
+        'Bank_POS',
+        'Urgent_POS',
+        'Corporate HD',
+        'Termination'
+      )
+           AND status NOT IN (
+             'Pending with Other Department',
+             'Re-Open',
+             'Details pending from Merchant',
+             'Responded from Department',
+             'Merchant Response Received',
+             'Pending With Agent'
+           )
+      THEN 'L3 Desk'
+      WHEN issue_L1 = 'CHD- Account Termination Request'
+           AND status = 'Assign to termination'
+      THEN 'L3 Desk'
+      WHEN assign__c = 'MHD Offline Call Back Queue'
+      THEN 'Call Back Cases'
+      WHEN (
+             assign__c = 'Logistics'
+             AND fsm_status__c IS NULL
+           )
+           OR status IN (
+             'Callback 1st Attempt Done',
+             'Callback 2nd Attempt Done',
+             'Callback 3rd Attempt Done',
+             'CallAttempted',
+             'Pending for Callback',
+             'Merchant Uncontactable',
+             'Language Barrier',
+             'Callback Required'
+           )
+      THEN 'Call Back Cases'
+      WHEN assign__c = 'MHD Offline Call Back Queue_SR'
+           AND status IS NOT NULL
+      THEN 'Call Back Cases'
+      WHEN assign__c = 'Soundbox SIM Inventory Team'
+           AND status = 'Pending for Resolution'
+      THEN 'Sim_Inventory_Team'
+      WHEN assign__c = 'P2P - Assigned to Retention'
+           AND status = 'Assign to retention'
+      THEN 'Assign to retention'
+      WHEN assign__c = 'MHD Collection Cases'
+      THEN 'L3 Desk'
+      ELSE 'Not_Mapped'
+    END AS substage,
+
+    -- Event_day_diff and bucket
+    date_diff(
+      'day',
+      CAST(coalesce(eventtime, lastmodifieddate) AS timestamp),
+      current_timestamp
+    ) AS Event_day_diff,
+    CASE
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 1 THEN '1 day'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 2 THEN '2 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 3 THEN '3 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 4 THEN '4 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 7 THEN '5 to 7 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 10 THEN '8 to 10 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 13 THEN '11 to 13 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 15 THEN '14 to 15 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 30 THEN '16 to 30 days'
+      ELSE '30+ days'
+    END AS days_bucket,
+
+    -- Case age and bucket
+    date_diff('day', CAST(createddate AS timestamp), current_timestamp) AS Case_age,
+    CASE
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 1 THEN '1 day'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 2 THEN '2 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 3 THEN '3 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 4 THEN '4 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 7 THEN '5 to 7 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 10 THEN '8 to 10 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 13 THEN '11 to 13 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 15 THEN '14 to 15 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 30 THEN '16 to 30 days'
+      ELSE '30+ days'
+    END AS Case_ageing_bucket,
+
+    -- L1_Map
+    CASE
+      WHEN service_request_type__c IN (
+        'EDC Replacement','EDC Deactivation','EDC_address_update','TR EDC Deactivation',
+        'EDC Upgrade','EDC SIM Replacement','EDC Training','TR EDC Replacement',
+        'International Card Activation','EDC Battery Replacement','TR EDC SIM Replacement',
+        'TR EDC Training','Plan Upgrade','EDC Charger Replacement','TR EDC_address_update',
+        'TR Plan Upgrade','TR KYC Update','SIM Activation'
+      )
+      THEN 'EDC_service'
+      WHEN status IN (
+        'Pickup Done by Courier','Pending with Service Team','Reverse Pickup Under Process',
+        'NSS','New Soundbox mapped & shipped','Assigned to Service Agent',
+        'Pending for Self-ship','145','Pending with Courier Team'
+      )
+           AND fsm_status__c IN (
+             'Pending with Courier Team','Pending with Service Team','Resolved by Service Agent',
+             'Assigned to Service Agent','Merchant Uncontactable','Pending for Self-ship','OTHER ISSUES'
+           )
+      THEN 'SERVICE_COURIER_TEAM'
+      WHEN coalesce(assign__c, 'NULL') IN (
+        'MHD Reopen','', 'P2P - Assigned to Retention','CHD_Admin','P2P L2 Queue','Bot CHD Admin',
+        'P2P - Language Barrier','P2P L1 Queue','Uncontactable Courier cases at L2',
+        'Profile change request- L3','Risk - Outcalling','Smart retail L2','Add on services',
+        'Smart Retail','Smart Retail - Non Voice','Smart retail - Assigned to Retention','Pending for change',
+        'P2P - Regional L2','SNB Bot - Premium','Social Retention Queue','SB Service Queue',
+        'Parked to FSM','Force Closed','Logistics','MHD_Service Uncontactable','P2P to External L3 Desk',
+        'Super Merchant','Re-Parked to FSM','MHD Offline Call Back Queue_SR'
+      )
+           AND status NOT IN (
+             'Assigned to Service Agent','145','Pending with Courier Team','Pending for Self-ship',
+             'New Soundbox mapped & shipped','NSS','Pickup Cancelled','Pickup Done by Courier',
+             'Resolved by Service Agent','Reverse Pickup Under Process','Unmapping Deactivation','Unmapping Replacement'
+           )
+      THEN 'L1'
+      WHEN status IN (
+        'Assigned to Service Agent','145','Pending for Self-ship','Pending with Courier Team'
+      )
+           AND fsm_status__c IS NULL
+      THEN 'L1'
+      ELSE 'L3 & Other'
+    END AS L1_Map,
+
+    -- (other fields remain the same)...
+    department_list__c,
+    issue_L1,
+    issue_L2,
+    issue_L3,
+    case_date,
+    createddate,
+    lastmodifieddate,
+    resolved_at,
+    creation_method__c,
+    customer_issue_category_l1__c,
+    customer_issue_category_l2__c,
+    customer_issue_category_l3__c,
+    created_by__c,
+    CASE origin
+      WHEN '106' THEN 'whatsapp'
+      WHEN '107' THEN 'manual_upload'
+      WHEN '112' THEN 'p4bweb'
+      WHEN '113' THEN 'call_me_back'
+      ELSE origin
+    END AS origin,
+    cust_id,
+    subject,
+    client_id__c,
+    uuid__c,
+    assign__c,
+    type,
+    fsm_status__c,
+    error_message__c,
+    cst_entity__c,
+    m_i_d,
+    service_request_type__c,
+    Tags,
+    preferred_language__c,
+    Group_id,
+    merchant_id,
+    customer_id,
+    Assgin_to_Retention_desk_Timestamp,
+    Assgin_to_L2_Queue_Timestamp,
+    Assgin_to_L3_Queue_Timestamp,
+    Transferred_to_Lending_Helpdesk_timestamp,
+    Parked_to_Business_Loan_L3_team_timestamp,
+    Business_Loan_L3_Team_timestamp,
+    Merchant_Response_Received,
+    Re_Open,
+    Details_pending_from_Merchant,
+    P2P_L2_Timestamp,
+    P2P_L3_Timestamp,
+    P2P_L1_Timestamp,
+    P2P_Assigned_to_Retention,
+    Merchant_Uncontactable,
+    Pending_with_Service_Team,
+    eventtime,
+    team_2            AS Team,
+    final_team_pending AS team_others,
+    month_text,
+    qr_sb_flag,
+    concat('#', device_serial_number__c) AS device_serial_no,
+    actorname,
+    actoremail,
+    category_value,
+    address_line_1__c,
+    address_line_2__c,
+    district__c,
+    postal_code__c,
+    state__c,
+    Final_Timestamp
+  FROM team_qr_merchant_helpdesk.pendency_final_table
+  WHERE id NOT IN (
+    '5101120771','5083324450', /* … and the rest of your excluded IDs … */
+    '5109837557'
+  )
+)
+
+SELECT
+  *,
+  CASE
+    WHEN substage IN (
+      'Re-Open','Merchant Response Received','Call Back Cases',
+      'Assign to retention','MHD Call Back','MHD Clean UP','L3 Desk',
+      'DIY','Fresh Cases','KYC Calling'
+    ) THEN 'MHD'
+    WHEN substage IN (
+      'Pending with Courier','Pending with Service','NSTP Calling',
+      'NSS','KYC Update','MCC Update'
+    ) THEN 'Service Related'
+    WHEN substage IN (
+      'Pending with other Department','Pending for Loan Disbursement',
+      'Merchant Setup/Risk_ops/Chargeback/Gold Investment',
+      'Sim_Inventory_Team'
+    ) THEN 'Internal Stakeholders'
+    WHEN substage = 'Merchant Dependency' THEN 'Merchant Dependency'
+    ELSE 'MHD'
+  END AS final_stage
+FROM subquery;
+",55,Care Dashboard-MHD,pivot_table_v2,44,QR_SB_Pendecy_TBL,Trino,
+188,QS_SB Pendency_final_stage_eventtime,"WITH subquery AS (
+  SELECT
+    id,
+    CASE status
+      WHEN '129' THEN 'Pending for Callback'
+      WHEN '130' THEN 'CallAttempted'
+      WHEN '145' THEN 'OTHER ISSUES'
+      WHEN '152' THEN 'Parked to Merchant Loan IO team'
+      ELSE status
+    END AS status,
+    CASE
+      WHEN assign__c IN (
+        'Merchant Setup',
+        'Gold Investment Plan',
+        'MHD-Riskops-QR',
+        'MHD Offline Chargeback cases'
+      ) THEN 'Merchant Setup/Risk_ops/Chargeback/Gold Investment'
+      WHEN status = 'Details pending from Merchant' THEN 'Merchant Dependency'
+      WHEN status IN (
+        'Pending with Other Department',
+        'Responded from Department'
+      ) THEN 'Pending with other Department'
+      WHEN status = 'Re-Open' THEN 'Re-Open'
+      WHEN status = 'Merchant Response Received' THEN 'Merchant Response Received'
+      WHEN status = 'Pending for Resolution'
+           AND issue_L1 IN ('Payout & Settlement', 'Merchant Profile')
+           AND assign__c = 'Confirmation Pending'
+      THEN 'DIY'
+      WHEN status = 'Pending for Resolution'
+           AND issue_L1 = 'Business Loan'
+           AND assign__c = 'Confirmation Pending'
+      THEN 'Pending for Loan Disbursement'
+      WHEN assign__c = 'P2P - Assigned to Retention'
+           AND fsm_status__c IS NULL
+      THEN 'Assign to retention'
+      WHEN status IN (
+        'Callback 1st Attempt Done',
+        'Callback 2nd Attempt Done',
+        'Callback 3rd Attempt Done',
+        'CallAttempted',
+        'Pending for Callback',
+        'Merchant Uncontactable',
+        'Language Barrier',
+        'Callback Required',
+        'Callback needed post getting exact solution',
+        'Bank Account Change - Details Pending'
+      )
+      THEN CASE
+        WHEN fsm_status__c IS NULL
+             OR fsm_status__c IN (
+               'Resolved by Service Agent',
+               'Assigned to Service Agent',
+               'OTHER ISSUES',
+               'Pending with Service Team',
+               'Pending with Courier Team'
+             )
+        THEN 'Call Back Cases'
+        WHEN fsm_status__c = 'Merchant Uncontactable'
+        THEN 'NSTP Calling'
+        ELSE 'Call Back Cases'
+      END
+      WHEN status = 'Pending With Agent'
+           AND issue_L3 = 'Paytm handle disabled_FSE visit required'
+      THEN 'KYC Update'
+      WHEN service_request_type__c = 'KYC Update'
+           AND status IN (
+             'Pending with Service Team',
+             'Assigned to Service Agent',
+             '145',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'KYC Update'
+      WHEN service_request_type__c = 'MCC Update'
+           AND status IN (
+             'Pending with Service Team',
+             'Assigned to Service Agent',
+             '145',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'MCC Update'
+      WHEN status IN (
+        'Assigned to Service Agent',
+        '145',
+        'Pending with Service Team'
+      )
+           AND fsm_status__c IN (
+             'OTHER ISSUES',
+             'Assigned to Service Agent',
+             'Merchant Uncontactable',
+             'Pending with Service Team',
+             'Resolved by Service Agent',
+             'Pending for Self-ship',
+             'Pending with Courier Team'
+           )
+      THEN 'Pending with Service'
+      WHEN status IN (
+        'Pickup Done by Courier',
+        'Reverse Pickup Under Process',
+        'New Soundbox mapped & shipped',
+        'Pending with Courier Team'
+      )
+           AND fsm_status__c IN (
+             'Pending with Courier Team',
+             'Pending for Self-ship',
+             'Resolved by Service Agent',
+             'Merchant Uncontactable',
+             'Pending with Service Team',
+             'Assigned to Service Agent'
+           )
+      THEN 'Pending with Courier'
+      WHEN status IN ('NSS', 'Pending for Self-ship')
+           AND fsm_status__c IN (
+             'Pending for Self-ship',
+             'Pending with Courier Team',
+             'Resolved by Service Agent'
+           )
+      THEN 'NSS'
+      WHEN coalesce(assign__c, 'NULL') IN (
+        '', 'MHD Reopen', 'P2P L1 Queue', 'P2P L2 Queue', 'P2P - Regional L2',
+        'P2P - Language Barrier', 'SB Service Queue', 'MHD Offline Call Back Queue',
+        'NULL', 'P2P - Assigned to Retention', 'CHD_Admin', 'Bot CHD Admin',
+        'Uncontactable Courier cases at L2', 'Profile change request- L3',
+        'Risk - Outcalling', 'Smart retail L2', 'Add on services', 'Smart Retail',
+        'Smart Retail - Non Voice', 'Smart retail - Assigned to Retention',
+        'Pending for change', 'SNB Bot - Premium', 'Social Retention Queue',
+        'Parked to FSM', 'Force Closed', 'Logistics', 'MHD_Service Uncontactable',
+        'P2P to External L3 Desk', 'Super Merchant', 'Re-Parked to FSM'
+      )
+           AND status IN ('Open', 'Assign to L2 queue')
+      THEN 'Fresh Cases'
+      WHEN assign__c IN (
+        'P2P L3 Queue',
+        'MHD IO cases',
+        'Payout and Settlement L3 team',
+        'Insurance Business',
+        'Business Loan L3 Team',
+        'L3 Out calling Queue',
+        'Merchant Termination',
+        'MHD FSE/SO cases',
+        'UPHD_Admin',
+        'Urgent_SB',
+        'MHD MCA Grievance cases',
+        'UPHD_Midmarket',
+        'Smart retail L3',
+        'PHD Email L3',
+        'Uncontactable Courier cases at L3',
+        'Smart Retail Email L3',
+        'Bank_POS',
+        'Urgent_POS',
+        'Corporate HD',
+        'Termination'
+      )
+           AND status NOT IN (
+             'Pending with Other Department',
+             'Re-Open',
+             'Details pending from Merchant',
+             'Responded from Department',
+             'Merchant Response Received',
+             'Pending With Agent'
+           )
+      THEN 'L3 Desk'
+      WHEN issue_L1 = 'CHD- Account Termination Request'
+           AND status = 'Assign to termination'
+      THEN 'L3 Desk'
+      WHEN assign__c = 'MHD Offline Call Back Queue'
+      THEN 'Call Back Cases'
+      WHEN (
+             assign__c = 'Logistics'
+             AND fsm_status__c IS NULL
+           )
+           OR status IN (
+             'Callback 1st Attempt Done',
+             'Callback 2nd Attempt Done',
+             'Callback 3rd Attempt Done',
+             'CallAttempted',
+             'Pending for Callback',
+             'Merchant Uncontactable',
+             'Language Barrier',
+             'Callback Required'
+           )
+      THEN 'Call Back Cases'
+      WHEN assign__c = 'MHD Offline Call Back Queue_SR'
+           AND status IS NOT NULL
+      THEN 'Call Back Cases'
+      WHEN assign__c = 'Soundbox SIM Inventory Team'
+           AND status = 'Pending for Resolution'
+      THEN 'Sim_Inventory_Team'
+      WHEN assign__c = 'P2P - Assigned to Retention'
+           AND status = 'Assign to retention'
+      THEN 'Assign to retention'
+      WHEN assign__c = 'MHD Collection Cases'
+      THEN 'L3 Desk'
+      ELSE 'Not_Mapped'
+    END AS substage,
+
+    -- Event_day_diff and bucket
+    date_diff(
+      'day',
+      CAST(coalesce(eventtime, lastmodifieddate) AS timestamp),
+      current_timestamp
+    ) AS Event_day_diff,
+    CASE
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 1 THEN '1 day'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 2 THEN '2 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 3 THEN '3 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 4 THEN '4 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 7 THEN '5 to 7 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 10 THEN '8 to 10 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 13 THEN '11 to 13 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 15 THEN '14 to 15 days'
+      WHEN date_diff('day', CAST(coalesce(eventtime, lastmodifieddate) AS timestamp), current_timestamp) <= 30 THEN '16 to 30 days'
+      ELSE '30+ days'
+    END AS days_bucket,
+
+    -- Case age and bucket
+    date_diff('day', CAST(createddate AS timestamp), current_timestamp) AS Case_age,
+    CASE
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 1 THEN '1 day'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 2 THEN '2 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 3 THEN '3 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 4 THEN '4 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 7 THEN '5 to 7 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 10 THEN '8 to 10 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 13 THEN '11 to 13 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 15 THEN '14 to 15 days'
+      WHEN date_diff('day', CAST(createddate AS timestamp), current_timestamp) <= 30 THEN '16 to 30 days'
+      ELSE '30+ days'
+    END AS Case_ageing_bucket,
+
+    -- L1_Map
+    CASE
+      WHEN service_request_type__c IN (
+        'EDC Replacement','EDC Deactivation','EDC_address_update','TR EDC Deactivation',
+        'EDC Upgrade','EDC SIM Replacement','EDC Training','TR EDC Replacement',
+        'International Card Activation','EDC Battery Replacement','TR EDC SIM Replacement',
+        'TR EDC Training','Plan Upgrade','EDC Charger Replacement','TR EDC_address_update',
+        'TR Plan Upgrade','TR KYC Update','SIM Activation'
+      )
+      THEN 'EDC_service'
+      WHEN status IN (
+        'Pickup Done by Courier','Pending with Service Team','Reverse Pickup Under Process',
+        'NSS','New Soundbox mapped & shipped','Assigned to Service Agent',
+        'Pending for Self-ship','145','Pending with Courier Team'
+      )
+           AND fsm_status__c IN (
+             'Pending with Courier Team','Pending with Service Team','Resolved by Service Agent',
+             'Assigned to Service Agent','Merchant Uncontactable','Pending for Self-ship','OTHER ISSUES'
+           )
+      THEN 'SERVICE_COURIER_TEAM'
+      WHEN coalesce(assign__c, 'NULL') IN (
+        'MHD Reopen','', 'P2P - Assigned to Retention','CHD_Admin','P2P L2 Queue','Bot CHD Admin',
+        'P2P - Language Barrier','P2P L1 Queue','Uncontactable Courier cases at L2',
+        'Profile change request- L3','Risk - Outcalling','Smart retail L2','Add on services',
+        'Smart Retail','Smart Retail - Non Voice','Smart retail - Assigned to Retention','Pending for change',
+        'P2P - Regional L2','SNB Bot - Premium','Social Retention Queue','SB Service Queue',
+        'Parked to FSM','Force Closed','Logistics','MHD_Service Uncontactable','P2P to External L3 Desk',
+        'Super Merchant','Re-Parked to FSM','MHD Offline Call Back Queue_SR'
+      )
+           AND status NOT IN (
+             'Assigned to Service Agent','145','Pending with Courier Team','Pending for Self-ship',
+             'New Soundbox mapped & shipped','NSS','Pickup Cancelled','Pickup Done by Courier',
+             'Resolved by Service Agent','Reverse Pickup Under Process','Unmapping Deactivation','Unmapping Replacement'
+           )
+      THEN 'L1'
+      WHEN status IN (
+        'Assigned to Service Agent','145','Pending for Self-ship','Pending with Courier Team'
+      )
+           AND fsm_status__c IS NULL
+      THEN 'L1'
+      ELSE 'L3 & Other'
+    END AS L1_Map,
+
+    -- (other fields remain the same)...
+    department_list__c,
+    issue_L1,
+    issue_L2,
+    issue_L3,
+    case_date,
+    createddate,
+    lastmodifieddate,
+    resolved_at,
+    creation_method__c,
+    customer_issue_category_l1__c,
+    customer_issue_category_l2__c,
+    customer_issue_category_l3__c,
+    created_by__c,
+    CASE origin
+      WHEN '106' THEN 'whatsapp'
+      WHEN '107' THEN 'manual_upload'
+      WHEN '112' THEN 'p4bweb'
+      WHEN '113' THEN 'call_me_back'
+      ELSE origin
+    END AS origin,
+    cust_id,
+    subject,
+    client_id__c,
+    uuid__c,
+    assign__c,
+    type,
+    fsm_status__c,
+    error_message__c,
+    cst_entity__c,
+    m_i_d,
+    service_request_type__c,
+    Tags,
+    preferred_language__c,
+    Group_id,
+    merchant_id,
+    customer_id,
+    Assgin_to_Retention_desk_Timestamp,
+    Assgin_to_L2_Queue_Timestamp,
+    Assgin_to_L3_Queue_Timestamp,
+    Transferred_to_Lending_Helpdesk_timestamp,
+    Parked_to_Business_Loan_L3_team_timestamp,
+    Business_Loan_L3_Team_timestamp,
+    Merchant_Response_Received,
+    Re_Open,
+    Details_pending_from_Merchant,
+    P2P_L2_Timestamp,
+    P2P_L3_Timestamp,
+    P2P_L1_Timestamp,
+    P2P_Assigned_to_Retention,
+    Merchant_Uncontactable,
+    Pending_with_Service_Team,
+    eventtime,
+    team_2            AS Team,
+    final_team_pending AS team_others,
+    month_text,
+    qr_sb_flag,
+    concat('#', device_serial_number__c) AS device_serial_no,
+    actorname,
+    actoremail,
+    category_value,
+    address_line_1__c,
+    address_line_2__c,
+    district__c,
+    postal_code__c,
+    state__c,
+    Final_Timestamp
+  FROM team_qr_merchant_helpdesk.pendency_final_table
+  WHERE id NOT IN (
+    '5101120771','5083324450', /* … and the rest of your excluded IDs … */
+    '5109837557'
+  )
+)
+
+SELECT
+  *,
+  CASE
+    WHEN substage IN (
+      'Re-Open','Merchant Response Received','Call Back Cases',
+      'Assign to retention','MHD Call Back','MHD Clean UP','L3 Desk',
+      'DIY','Fresh Cases','KYC Calling'
+    ) THEN 'MHD'
+    WHEN substage IN (
+      'Pending with Courier','Pending with Service','NSTP Calling',
+      'NSS','KYC Update','MCC Update'
+    ) THEN 'Service Related'
+    WHEN substage IN (
+      'Pending with other Department','Pending for Loan Disbursement',
+      'Merchant Setup/Risk_ops/Chargeback/Gold Investment',
+      'Sim_Inventory_Team'
+    ) THEN 'Internal Stakeholders'
+    WHEN substage = 'Merchant Dependency' THEN 'Merchant Dependency'
+    ELSE 'MHD'
+  END AS final_stage
+FROM subquery;
+",55,Care Dashboard-MHD,pivot_table_v2,44,QR_SB_Pendecy_TBL,Trino,
+190,QS_SB Pendency_final_substage_eventtime,"SELECT days_bucket AS days_bucket, final_stage AS final_stage, substage AS substage, count(id) AS ""COUNT(id)"" 
+FROM (Select * from team_servicesone.QR_SB_Daily_Pendency_Superset
+) AS virtual_table GROUP BY days_bucket, final_stage, substage ORDER BY ""COUNT(id)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,pivot_table_v2,49,QR_SB_Pendency_TBL,Trino,
+190,QS_SB Pendency_final_substage_eventtime,"SELECT days_bucket AS days_bucket, final_stage AS final_stage, substage AS substage, count(id) AS ""COUNT(id)"" 
+FROM (Select * from team_servicesone.QR_SB_Daily_Pendency_Superset
+) AS virtual_table GROUP BY days_bucket, final_stage, substage ORDER BY ""COUNT(id)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,pivot_table_v2,49,QR_SB_Pendency_TBL,Trino,
+226,Bot Tickets Counts (Includes Dropoff),"SELECT lob AS lob, sum(bot_ticket_count) AS ""SUM(bot_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+226,Bot Tickets Counts (Includes Dropoff),"SELECT lob AS lob, sum(bot_ticket_count) AS ""SUM(bot_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+227,Bot Tickets Count (Active Sessions),"SELECT lob AS lob, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+227,Bot Tickets Count (Active Sessions),"SELECT lob AS lob, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+228,Bot MSAT (%),"SELECT lob AS lob, 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+228,Bot MSAT (%),"SELECT lob AS lob, 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+229,Bot Passthrough (%),"SELECT lob AS lob, 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+229,Bot Passthrough (%),"SELECT lob AS lob, 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+230,IVR Calls Count,"SELECT lob AS lob, sum(ivr_calls) AS ""SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+230,IVR Calls Count,"SELECT lob AS lob, sum(ivr_calls) AS ""SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+232,Ticket Count (MHD+Service),"SELECT lob AS lob, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+232,Ticket Count (MHD+Service),"SELECT lob AS lob, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+233,Ticket Count (MHD Agent),"SELECT lob AS lob, sum(agent_ticket_count) AS ""SUM(agent_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+233,Ticket Count (MHD Agent),"SELECT lob AS lob, sum(agent_ticket_count) AS ""SUM(agent_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+234,Ticket Count (Service),"SELECT lob AS lob, sum(service_ticket_count) AS ""SUM(service_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+234,Ticket Count (Service),"SELECT lob AS lob, sum(service_ticket_count) AS ""SUM(service_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+236,MSAT(%) Agent,"SELECT lob AS lob, 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('06. RETAIL MID-MARKET', '07. ENTERPRISE', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+236,MSAT(%) Agent,"SELECT lob AS lob, 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('06. RETAIL MID-MARKET', '07. ENTERPRISE', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+237,MSAT (%) (MHD+Service),"SELECT lob AS lob, 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('06. RETAIL MID-MARKET', '07. ENTERPRISE', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+237,MSAT (%) (MHD+Service),"SELECT lob AS lob, 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('06. RETAIL MID-MARKET', '07. ENTERPRISE', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+238,MSAT(%) Service,"SELECT lob AS lob, 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('07. ENTERPRISE', '06. RETAIL MID-MARKET', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+238,MSAT(%) Service,"SELECT lob AS lob, 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table 
+WHERE (lob NOT IN ('07. ENTERPRISE', '06. RETAIL MID-MARKET', '08. GOVERNMENT')) GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+239,Avg TAT (Days) Human Agent,"SELECT lob AS lob, sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+239,Avg TAT (Days) Human Agent,"SELECT lob AS lob, sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+247,Unique Merchant Count - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(bot_merchant_count) AS ""Bot (Active+Dropoff)"", sum(bot_active_merchant_count) AS ""Bot- Active Sessions"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Bot (Active+Dropoff)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+247,Unique Merchant Count - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(bot_merchant_count) AS ""Bot (Active+Dropoff)"", sum(bot_active_merchant_count) AS ""Bot- Active Sessions"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Bot (Active+Dropoff)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+251,Top Issue on Bot ,"SELECT issue_mapping AS issue_mapping, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY issue_mapping
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+251,Top Issue on Bot ,"SELECT issue_mapping AS issue_mapping, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY issue_mapping
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+252,Agent Ticket Count - Bot (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_count_bot) AS ""MHD Agent"", sum(bot_to_service_ticket_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+252,Agent Ticket Count - Bot (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_count_bot) AS ""MHD Agent"", sum(bot_to_service_ticket_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+253,Unique Merchant Counts - Bot (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_merchant_count_bot) AS ""MHD Agent"", sum(bot_to_service_ticket_merchant_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+253,Unique Merchant Counts - Bot (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_merchant_count_bot) AS ""MHD Agent"", sum(bot_to_service_ticket_merchant_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+254,Bot Passthrough % (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(agent_ticket_count_bot)/nullif(sum(bot_active_ticket_count),0) AS ""MHD Agent"", 100*SUM(bot_to_service_ticket_count)/nullif(sum(bot_active_ticket_count),0) AS ""Serivce"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+254,Bot Passthrough % (MHD & Service),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(agent_ticket_count_bot)/nullif(sum(bot_active_ticket_count),0) AS ""MHD Agent"", 100*SUM(bot_to_service_ticket_count)/nullif(sum(bot_active_ticket_count),0) AS ""Serivce"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+255,Feedback % - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Response Rate"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+255,Feedback % - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Response Rate"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+258,Feedback % (Human Agent),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(total_tickets_feedback_received)/nullif(sum(total_tickets_for_response),0) AS ""Response Rate"", 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+258,Feedback % (Human Agent),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(total_tickets_feedback_received)/nullif(sum(total_tickets_for_response),0) AS ""Response Rate"", 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+260,Feedback % - MHD Agent ,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Response Rate"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+260,Feedback % - MHD Agent ,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Response Rate"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+262,Feedback % - Service,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100 * SUM(service_tickets_feedback_received) / 
+NULLIF(SUM(service_tickets_for_response), 0) AS ""Response Rate"", 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+262,Feedback % - Service,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, 100 * SUM(service_tickets_feedback_received) / 
+NULLIF(SUM(service_tickets_for_response), 0) AS ""Response Rate"", 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""MSAT"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""Response Rate"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+264,Avg TAT (Days) - Human Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)
+"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+264,Avg TAT (Days) - Human Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0)
+"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+265,Avg TAT (Days) - MHD Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+265,Avg TAT (Days) - MHD Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+266,Avg TAT - Service Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0) AS ""sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+266,Avg TAT - Service Agent,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0) AS ""sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+269,Top L1 Issues - Human Agent,"SELECT issue_mapping AS issue_mapping, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY issue_mapping
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+269,Top L1 Issues - Human Agent,"SELECT issue_mapping AS issue_mapping, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY issue_mapping
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+270,Ticket Counts - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(bot_ticket_count) AS ""BOT (Active+Drop off)"", sum(bot_active_ticket_count) AS ""Bot - Active Session"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""BOT (Active+Drop off)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+270,Ticket Counts - Bot,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(bot_ticket_count) AS ""BOT (Active+Drop off)"", sum(bot_active_ticket_count) AS ""Bot - Active Session"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""BOT (Active+Drop off)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+386,Bot Contact Ratio (%),"SELECT lob AS lob, 100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0) AS ""100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+386,Bot Contact Ratio (%),"SELECT lob AS lob, 100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0) AS ""100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+387,Total Volume (IVR Calls+Bot Tickets),"SELECT lob AS lob, sum(bot_ticket_count)+SUM(ivr_calls) AS ""sum(bot_ticket_count)+SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+387,Total Volume (IVR Calls+Bot Tickets),"SELECT lob AS lob, sum(bot_ticket_count)+SUM(ivr_calls) AS ""sum(bot_ticket_count)+SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+388,Contact Ratio (%),"SELECT lob AS lob, 100*(SUM(bot_ticket_count)+sum(ivr_calls))/
+nullif(max(cr_base_count),0) AS ""100*(SUM(bot_ticket_count)+sum(ivr_calls))/
+nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+388,Contact Ratio (%),"SELECT lob AS lob, 100*(SUM(bot_ticket_count)+sum(ivr_calls))/
+nullif(max(cr_base_count),0) AS ""100*(SUM(bot_ticket_count)+sum(ivr_calls))/
+nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+389,MSAT (%),"SELECT lob AS lob, 100*((SUM(bot_positive_response)+SUM(total_tickets_msat_received)))/nullif((SUM(bot_total_responses)+SUM(total_tickets_feedback_received)),0) AS ""100*((SUM(bot_positive_response)+SUM(total_tickets_msat_received)))/nullif((SUM(bot_total_responses)+SUM(total_tickets_feedback_received)),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+389,MSAT (%),"SELECT lob AS lob, 100*((SUM(bot_positive_response)+SUM(total_tickets_msat_received)))/nullif((SUM(bot_total_responses)+SUM(total_tickets_feedback_received)),0) AS ""100*((SUM(bot_positive_response)+SUM(total_tickets_msat_received)))/nullif((SUM(bot_total_responses)+SUM(total_tickets_feedback_received)),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+390,IVR Contact Ratio (%),"SELECT lob AS lob, 100*sum(ivr_calls)/nullif(max(cr_base_count),0) AS ""100*sum(ivr_calls)/nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+390,IVR Contact Ratio (%),"SELECT lob AS lob, 100*sum(ivr_calls)/nullif(max(cr_base_count),0) AS ""100*sum(ivr_calls)/nullif(max(cr_base_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+391,Avg TAT (Days) Service Agent,"SELECT lob AS lob, sum(sum_service_tat_days)/
+nullif(SUM(service_tat_denominatior_tickets),0) AS ""sum(sum_service_tat_days)/
+nullif(SUM(service_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+391,Avg TAT (Days) Service Agent,"SELECT lob AS lob, sum(sum_service_tat_days)/
+nullif(SUM(service_tat_denominatior_tickets),0) AS ""sum(sum_service_tat_days)/
+nullif(SUM(service_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+392,Avg TAT (Days) MHD Agent,"SELECT lob AS lob, sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+392,Avg TAT (Days) MHD Agent,"SELECT lob AS lob, sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+393,Bot Contact Ratio (%),"SELECT date_trunc('month', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0) AS ""Bot (Active+Dropoff)"", 100*SUM(bot_active_ticket_count)/nullif(max(cr_base_count),0) AS ""Bot - Active Sessions"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('month', CAST(created_date AS TIMESTAMP)) ORDER BY ""Bot (Active+Dropoff)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+393,Bot Contact Ratio (%),"SELECT date_trunc('month', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(bot_ticket_count)/nullif(max(cr_base_count),0) AS ""Bot (Active+Dropoff)"", 100*SUM(bot_active_ticket_count)/nullif(max(cr_base_count),0) AS ""Bot - Active Sessions"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('month', CAST(created_date AS TIMESTAMP)) ORDER BY ""Bot (Active+Dropoff)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+398,Top Bot L2 Issues,"SELECT bot_l2 AS bot_l2, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.Bot_issue_l2_project_servicesone_mhd
+) AS virtual_table GROUP BY bot_l2
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,58,MHD_Bot_L2_Data,Trino,No filter
+398,Top Bot L2 Issues,"SELECT bot_l2 AS bot_l2, sum(bot_active_ticket_count) AS ""SUM(bot_active_ticket_count)"" 
+FROM (select * from hive.team_servicesone.Bot_issue_l2_project_servicesone_mhd
+) AS virtual_table GROUP BY bot_l2
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,58,MHD_Bot_L2_Data,Trino,No filter
+401,Top DSAT Reason -  Bot,"SELECT bot_l2 AS bot_l2, sum(bot_negative_response) AS ""sum(bot_negative_response)"" 
+FROM (select * from hive.team_servicesone.Bot_issue_l2_project_servicesone_mhd
+) AS virtual_table GROUP BY bot_l2
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,58,MHD_Bot_L2_Data,Trino,No filter
+401,Top DSAT Reason -  Bot,"SELECT bot_l2 AS bot_l2, sum(bot_negative_response) AS ""sum(bot_negative_response)"" 
+FROM (select * from hive.team_servicesone.Bot_issue_l2_project_servicesone_mhd
+) AS virtual_table GROUP BY bot_l2
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,58,MHD_Bot_L2_Data,Trino,No filter
+404,Top L2 Issues - Human Agent,"SELECT issue_l2 AS issue_l2, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.MHD_Agent_issue_l2_project_servicesone
+) AS virtual_table GROUP BY issue_l2
+LIMIT 50000;
+
+",55,Care Dashboard-MHD,time_table,59,MHD_Agent_Tickets_Issue_Data,Trino,No filter
+404,Top L2 Issues - Human Agent,"SELECT issue_l2 AS issue_l2, sum(total_ticket_count) AS ""SUM(total_ticket_count)"" 
+FROM (select * from hive.team_servicesone.MHD_Agent_issue_l2_project_servicesone
+) AS virtual_table GROUP BY issue_l2
+LIMIT 50000;
+
+",55,Care Dashboard-MHD,time_table,59,MHD_Agent_Tickets_Issue_Data,Trino,No filter
+429,Intent wise Final MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(happy) * 100.00 / SUM(feedback_given)
+END AS ""Final MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity <> 'ivr-merchant')) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Final MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,65,MHD MSAT Base,Trino,
+429,Intent wise Final MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(happy) * 100.00 / SUM(feedback_given)
+END AS ""Final MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity <> 'ivr-merchant')) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Final MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,65,MHD MSAT Base,Trino,
+430,Function Call SR%,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE 
+    WHEN SUM(raiseservicerequest_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(raiseservicerequest_success) * 100.0 / SUM(raiseservicerequest_attempts), 2)
+END AS ""Raise Service Request SR%"", CASE 
+    WHEN SUM(get_settlement_and_payment_info_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(get_settlement_and_payment_info_success) * 100.0 / SUM(get_settlement_and_payment_info_attempts), 2)
+END AS ""Settlement & Payments SR%"", CASE 
+    WHEN SUM(agent_handover_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(agent_handover_success) * 100.0 / SUM(agent_handover_attempts), 2)
+END AS ""Agent Handover SR%"", CASE 
+    WHEN SUM(checksoundboxhardware_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(checksoundboxhardware_success) * 100.0 / SUM(checksoundboxhardware_attempts), 2)
+END AS ""Check Soundbox HW SR%"", CASE 
+    WHEN SUM(checksoundboxhardware_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(testbroadcast_success) * 100.0 / SUM(testbroadcast_attempts), 2)
+END AS ""Test Broadcast SR %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '10' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Raise Service Request SR%"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,63,MHD Summary Dataset - 05/22/2025,Trino,
+430,Function Call SR%,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE 
+    WHEN SUM(raiseservicerequest_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(raiseservicerequest_success) * 100.0 / SUM(raiseservicerequest_attempts), 2)
+END AS ""Raise Service Request SR%"", CASE 
+    WHEN SUM(get_settlement_and_payment_info_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(get_settlement_and_payment_info_success) * 100.0 / SUM(get_settlement_and_payment_info_attempts), 2)
+END AS ""Settlement & Payments SR%"", CASE 
+    WHEN SUM(agent_handover_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(agent_handover_success) * 100.0 / SUM(agent_handover_attempts), 2)
+END AS ""Agent Handover SR%"", CASE 
+    WHEN SUM(checksoundboxhardware_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(checksoundboxhardware_success) * 100.0 / SUM(checksoundboxhardware_attempts), 2)
+END AS ""Check Soundbox HW SR%"", CASE 
+    WHEN SUM(checksoundboxhardware_attempts) = 0 THEN 0
+    ELSE ROUND(SUM(testbroadcast_success) * 100.0 / SUM(testbroadcast_attempts), 2)
+END AS ""Test Broadcast SR %"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '10' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Raise Service Request SR%"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,63,MHD Summary Dataset - 05/22/2025,Trino,
+496,Bot to Service Passthrough (%),"SELECT lob AS lob, 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+496,Bot to Service Passthrough (%),"SELECT lob AS lob, 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+497,MHD Agent Tickets count (IVR),"SELECT lob AS lob, sum(agent_ticket_count_phone) AS ""SUM(agent_ticket_count_phone)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+497,MHD Agent Tickets count (IVR),"SELECT lob AS lob, sum(agent_ticket_count_phone) AS ""SUM(agent_ticket_count_phone)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+498,Service Tickets Count (IVR),"SELECT lob AS lob, sum(ivr_call_to_service_ticket) AS ""SUM(ivr_call_to_service_ticket)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+498,Service Tickets Count (IVR),"SELECT lob AS lob, sum(ivr_call_to_service_ticket) AS ""SUM(ivr_call_to_service_ticket)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY lob
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+499,IVR Calls Count,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(ivr_calls) AS ""SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""SUM(ivr_calls)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+499,IVR Calls Count,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(ivr_calls) AS ""SUM(ivr_calls)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""SUM(ivr_calls)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+500,Unique Merchant Count - IVR,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(ivr_merchant_count) AS ""SUM(ivr_merchant_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""SUM(ivr_merchant_count)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+500,Unique Merchant Count - IVR,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(ivr_merchant_count) AS ""SUM(ivr_merchant_count)"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""SUM(ivr_merchant_count)"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+501,IVR Contact Ratio (%),"SELECT date_trunc('month', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(ivr_calls)/nullif(max(cr_base_count),0) AS ""100*SUM(ivr_calls)/nullif(max(cr_base_count),0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('month', CAST(created_date AS TIMESTAMP)) ORDER BY ""100*SUM(ivr_calls)/nullif(max(cr_base_count),0)
+"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+501,IVR Contact Ratio (%),"SELECT date_trunc('month', CAST(created_date AS TIMESTAMP)) AS created_date, 100*SUM(ivr_calls)/nullif(max(cr_base_count),0) AS ""100*SUM(ivr_calls)/nullif(max(cr_base_count),0)
+"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('month', CAST(created_date AS TIMESTAMP)) ORDER BY ""100*SUM(ivr_calls)/nullif(max(cr_base_count),0)
+"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+502,MHD Agent Ticket Count - IVR,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_count_phone) AS ""MHD Agent"", SUM(ivr_to_service_ticket_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+502,MHD Agent Ticket Count - IVR,"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_count_phone) AS ""MHD Agent"", SUM(ivr_to_service_ticket_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+503,Unique Merchant Count - MHD Agent (IVR),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_merchant_count_phone) AS ""MHD Agent"", SUM(ivr_to_service_ticket_merchant_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+503,Unique Merchant Count - MHD Agent (IVR),"SELECT date_trunc('week', CAST(created_date AS TIMESTAMP)) AS created_date, sum(agent_ticket_merchant_count_phone) AS ""MHD Agent"", SUM(ivr_to_service_ticket_merchant_count) AS ""Service"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table GROUP BY date_trunc('week', CAST(created_date AS TIMESTAMP)) ORDER BY ""MHD Agent"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,55,combined_data_project_MHD,Trino,
+513,Monthly AVG Latency (seconds),"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(all_avg_latency) AS ""AVG Latency"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+513,Monthly AVG Latency (seconds),"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(all_avg_latency) AS ""AVG Latency"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+514,Monthly Median Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(median_latency) AS ""Median Latency"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+514,Monthly Median Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(median_latency) AS ""Median Latency"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+515,Monthly P95 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p95_latency) AS ""P95"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+515,Monthly P95 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p95_latency) AS ""P95"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+516,Monthly P99 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p99_latency) AS ""P99"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+516,Monthly P99 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p99_latency) AS ""P99"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+517,Monthly P90 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p90_latency) AS ""P90"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+517,Monthly P90 Latency,"SELECT CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END AS month___, AVG(p90_latency) AS ""P90"", MAX(year_) * 100 + MAX(month_) AS ""Year+Month"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""overall_latency_analysis1"" ORDER BY 1, 2 DESC, 3 DESC
+) AS virtual_table 
+WHERE ((month_ > 1)) GROUP BY CASE month_
+        WHEN 1 THEN 'January'
+        WHEN 2 THEN 'February'
+        WHEN 3 THEN 'March'
+        WHEN 4 THEN 'April'
+        WHEN 5 THEN 'May'
+        WHEN 6 THEN 'June'
+        WHEN 7 THEN 'July'
+        WHEN 8 THEN 'August'
+        WHEN 9 THEN 'September'
+        WHEN 10 THEN 'October'
+        WHEN 11 THEN 'November'
+        WHEN 12 THEN 'December'
+        ELSE 'Invalid'
+END ORDER BY ""Year+Month"" ASC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,82,CST MHD Latency,Trino,
+519,MHD Language Select - Last Week,"WITH session_data AS (
+    SELECT * FROM (
+        SELECT
+            id, created_at AS sess_created_at, cst_entity, fd_ticket_id,
+            CASE 
+                WHEN role_type = 1 THEN 'CST' 
+                WHEN role_type = 2 THEN 'MHD' ELSE NULL 
+            END AS type1,
+            CASE 
+                WHEN role_type = 1 THEN customer_id
+                WHEN role_type = 2 THEN merchant_id
+            END AS user_id
+            --ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at ASC) AS r
+        FROM ""hive"".""crm_cst"".""support_ticket_details_snapshot_v3""
+        WHERE dl_last_updated >= CURRENT_DATE - INTERVAL '30' DAY
+        AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30' DAY
+        AND id IS NOT NULL
+        AND role_type IN (1, 2)
+        AND source = 100
+        GROUP BY 1, 2, 3, 4, 5, 6
+    )
+),
+
+message AS (
+    SELECT
+        created_at, ticket_id, type,
+        CASE question_language_code
+            WHEN 'en' THEN 'English'
+            WHEN 'hi' THEN 'Hindi'
+            WHEN 'te' THEN 'Telugu'
+            WHEN 'mr' THEN 'Marathi'
+            WHEN 'ta' THEN 'Tamil'
+            WHEN 'kn' THEN 'Kannada'
+            WHEN 'gu' THEN 'Gujarati'
+            WHEN 'bn' THEN 'Bengali'
+            WHEN 'ml' THEN 'Malayalam'
+            WHEN 'pa' THEN 'Punjabi'
+            ELSE 'Others'
+        END AS question_language_code
+    FROM ""hive"".""crm_cst"".""ticket_session_conversation_snapshot_v3"" t
+    WHERE dl_last_updated >= CURRENT_DATE - INTERVAL '30' DAY
+    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30' DAY
+    AND ticket_id IN (SELECT id AS ticket_id FROM session_data)
+)
+
+SELECT
+    type1,
+    DATE(created_at) AS date_,
+    question_language_code,
+    COUNT(DISTINCT ticket_id) AS tickets
+FROM (
+    SELECT
+        a.*, b.*
+    FROM message a
+    LEFT JOIN session_data b
+    ON a.ticket_id = b.id
+    WHERE b.id IS NOT NULL
+) --WHERE DATE(created_at) <= CURRENT_DATE - INTERVAL '1' DAY
+WHERE question_language_code IS NOT NULL
+AND question_language_code <> 'Others'
+GROUP BY 1, 2, 3
+ORDER BY 1, 2, 3, 4 DESC;",55,Care Dashboard-MHD,time_table,83,CST MHD Language Select,Trino,No filter
+519,MHD Language Select - Last Week,"WITH session_data AS (
+    SELECT * FROM (
+        SELECT
+            id, created_at AS sess_created_at, cst_entity, fd_ticket_id,
+            CASE 
+                WHEN role_type = 1 THEN 'CST' 
+                WHEN role_type = 2 THEN 'MHD' ELSE NULL 
+            END AS type1,
+            CASE 
+                WHEN role_type = 1 THEN customer_id
+                WHEN role_type = 2 THEN merchant_id
+            END AS user_id
+            --ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at ASC) AS r
+        FROM ""hive"".""crm_cst"".""support_ticket_details_snapshot_v3""
+        WHERE dl_last_updated >= CURRENT_DATE - INTERVAL '30' DAY
+        AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30' DAY
+        AND id IS NOT NULL
+        AND role_type IN (1, 2)
+        AND source = 100
+        GROUP BY 1, 2, 3, 4, 5, 6
+    )
+),
+
+message AS (
+    SELECT
+        created_at, ticket_id, type,
+        CASE question_language_code
+            WHEN 'en' THEN 'English'
+            WHEN 'hi' THEN 'Hindi'
+            WHEN 'te' THEN 'Telugu'
+            WHEN 'mr' THEN 'Marathi'
+            WHEN 'ta' THEN 'Tamil'
+            WHEN 'kn' THEN 'Kannada'
+            WHEN 'gu' THEN 'Gujarati'
+            WHEN 'bn' THEN 'Bengali'
+            WHEN 'ml' THEN 'Malayalam'
+            WHEN 'pa' THEN 'Punjabi'
+            ELSE 'Others'
+        END AS question_language_code
+    FROM ""hive"".""crm_cst"".""ticket_session_conversation_snapshot_v3"" t
+    WHERE dl_last_updated >= CURRENT_DATE - INTERVAL '30' DAY
+    AND DATE(created_at) >= CURRENT_DATE - INTERVAL '30' DAY
+    AND ticket_id IN (SELECT id AS ticket_id FROM session_data)
+)
+
+SELECT
+    type1,
+    DATE(created_at) AS date_,
+    question_language_code,
+    COUNT(DISTINCT ticket_id) AS tickets
+FROM (
+    SELECT
+        a.*, b.*
+    FROM message a
+    LEFT JOIN session_data b
+    ON a.ticket_id = b.id
+    WHERE b.id IS NOT NULL
+) --WHERE DATE(created_at) <= CURRENT_DATE - INTERVAL '1' DAY
+WHERE question_language_code IS NOT NULL
+AND question_language_code <> 'Others'
+GROUP BY 1, 2, 3
+ORDER BY 1, 2, 3, 4 DESC;",55,Care Dashboard-MHD,time_table,83,CST MHD Language Select,Trino,No filter
+528,Agent Ticket Inflow,"SELECT issue_l1 AS issue_l1, issue_l2 AS issue_l2, sum(total_ticket_count) AS ""Total Ticket Count"", sum(agent_ticket_count) AS ""MHD Agent"", sum(service_ticket_count) AS ""Service"", sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""TAT(In Days)"", sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""MHD (TAT)"", sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0) AS ""Service (TAT)"", 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""Overall MSAT%"", 100*SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""Agent MSAT"", 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""Service MSAT"" 
+FROM (select * from hive.team_servicesone.MHD_Agent_issue_l2_project_servicesone
+) AS virtual_table 
+WHERE (issue_l1 NOT IN ('outbound call done', 'non risk hold queries', 'Others', 'sr - miscellaneous', 'others', 'corporate - others', 'p2p - other issues_mid', 'sr- other issues_mid', 'pspl - not related to pspl', 'pg - duplicate ticket', 'technical - staging issue web', 'contactless - other', 'pg-junk', 'agent missed to tag', 'junk', 'retail - non- contactable', 'pspl - call drop', 'retail - others', 'sr - no issue found', 'retail - requested call back', 'refund - other', 'dhd - issue not clear', 'technical - other', 'retail - other', 'bsr - prohibited lob', 'onus_hd - others_edu', 'ee - outbound activity', 'mit - others', 'erm:intro/engagement call', 'other iss', 'other issues', 'chd - other issues_mid')) AND NOT (issue_l2 IS NULL OR issue_l2 IN ('N/A', 'other issues', 'language barrier', 'prohibited issues', 'tag not available', 'others')) GROUP BY issue_l1, issue_l2 ORDER BY ""Total Ticket Count"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,table,59,MHD_Agent_Tickets_Issue_Data,Trino,
+528,Agent Ticket Inflow,"SELECT issue_l1 AS issue_l1, issue_l2 AS issue_l2, sum(total_ticket_count) AS ""Total Ticket Count"", sum(agent_ticket_count) AS ""MHD Agent"", sum(service_ticket_count) AS ""Service"", sum(sum_tat_days)/
+nullif(SUM(tat_denominatior_tickets),0) AS ""TAT(In Days)"", sum(sum_mhd_tat_days)/
+nullif(SUM(mhd_tat_denominatior_tickets),0) AS ""MHD (TAT)"", sum(sum_service_tat_days)/nullif(
+SUM(service_tat_denominatior_tickets),0) AS ""Service (TAT)"", 100 * SUM(total_tickets_msat_received) / NULLIF(SUM(total_tickets_feedback_received), 0) AS ""Overall MSAT%"", 100*SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS ""Agent MSAT"", 100 * SUM(service_tickets_msat_received) / 
+NULLIF(SUM(service_tickets_feedback_received), 0) AS ""Service MSAT"" 
+FROM (select * from hive.team_servicesone.MHD_Agent_issue_l2_project_servicesone
+) AS virtual_table 
+WHERE (issue_l1 NOT IN ('outbound call done', 'non risk hold queries', 'Others', 'sr - miscellaneous', 'others', 'corporate - others', 'p2p - other issues_mid', 'sr- other issues_mid', 'pspl - not related to pspl', 'pg - duplicate ticket', 'technical - staging issue web', 'contactless - other', 'pg-junk', 'agent missed to tag', 'junk', 'retail - non- contactable', 'pspl - call drop', 'retail - others', 'sr - no issue found', 'retail - requested call back', 'refund - other', 'dhd - issue not clear', 'technical - other', 'retail - other', 'bsr - prohibited lob', 'onus_hd - others_edu', 'ee - outbound activity', 'mit - others', 'erm:intro/engagement call', 'other iss', 'other issues', 'chd - other issues_mid')) AND NOT (issue_l2 IS NULL OR issue_l2 IN ('N/A', 'other issues', 'language barrier', 'prohibited issues', 'tag not available', 'others')) GROUP BY issue_l1, issue_l2 ORDER BY ""Total Ticket Count"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,table,59,MHD_Agent_Tickets_Issue_Data,Trino,
+529,MSAT + Fedback Given %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(active_sessions) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(feedback_given) * 100.0
+    /
+    SUM(active_sessions),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(happy) * 100.0
+    /
+    SUM(feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,65,MHD MSAT Base,Trino,
+529,MSAT + Fedback Given %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(active_sessions) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(feedback_given) * 100.0
+    /
+    SUM(active_sessions),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(happy) * 100.0
+    /
+    SUM(feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,65,MHD MSAT Base,Trino,
+530,Intent wise Tickets Creation %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(p4bbusinessloan_tickets) = 0 THEN NULL
+ELSE SUM(p4bbusinessloan_fd_tickets) * 100/SUM(p4bbusinessloan_tickets) END AS ""Business Loan"", CASE WHEN SUM(p4bprofile_tickets) = 0 THEN NULL
+ELSE SUM(p4bprofile_fd_tickets) * 100/SUM(p4bprofile_tickets) END AS ""Profile"", CASE WHEN SUM(p4bwealth_tickets) = 0 THEN NULL
+ELSE SUM(p4bwealth_fd_tickets) * 100/SUM(p4bwealth_tickets) END AS ""Wealth"", CASE WHEN SUM(p4bsoundbox_tickets) = 0 THEN NULL
+ELSE SUM(p4bsoundbox_fd_tickets) * 100/SUM(p4bsoundbox_tickets) END AS ""SB Service Tickets"", CASE WHEN SUM(p4bsoundbox_tickets) = 0 THEN NULL
+ELSE SUM(p4bAIBot_fd_tickets) * 100/SUM(p4bsoundbox_tickets) END AS ""SB Agent Handover"", CASE WHEN SUM(p4bpayoutandsettlement_tickets) = 0 THEN NULL
+ELSE SUM(p4bpayoutandsettlement_fd_tickets) * 100/SUM(p4bpayoutandsettlement_tickets) END AS ""Payout & Settlement"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '7' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Business Loan"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,63,MHD Summary Dataset - 05/22/2025,Trino,
+530,Intent wise Tickets Creation %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE WHEN SUM(p4bbusinessloan_tickets) = 0 THEN NULL
+ELSE SUM(p4bbusinessloan_fd_tickets) * 100/SUM(p4bbusinessloan_tickets) END AS ""Business Loan"", CASE WHEN SUM(p4bprofile_tickets) = 0 THEN NULL
+ELSE SUM(p4bprofile_fd_tickets) * 100/SUM(p4bprofile_tickets) END AS ""Profile"", CASE WHEN SUM(p4bwealth_tickets) = 0 THEN NULL
+ELSE SUM(p4bwealth_fd_tickets) * 100/SUM(p4bwealth_tickets) END AS ""Wealth"", CASE WHEN SUM(p4bsoundbox_tickets) = 0 THEN NULL
+ELSE SUM(p4bsoundbox_fd_tickets) * 100/SUM(p4bsoundbox_tickets) END AS ""SB Service Tickets"", CASE WHEN SUM(p4bsoundbox_tickets) = 0 THEN NULL
+ELSE SUM(p4bAIBot_fd_tickets) * 100/SUM(p4bsoundbox_tickets) END AS ""SB Agent Handover"", CASE WHEN SUM(p4bpayoutandsettlement_tickets) = 0 THEN NULL
+ELSE SUM(p4bpayoutandsettlement_fd_tickets) * 100/SUM(p4bpayoutandsettlement_tickets) END AS ""Payout & Settlement"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '7' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Business Loan"" DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_smooth,63,MHD Summary Dataset - 05/22/2025,Trino,
+531,Function Calls #,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(fetch_merchant_sessions) AS ""FetchMerchantDetails"", sum(agent_handover_attempts) AS ""AgentHandover"", sum(raiseservicerequest_attempts) AS ""RaiseServiceRequest"", sum(get_settlement_and_payment_info_attempts) AS ""SettlementAndPaymentInfo"", sum(checksoundboxhardware_attempts) AS ""CheckSoundboxHardware"", sum(testbroadcast_attempts) AS ""TestBroadcast"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '7' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,table,63,MHD Summary Dataset - 05/22/2025,Trino,
+531,Function Calls #,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date___, sum(fetch_merchant_sessions) AS ""FetchMerchantDetails"", sum(agent_handover_attempts) AS ""AgentHandover"", sum(raiseservicerequest_attempts) AS ""RaiseServiceRequest"", sum(get_settlement_and_payment_info_attempts) AS ""SettlementAndPaymentInfo"", sum(checksoundboxhardware_attempts) AS ""CheckSoundboxHardware"", sum(testbroadcast_attempts) AS ""TestBroadcast"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE ((date_ >= CURRENT_DATE - INTERVAL '7' DAY)) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY max(date_) DESC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,table,63,MHD Summary Dataset - 05/22/2025,Trino,
+554,Language Change Metrics,"SELECT language_transition AS language_transition, sum(transition_count) AS ""# Language Change"", sum(transition_count) AS "" Language Change"" 
+FROM (SELECT * FROM hive.team_cst_mhd_product.langauge_transition_base 
+WHERE date_ < CURRENT_DATE
+ORDER BY 1 DESC, 3 DESC
+) AS virtual_table GROUP BY language_transition ORDER BY "" Language Change"" DESC
+LIMIT 10;
+
+",55,Care Dashboard-MHD,table,89,Language Transition,Trino,
+554,Language Change Metrics,"SELECT language_transition AS language_transition, sum(transition_count) AS ""# Language Change"", sum(transition_count) AS "" Language Change"" 
+FROM (SELECT * FROM hive.team_cst_mhd_product.langauge_transition_base 
+WHERE date_ < CURRENT_DATE
+ORDER BY 1 DESC, 3 DESC
+) AS virtual_table GROUP BY language_transition ORDER BY "" Language Change"" DESC
+LIMIT 10;
+
+",55,Care Dashboard-MHD,table,89,Language Transition,Trino,
+568,Intent wise Bot MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(bot_feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(bot_happy) * 100.00 / SUM(bot_feedback_given)
+END AS ""Bot MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity <> 'ivr-merchant')) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Bot MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+568,Intent wise Bot MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(bot_feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(bot_happy) * 100.00 / SUM(bot_feedback_given)
+END AS ""Bot MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity <> 'ivr-merchant')) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Bot MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+569,Bot MSAT + Fedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(active_sessions) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(bot_feedback_given) * 100.0
+    /
+    SUM(active_sessions),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(bot_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(bot_happy) * 100.0
+    /
+    SUM(feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+569,Bot MSAT + Fedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(active_sessions) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(bot_feedback_given) * 100.0
+    /
+    SUM(active_sessions),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(bot_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(bot_happy) * 100.0
+    /
+    SUM(feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+570,Ticket MSAT + Feedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(fd_tickets) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(agent_feedback_given) * 100.0
+    /
+    SUM(fd_tickets),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(agent_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(agent_happy) * 100.0
+    /
+    SUM(agent_feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+570,Ticket MSAT + Feedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(fd_tickets) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(agent_feedback_given) * 100.0
+    /
+    SUM(fd_tickets),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(agent_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(agent_happy) * 100.0
+    /
+    SUM(agent_feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+571,Intent wise Ticket Only MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(agent_feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(agent_happy) * 100.00 / SUM(agent_feedback_given)
+END AS ""Bot MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity NOT IN ('ivr-merchant', 'p4bsoundbox', 'all_others', 'p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Bot MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+571,Intent wise Ticket Only MSAT %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, cst_entity AS cst_entity, CASE 
+  WHEN SUM(agent_feedback_given) = 0.00 THEN 0.00
+  ELSE SUM(agent_happy) * 100.00 / SUM(agent_feedback_given)
+END AS ""Bot MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' AND ((cst_entity NOT IN ('ivr-merchant', 'p4bsoundbox', 'all_others', 'p4bwealth'))) GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)), cst_entity ORDER BY ""Bot MSAT %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+572,Service Ticket MSAT + Feedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(fd_tickets) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(service_feedback_given) * 100.0
+    /
+    SUM(fd_tickets),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(service_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(service_happy) * 100.0
+    /
+    SUM(service_feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+572,Service Ticket MSAT + Feedback Rate %,"SELECT date_trunc('day', CAST(date_ AS TIMESTAMP)) AS date_, CASE
+  WHEN SUM(fd_tickets) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(service_feedback_given) * 100.0
+    /
+    SUM(fd_tickets),
+    2
+  )
+END AS ""Feedback Received %"", CASE
+  WHEN SUM(service_feedback_given) = 0
+  THEN 0
+  ELSE ROUND(
+    SUM(service_happy) * 100.0
+    /
+    SUM(service_feedback_given),
+    2
+  )
+END AS ""MSAT %"" 
+FROM (SELECT * 
+FROM ""hive"".""team_cst_mhd_product"".""mhd_msat_monthly_dashboard1""
+--WHERE date_ < CURRENT_DATE
+ORDER BY 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('day', CAST(date_ AS TIMESTAMP)) ORDER BY ""Feedback Received %"" DESC
+LIMIT 1000;
+
+",55,Care Dashboard-MHD,echarts_timeseries_line,65,MHD MSAT Base,Trino,
+578,Bot CTR % (Distinct User Level),"SELECT event_label2 AS ""CTA"", sum(users_shown) AS ""CTA Displayed #"", sum(users_clicked) AS ""CTA Clicked #"", CASE 
+  WHEN SUM(users_shown) = 0 THEN NULL
+  ELSE CAST((SUM(users_clicked) * 100) AS DOUBLE)/ CAST(SUM(users_shown) AS DOUBLE)
+END AS ""CTR %"" 
+FROM (SELECT * FROM hive.team_cst_mhd_product.cst_mhd_ctr ORDER BY 1 DESC, 2, 3
+) AS virtual_table 
+WHERE client_type = 'MHD' AND date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY event_label2 ORDER BY ""CTA Displayed #"" DESC
+LIMIT 15;
+
+",55,Care Dashboard-MHD,table,96,Bot CTR,Trino,
+578,Bot CTR % (Distinct User Level),"SELECT event_label2 AS ""CTA"", sum(users_shown) AS ""CTA Displayed #"", sum(users_clicked) AS ""CTA Clicked #"", CASE 
+  WHEN SUM(users_shown) = 0 THEN NULL
+  ELSE CAST((SUM(users_clicked) * 100) AS DOUBLE)/ CAST(SUM(users_shown) AS DOUBLE)
+END AS ""CTR %"" 
+FROM (SELECT * FROM hive.team_cst_mhd_product.cst_mhd_ctr ORDER BY 1 DESC, 2, 3
+) AS virtual_table 
+WHERE client_type = 'MHD' AND date_ >= DATE '2025-11-25' AND date_ < DATE '2025-12-02' GROUP BY event_label2 ORDER BY ""CTA Displayed #"" DESC
+LIMIT 15;
+
+",55,Care Dashboard-MHD,table,96,Bot CTR,Trino,
+2122,Weekly_Metrics_Insights_MHD,"SELECT min(created_week) AS ""Week of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service) "", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2122,Weekly_Metrics_Insights_MHD,"SELECT min(created_week) AS ""Week of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service) "", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2123,Weekly_Metrics_Insights_1_MHD,"SELECT min(created_week) AS ""Week of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service) "", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2123,Weekly_Metrics_Insights_1_MHD,"SELECT min(created_week) AS ""Week of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service) "", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2210,Monthly_Metrics_Insights_MHD,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2210,Monthly_Metrics_Insights_MHD,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2211,Monthly_Metrics_Insights_MHD,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2211,Monthly_Metrics_Insights_MHD,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2213,Monthly_Metrics_Insights_MHD_,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+2213,Monthly_Metrics_Insights_MHD_,"SELECT min(created_month) AS ""Month of the year"", sum(ivr_calls) AS ""IVR Calls Count"", ROUND(CAST(100 * SUM(ivr_calls) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""IVR Contact Ratio (%)"", sum(bot_ticket_count) AS ""Bot Tickets Count"", ROUND(CAST(100 * SUM(bot_ticket_count) AS DECIMAL(18, 2)) / nullif(max(cr_base_count),0), 2) AS ""Bot Contact Ratio(%)"", 100*SUM(bot_total_responses)/nullif(sum(bot_active_ticket_count),0) AS ""Feedback % - Bot"", 100*SUM(bot_positive_response)/nullif(SUM(bot_total_responses),0) AS ""Bot MSAT(%)"", 100*SUM(agent_ticket_count_bot)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to MHD Passthrough(%)"", 100 * SUM(agent_tickets_feedback_received) / NULLIF(SUM(agent_tickets_for_response), 0) AS ""Feedback % - MHD Agent"", 100*SUM(bot_to_service_ticket_count)/NULLIF(SUM(bot_active_ticket_count),0) AS ""Bot to Service Passthrough (%)"", SUM(agent_ticket_count_bot)+SUM(bot_to_service_ticket_count) AS ""Agent Ticket Count - Bot (MHD & Service)"", sum(agent_ticket_count_bot) AS ""Agent Ticket Count - Bot MHD"", sum(bot_to_service_ticket_count) AS ""Agent Ticket Count- Bot Service"", 100 * SUM(agent_tickets_msat_received) / NULLIF(SUM(agent_tickets_feedback_received), 0) AS "" MSAT(%) MHD Agent"" 
+FROM (select * from hive.team_servicesone.combined_data_project_servicesone_mhd
+) AS virtual_table
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,time_table,55,combined_data_project_MHD,Trino,No filter
+518,Monthly Sessions + Agent Handover + Service Tickets,"SELECT date_trunc('month', CAST(DATE_TRUNC('month', date_) AS TIMESTAMP)) AS ""Month"", sum(active_sessions) AS ""Active Sessions"", sum(agent_tickets) AS ""Agent Tickets"", sum(service_tickets) AS ""Service Tickets"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-02-01' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('month', CAST(DATE_TRUNC('month', date_) AS TIMESTAMP)) ORDER BY ""Active Sessions"" ASC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,mixed_timeseries,63,MHD Summary Dataset - 05/22/2025,Trino,
+518,Monthly Sessions + Agent Handover + Service Tickets,"SELECT date_trunc('month', CAST(DATE_TRUNC('month', date_) AS TIMESTAMP)) AS ""Month"", sum(active_sessions) AS ""Active Sessions"", sum(agent_tickets) AS ""Agent Tickets"", sum(service_tickets) AS ""Service Tickets"" 
+FROM (SELECT * FROM ""hive"".""team_cst_mhd_product"".""mhd_monthly_dashboard1"" ORDER BY 1 DESC, 2 DESC, 4 DESC
+) AS virtual_table 
+WHERE date_ >= DATE '2025-02-01' AND date_ < DATE '2025-12-02' GROUP BY date_trunc('month', CAST(DATE_TRUNC('month', date_) AS TIMESTAMP)) ORDER BY ""Active Sessions"" ASC
+LIMIT 10000;
+
+",55,Care Dashboard-MHD,mixed_timeseries,63,MHD Summary Dataset - 05/22/2025,Trino,

@@ -1,0 +1,38 @@
+{
+  "generated_at": "2025-12-03T05:27:01.224494",
+  "version": "2.0-fallback",
+  "generation_method": "Template (LLM unavailable)",
+  "error": "litellm.AuthenticationError: AnthropicException - {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CVjCXwSQzYkg1aNFrZTsJ\"}",
+  "purpose": "SQL Query Generation Agent Instructions",
+  "context": {
+    "vertical": {
+      "id": "general",
+      "name": "General Analytics"
+    },
+    "sub_vertical": null
+  },
+  "instructions": [
+    {
+      "category": "Available Tables",
+      "priority": "HIGH",
+      "content": "The following tables are available:\n\n"
+    },
+    {
+      "category": "Join Patterns",
+      "priority": "MEDIUM",
+      "content": "Use these join patterns:\n\n"
+    },
+    {
+      "category": "General Guidelines",
+      "priority": "HIGH",
+      "content": "\n1. Always use fully qualified table names (catalog.schema.table)\n2. Include partition filters (dt or day_id) for performance\n3. Use CTEs for complex queries\n4. Round percentages to 2 decimal places\n5. Order results by date then primary dimension\n"
+    }
+  ],
+  "example_queries": [],
+  "metadata_summary": {
+    "tables_count": 0,
+    "columns_count": 0,
+    "joins_count": 0,
+    "definitions_count": 0
+  }
+}

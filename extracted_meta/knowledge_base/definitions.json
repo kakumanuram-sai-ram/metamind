@@ -73,8 +73,8 @@
   },
   {
     "term": "Month",
-    "type": "Metric",
-    "definition": "Month component extracted from transaction date using date_trunc function for monthly analysis and aggregation. This metric truncates the transaction date to the month level, enabling monthly trend analysis and reporting.",
+    "type": "Dimension",
+    "definition": "Time dimension representing monthly grouping for trend analysis and reporting. Month component extracted from transaction date using date_trunc function for monthly analysis and aggregation in transaction contexts, and used for monthly grouping of customer service metrics for trend analysis. This dimension truncates dates to the month level, enabling monthly trend analysis and reporting across different business areas.",
     "business_alias": NaN
   },
   {
@@ -760,5 +760,1805 @@
     "type": "Metric",
     "definition": "UPI handle of the person or entity receiving the payment transaction",
     "business_alias": "Payee Handle"
+  },
+  {
+    "term": "COUNT(id)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total count of unique case IDs or records, representing the number of cases in the system",
+    "business_alias": NaN
+  },
+  {
+    "term": "days_bucket",
+    "type": "Dimension",
+    "definition": "Time-based grouping dimension that categorizes cases based on the number of days they have been pending",
+    "business_alias": NaN
+  },
+  {
+    "term": "final_stage",
+    "type": "Dimension",
+    "definition": "The ultimate stage or status that a case has reached in the workflow process",
+    "business_alias": NaN
+  },
+  {
+    "term": "substage",
+    "type": "Dimension",
+    "definition": "Sub-level stages within the main workflow stages, providing more granular tracking of case progress",
+    "business_alias": NaN
+  },
+  {
+    "term": "Pendency",
+    "type": "Category",
+    "definition": "Cases or processes that are awaiting action, approval, or completion, tracked across different time periods and stages",
+    "business_alias": NaN
+  },
+  {
+    "term": "QS_SB",
+    "type": "Category",
+    "definition": "Quality Service and Service Board processes, representing the operational framework being monitored",
+    "business_alias": "QR_SB, also referred as Quality Review Service Board"
+  },
+  {
+    "term": "QS_SB Pendency",
+    "type": "Category",
+    "definition": "Query Service and Service Book pendency tracking category, encompassing all metrics related to case resolution timeframes",
+    "business_alias": "QS/Query Service, SB/Service Book"
+  },
+  {
+    "term": "Case Pendency",
+    "type": "Category",
+    "definition": "Time-based analysis of unresolved cases across different workflow stages and time periods",
+    "business_alias": NaN
+  },
+  {
+    "term": "Pending for Callback",
+    "type": "Category",
+    "definition": "Status indicating cases waiting for callback to be made to merchants or customers",
+    "business_alias": NaN
+  },
+  {
+    "term": "CallAttempted",
+    "type": "Category",
+    "definition": "Status indicating that a call attempt has been made to the merchant or customer",
+    "business_alias": NaN
+  },
+  {
+    "term": "OTHER ISSUES",
+    "type": "Category",
+    "definition": "Status for cases that don't fit into standard categories and require special handling",
+    "business_alias": NaN
+  },
+  {
+    "term": "Merchant Setup",
+    "type": "Category",
+    "definition": "Cases related to setting up new merchant accounts or merchant onboarding issues",
+    "business_alias": NaN
+  },
+  {
+    "term": "Gold Investment Plan",
+    "type": "Category",
+    "definition": "Cases related to gold investment product issues and inquiries",
+    "business_alias": NaN
+  },
+  {
+    "term": "MHD-Riskops-QR",
+    "type": "Category",
+    "definition": "Cases assigned to MHD Risk Operations team for QR-related issues",
+    "business_alias": "MHD Risk Operations QR"
+  },
+  {
+    "term": "MHD Offline Chargeback cases",
+    "type": "Category",
+    "definition": "Cases related to offline chargeback disputes and resolution",
+    "business_alias": NaN
+  },
+  {
+    "term": "Merchant Dependency",
+    "type": "Category",
+    "definition": "Cases where resolution is pending due to required information or action from the merchant",
+    "business_alias": "Details pending from Merchant"
+  },
+  {
+    "term": "Pending with other Department",
+    "type": "Category",
+    "definition": "Cases that have been escalated to or are waiting for response from other internal departments",
+    "business_alias": NaN
+  },
+  {
+    "term": "Re-Open",
+    "type": "Category",
+    "definition": "Previously closed cases that have been reopened for further investigation or resolution",
+    "business_alias": NaN
+  },
+  {
+    "term": "Merchant Response Received",
+    "type": "Category",
+    "definition": "Cases where merchant has provided requested information and awaiting next action",
+    "business_alias": NaN
+  },
+  {
+    "term": "DIY",
+    "type": "Category",
+    "definition": "Do-it-yourself cases for Payout & Settlement and Merchant Profile issues where confirmation is pending",
+    "business_alias": "Do It Yourself"
+  },
+  {
+    "term": "Pending for Loan Disbursement",
+    "type": "Category",
+    "definition": "Business loan cases waiting for loan disbursement confirmation",
+    "business_alias": NaN
+  },
+  {
+    "term": "Assign to retention",
+    "type": "Category",
+    "definition": "Cases assigned to the retention team for customer retention activities",
+    "business_alias": "P2P - Assigned to Retention"
+  },
+  {
+    "term": "Payout & Settlement",
+    "type": "Category",
+    "definition": "Percentage of payout and settlement tickets escalated to first-line defense, calculated as (payout settlement FD tickets / total payout settlement tickets) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Merchant Profile",
+    "type": "Category",
+    "definition": "Issue category for cases related to merchant profile setup and management",
+    "business_alias": NaN
+  },
+  {
+    "term": "Business Loan",
+    "type": "Category",
+    "definition": "Percentage of business loan tickets escalated to first-line defense, calculated as (business loan FD tickets / total business loan tickets) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Ticket Count",
+    "type": "Metric",
+    "definition": "Count of tickets or interactions processed by automated bot systems, including both completed and dropped-off interactions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(bot_ticket_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all bot ticket interactions across all records, calculated by summing individual bot ticket counts.",
+    "business_alias": "Bot Tickets Counts"
+  },
+  {
+    "term": "LOB",
+    "type": "Category",
+    "definition": "Line of Business - a business dimension used to categorize and segment data by different business units or product lines. Specifically used to segment and analyze service satisfaction metrics across different business units, excluding Enterprise, Retail Mid-Market, and Government segments.",
+    "business_alias": "Line of Business, LOB, Business Line"
+  },
+  {
+    "term": "Dropoff",
+    "type": "Category",
+    "definition": "Category indicating incomplete or abandoned bot interactions where users did not complete the full ticket process.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Tickets Count",
+    "type": "Metric / Calculated Field",
+    "definition": "Total sum of bot tickets from active sessions, aggregated across the selected time period and grouped by line of business",
+    "business_alias": "Bot Tickets, Bot Active Ticket Count"
+  },
+  {
+    "term": "Active Sessions",
+    "type": "Metric",
+    "definition": "Total count of active sessions within a given time period. In customer service context: represents user interactions with the care system. In soundbox evaluation context: represents active sessions in the soundbox evaluation system for payout and settlement operations.",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_active_ticket_count",
+    "type": "Metric",
+    "definition": "Total count of active tickets generated from bot interactions, used as denominator for passthrough calculations",
+    "business_alias": NaN
+  },
+  {
+    "term": "MHD",
+    "type": "Category",
+    "definition": "System or service identifier used in healthcare and business contexts. In Care Dashboard systems, it represents a specific healthcare or care management system component. In evaluation systems, it serves as a business context identifier for monitoring purposes. The term encompasses various healthcare and system management applications across different operational contexts.",
+    "business_alias": "Mental Health Dashboard, Mental Health Digital, Mobile Handset Device, Mental Health Department, Medical Health Department, Mental Health Division, Mental Health Disorders, Medical/Healthcare Division, Merchant Help Desk, Multi-Home Device"
+  },
+  {
+    "term": "Bot MSAT",
+    "type": "Metric / Calculated Field",
+    "definition": "Bot satisfaction percentage calculated as (positive bot responses / total bot responses) * 100, measuring the rate of positive customer interactions with automated bot services",
+    "business_alias": "Bot Satisfaction"
+  },
+  {
+    "term": "bot_positive_response",
+    "type": "Metric",
+    "definition": "Count of positive customer responses or feedback received from bot interactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_total_responses",
+    "type": "Metric",
+    "definition": "Total count of all responses received from bot interactions, including both positive and negative feedback",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot MSAT (%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Bot satisfaction percentage calculated as (positive bot responses / total bot responses) * 100, measuring the percentage of positive feedback received from bot interactions",
+    "business_alias": "MSAT"
+  },
+  {
+    "term": "MSAT",
+    "type": "Synonym",
+    "definition": "Member satisfaction rate showing the percentage of received feedback that was satisfied, calculated as (service tickets with MSAT received / total service tickets with feedback received) × 100",
+    "business_alias": "Member Satisfaction, Customer Satisfaction, Member Satisfaction, Medical Health Department Satisfaction, Mean Satisfaction, also referred as Bot Satisfaction Rate, Member Satisfaction, also referred as Medical Satisfaction, Customer Satisfaction, Mean Satisfaction, Bot Satisfaction Rate, Monthly Satisfaction, also referred as MSAT(%), Customer Satisfaction Rate, Satisfaction Score, Customer Satisfaction, Merchant Satisfaction, Agent Satisfaction, Customer Satisfaction Score, Merchant Satisfaction, Satisfaction Score, Satisfaction Measurement, Member Satisfaction, Mobile Satisfaction"
+  },
+  {
+    "term": "Bot Passthrough (%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of bot-active tickets that are passed through to human agents, calculated as (agent_ticket_count_bot / bot_active_ticket_count) * 100",
+    "business_alias": "Bot Escalation Rate"
+  },
+  {
+    "term": "agent_ticket_count_bot",
+    "type": "Metric",
+    "definition": "Total count of tickets that were initially handled by bots but then transferred to human agents",
+    "business_alias": NaN
+  },
+  {
+    "term": "IVR Calls",
+    "type": "Metric",
+    "definition": "Total count of calls handled by Interactive Voice Response system, an automated phone system that interacts with callers",
+    "business_alias": "IVR, Interactive Voice Response Calls"
+  },
+  {
+    "term": "IVR Calls Count",
+    "type": "Metric",
+    "definition": "Total number of calls handled by the Interactive Voice Response system during the specified time period",
+    "business_alias": "IVR Calls, SUM(ivr_calls)"
+  },
+  {
+    "term": "Care Dashboard-MHD",
+    "type": "Category",
+    "definition": "Healthcare dashboard category focusing on IVR call metrics for medical/healthcare services",
+    "business_alias": "MHD Care Metrics"
+  },
+  {
+    "term": "Ticket Count",
+    "type": "Metric",
+    "definition": "The number of support tickets, representing individual customer service requests or issues.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service",
+    "type": "Category",
+    "definition": "Percentage of active bot tickets that are passed through to service team, calculated as (bot_to_service_ticket_count / bot_active_ticket_count) * 100",
+    "business_alias": "IVR to Service Ticket Count, Serivce, IVR to Service Tickets, Bot to Service Ticket Count"
+  },
+  {
+    "term": "total_ticket_count",
+    "type": "Metric",
+    "definition": "Base field containing the count of tickets that gets aggregated in reporting",
+    "business_alias": NaN
+  },
+  {
+    "term": "Total Ticket Count",
+    "type": "Metric",
+    "definition": "The total number of support tickets across all categories, representing the volume of customer service requests.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service Ticket Count",
+    "type": "Metric",
+    "definition": "The total number of service tickets recorded in the system for customer support or service requests.",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(service_ticket_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "The aggregated sum of all service ticket counts, typically grouped by dimensions such as line of business.",
+    "business_alias": "Total Service Tickets"
+  },
+  {
+    "term": "MHD Agent",
+    "type": "Category",
+    "definition": "Percentage of bot tickets transferred to Mental Health Department agents, calculated as (agent_ticket_count_bot / bot_active_ticket_count) * 100",
+    "business_alias": "MHD Agent Ticket Count, Mental Health Department Agent Tickets, MHD/Merchant Help Desk Agent, Mental Health Department Agent"
+  },
+  {
+    "term": "agent_ticket_count",
+    "type": "Metric",
+    "definition": "Number of tickets handled or processed by individual agents",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(agent_ticket_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all tickets processed by agents, calculated by summing individual agent ticket counts",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent Ticket Count",
+    "type": "Metric",
+    "definition": "Total count of tickets handled by agents, representing the volume of customer service interactions processed through support channels.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Ticket Count (Service)",
+    "type": "Synonym",
+    "definition": "Service Ticket Count",
+    "business_alias": NaN
+  },
+  {
+    "term": "MSAT(%) Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of agent tickets that received positive satisfaction feedback, calculated as (Total satisfied agent tickets / Total agent tickets with feedback) * 100",
+    "business_alias": "MSAT, Agent Satisfaction Rate, Agent Satisfaction Rate, Agent MSAT Percentage"
+  },
+  {
+    "term": "agent_tickets_msat_received",
+    "type": "Metric",
+    "definition": "Total count of agent tickets that received positive customer satisfaction feedback",
+    "business_alias": NaN
+  },
+  {
+    "term": "agent_tickets_feedback_received",
+    "type": "Metric",
+    "definition": "Total count of agent tickets that received any type of feedback responses",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent",
+    "type": "Category",
+    "definition": "Customer service representatives who handle customer tickets and interactions",
+    "business_alias": "Customer Service Agent, Support Agent"
+  },
+  {
+    "term": "Agent Tickets MSAT Received",
+    "type": "Metric",
+    "definition": "Total count of agent-handled tickets that received positive satisfaction ratings from customers",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent Tickets Feedback Received",
+    "type": "Metric",
+    "definition": "Total count of agent-handled tickets for which customer feedback was received (both positive and negative)",
+    "business_alias": NaN
+  },
+  {
+    "term": "MSAT (%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Customer satisfaction percentage calculated as (bot positive responses + MSAT tickets received) divided by (total bot responses + total feedback tickets received) multiplied by 100",
+    "business_alias": "MSAT Percentage, Satisfaction Rate, Member Satisfaction Percentage, MSAT"
+  },
+  {
+    "term": "Total Tickets MSAT Received",
+    "type": "Metric",
+    "definition": "Total count of tickets where customers indicated satisfaction (MSAT) in their feedback",
+    "business_alias": "Satisfied Tickets, MSAT Tickets"
+  },
+  {
+    "term": "Total Tickets Feedback Received",
+    "type": "Metric",
+    "definition": "Total count of tickets where customer feedback was received, regardless of satisfaction level",
+    "business_alias": "Feedback Tickets, Total Responses"
+  },
+  {
+    "term": "MHD+Service",
+    "type": "Category",
+    "definition": "Combined category encompassing Medical Health Department operations and general service activities",
+    "business_alias": "MHD and Service, Healthcare Services"
+  },
+  {
+    "term": "total_tickets_msat_received",
+    "type": "Metric",
+    "definition": "Total count of support tickets that received satisfactory ratings from customers",
+    "business_alias": "Satisfied Tickets, Tickets MSAT Received"
+  },
+  {
+    "term": "total_tickets_feedback_received",
+    "type": "Metric",
+    "definition": "Total count of support tickets that received any form of customer feedback or rating",
+    "business_alias": "Feedback Tickets, Tickets Feedback Received"
+  },
+  {
+    "term": "MSAT(%) Service",
+    "type": "Metric / Calculated Field",
+    "definition": "Service satisfaction percentage calculated as (service_tickets_msat_received / service_tickets_feedback_received) * 100, representing the percentage of satisfied customers out of total feedback received for service tickets",
+    "business_alias": "MSAT, Service Satisfaction Rate, Service Satisfaction Rate"
+  },
+  {
+    "term": "service_tickets_msat_received",
+    "type": "Metric",
+    "definition": "Total count of service tickets that received positive satisfaction feedback or met satisfaction criteria",
+    "business_alias": NaN
+  },
+  {
+    "term": "service_tickets_feedback_received",
+    "type": "Metric",
+    "definition": "Total count of service tickets for which feedback was received, serving as the denominator for satisfaction calculations",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot (Active+Dropoff)",
+    "type": "Metric",
+    "definition": "Total sum of unique merchants who interacted with the bot system, including both merchants with active sessions and those who dropped off during the interaction",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot- Active Sessions",
+    "type": "Metric",
+    "definition": "Total sum of unique merchants who maintained active sessions while interacting with the bot system",
+    "business_alias": "Bot Active Sessions"
+  },
+  {
+    "term": "Unique Merchant Count",
+    "type": "Category",
+    "definition": "Distinct count of merchants who accessed support services through various channels during a specific time period",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot",
+    "type": "Category",
+    "definition": "Automated system that handles initial customer service interactions and tickets before potential escalation to human agents",
+    "business_alias": "Chatbot, Virtual Assistant, Chatbot, Automated Assistant"
+  },
+  {
+    "term": "TAT",
+    "type": "Metric",
+    "definition": "Turnaround Time - the duration between when a ticket or request is received and when it is resolved or completed",
+    "business_alias": "Turn Around Time, Turnaround Time, Turnaround Time"
+  },
+  {
+    "term": "Avg TAT",
+    "type": "Metric / Calculated Field",
+    "definition": "Average Turnaround Time calculated as total TAT days divided by the number of tickets, representing the mean time to resolve tickets",
+    "business_alias": "Average Turnaround Time"
+  },
+  {
+    "term": "Human Agent",
+    "type": "Category",
+    "definition": "Category referring to tickets or services handled by human customer service representatives as opposed to automated systems",
+    "business_alias": NaN
+  },
+  {
+    "term": "sum_tat_days",
+    "type": "Metric",
+    "definition": "Total sum of turnaround time days across all tickets in the measurement period",
+    "business_alias": NaN
+  },
+  {
+    "term": "tat_denominatior_tickets",
+    "type": "Metric",
+    "definition": "Count of tickets used as denominator in TAT calculations, representing the total number of tickets processed",
+    "business_alias": "TAT Denominator Tickets"
+  },
+  {
+    "term": "Avg TAT (Days) Human Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Average turnaround time in days for tickets handled by human agents, calculated as total TAT days divided by total number of tickets",
+    "business_alias": "Average Turnaround Time for Human Agent"
+  },
+  {
+    "term": "Bot Active Ticket Count",
+    "type": "Metric",
+    "definition": "The count of active tickets currently being handled by the bot system",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(bot_active_ticket_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all active bot-related support tickets, calculated by summing individual bot_active_ticket_count values.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Issue Mapping",
+    "type": "Dimension",
+    "definition": "Classification system that categorizes support tickets into specific issue types or problem categories for tracking and analysis purposes.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Top Issue on Bot",
+    "type": "Category",
+    "definition": "Analysis of the most frequently occurring issues handled by the bot system based on active ticket volume",
+    "business_alias": NaN
+  },
+  {
+    "term": "issue_mapping",
+    "type": "Dimension",
+    "definition": "Categorical classification or mapping of different types of customer issues or problems for support ticket organization",
+    "business_alias": NaN
+  },
+  {
+    "term": "Unique Merchant Counts",
+    "type": "Category",
+    "definition": "Metrics tracking the count of distinct merchants served through different service channels including bot interactions and service transfers",
+    "business_alias": NaN
+  },
+  {
+    "term": "Care Dashboard",
+    "type": "Category",
+    "definition": "Healthcare service quality metrics including response rates and member satisfaction scores for the MHD department",
+    "business_alias": "Care Dashboard-MHD, MHD Dashboard, MHD/Merchant Help Desk Dashboard, MHD Care Dashboard"
+  },
+  {
+    "term": "Bot Passthrough %",
+    "type": "Category",
+    "definition": "Percentage of bot interactions that are transferred to human agents or service teams, calculated as the ratio of transferred tickets to total active bot tickets multiplied by 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_to_service_ticket_count",
+    "type": "Metric",
+    "definition": "Total count of bot interactions that were escalated or passed through to human service agents",
+    "business_alias": NaN
+  },
+  {
+    "term": "Response Rate",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of agent tickets that received feedback out of total tickets eligible for response, calculated as (agent_tickets_feedback_received / agent_tickets_for_response) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Total Responses",
+    "type": "Metric",
+    "definition": "Total number of responses generated by the bot system",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Positive Response",
+    "type": "Metric",
+    "definition": "Number of positive/satisfactory responses received from bot interactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Feedback % - Bot",
+    "type": "Category",
+    "definition": "Percentage of bot interactions that received feedback responses, calculated as (Total Bot Responses / Bot Active Ticket Count) * 100",
+    "business_alias": "Bot Feedback Rate"
+  },
+  {
+    "term": "Total Tickets For Response",
+    "type": "Metric",
+    "definition": "Total count of support tickets that were eligible to receive customer feedback responses",
+    "business_alias": NaN
+  },
+  {
+    "term": "Feedback %",
+    "type": "Category",
+    "definition": "Collection of percentage-based metrics related to agent feedback collection and customer satisfaction",
+    "business_alias": NaN
+  },
+  {
+    "term": "Human Agent Feedback Metrics",
+    "type": "Category",
+    "definition": "Group of metrics measuring human agent performance through customer feedback collection and satisfaction scoring",
+    "business_alias": NaN
+  },
+  {
+    "term": "agent_tickets_for_response",
+    "type": "Metric",
+    "definition": "Total count of agent tickets that were eligible or required to receive customer response/feedback",
+    "business_alias": NaN
+  },
+  {
+    "term": "service_tickets_for_response",
+    "type": "Metric",
+    "definition": "Total count of service tickets that are eligible or expected to receive a response/feedback",
+    "business_alias": NaN
+  },
+  {
+    "term": "Feedback % - Service",
+    "type": "Category",
+    "definition": "Group of metrics measuring service feedback performance including response rates and satisfaction percentages",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service Tickets",
+    "type": "Metric",
+    "definition": "Individual service requests or support cases submitted by members, patients, or customers in the system. Total count of service tickets created for customer issues or requests, including healthcare-specific cases submitted by members or patients.",
+    "business_alias": "fd_tickets, FD Tickets, Support Tickets"
+  },
+  {
+    "term": "Feedback",
+    "type": "Metric",
+    "definition": "Customer or patient responses and evaluations provided for completed service tickets",
+    "business_alias": NaN
+  },
+  {
+    "term": "Avg TAT (Days)",
+    "type": "Metric / Calculated Field",
+    "definition": "Average Turnaround Time in days calculated by dividing total MHD TAT days by the number of tickets processed, measuring the average time taken to resolve tickets by MHD agents",
+    "business_alias": "TAT, also referred as Turnaround Time, Average Turn Around Time, Average Turnaround Time, Average Turnaround Time, also referred as TAT"
+  },
+  {
+    "term": "sum_mhd_tat_days",
+    "type": "Metric",
+    "definition": "Total sum of turnaround time days for all MHD tickets, representing the cumulative time spent on resolving tickets",
+    "business_alias": NaN
+  },
+  {
+    "term": "mhd_tat_denominatior_tickets",
+    "type": "Metric",
+    "definition": "Total count of MHD tickets used as denominator in TAT calculations, representing the number of tickets processed",
+    "business_alias": "MHD TAT Denominator Tickets, TAT denominator tickets"
+  },
+  {
+    "term": "Avg TAT - Service Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Average Turnaround Time for Service Agents, calculated as total service TAT days divided by total number of tickets with TAT data",
+    "business_alias": "Average Turnaround Time - Service Agent"
+  },
+  {
+    "term": "Service Agent",
+    "type": "Category",
+    "definition": "Healthcare service representatives who handle patient care requests and service tickets in the Mental Health Department",
+    "business_alias": NaN
+  },
+  {
+    "term": "sum_service_tat_days",
+    "type": "Metric",
+    "definition": "Total cumulative days spent in turnaround time across all service tickets",
+    "business_alias": "Total Service TAT Days"
+  },
+  {
+    "term": "service_tat_denominatior_tickets",
+    "type": "Metric",
+    "definition": "Count of tickets used as denominator in TAT calculations, representing tickets with valid TAT data",
+    "business_alias": "Service TAT Denominator Tickets"
+  },
+  {
+    "term": "created_date",
+    "type": "Dimension",
+    "definition": "Date when the ticket or record was initially created in the system",
+    "business_alias": "Creation Date"
+  },
+  {
+    "term": "L1 Issues",
+    "type": "Category",
+    "definition": "Level 1 support issues representing the first tier of customer service problems that are typically handled by front-line support agents.",
+    "business_alias": "Level 1 Issues"
+  },
+  {
+    "term": "SUM(total_ticket_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all support tickets, calculated by summing individual ticket counts across different issue categories",
+    "business_alias": NaN
+  },
+  {
+    "term": "BOT (Active+Drop off)",
+    "type": "Metric",
+    "definition": "Total count of bot tickets including both active sessions and dropped-off sessions, representing the complete volume of bot interactions.",
+    "business_alias": "Bot Total Tickets"
+  },
+  {
+    "term": "Bot - Active Session",
+    "type": "Metric",
+    "definition": "Count of bot tickets where the session remained active, representing successful ongoing bot interactions without dropoff.",
+    "business_alias": "Active Bot Sessions"
+  },
+  {
+    "term": "Ticket Counts",
+    "type": "Category",
+    "definition": "Group of metrics measuring the volume and types of support tickets processed through bot interactions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Ticket",
+    "type": "Metric",
+    "definition": "Individual support ticket handled through automated bot interaction system.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Contact Ratio",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of bot-handled tickets relative to total contact ratio base count, calculated as 100*SUM(bot_ticket_count)/max(cr_base_count)",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_ticket_count",
+    "type": "Metric",
+    "definition": "Total count of tickets or interactions handled by the bot system, including all session types",
+    "business_alias": "Bot Tickets"
+  },
+  {
+    "term": "cr_base_count",
+    "type": "Metric",
+    "definition": "Base count used as denominator for contact ratio calculation, represents the total population or eligible base for contact ratio measurement.",
+    "business_alias": "Contact Ratio Base Count, Contact Ratio base count"
+  },
+  {
+    "term": "Total Volume",
+    "type": "Metric / Calculated Field",
+    "definition": "Combined count of IVR calls and bot tickets, calculated as sum(bot_ticket_count) + SUM(ivr_calls), representing total customer service interactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Tickets",
+    "type": "Metric",
+    "definition": "Total count of support tickets generated through automated chatbot interactions",
+    "business_alias": "Chatbot Tickets"
+  },
+  {
+    "term": "Contact Ratio",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage calculated as (bot ticket count + IVR calls) divided by base count, multiplied by 100. Measures the ratio of customer service contacts relative to the base population.",
+    "business_alias": "Engagement Rate, Channel Distribution"
+  },
+  {
+    "term": "ivr_calls",
+    "type": "Metric",
+    "definition": "Total count of calls handled through Interactive Voice Response (IVR) systems.",
+    "business_alias": "IVR calls, IVR Calls"
+  },
+  {
+    "term": "IVR Contact Ratio",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage ratio calculated as total IVR calls divided by the base count, representing the proportion of interactions handled through Interactive Voice Response systems",
+    "business_alias": "IVR Contact Ratio (%)"
+  },
+  {
+    "term": "CR Base Count",
+    "type": "Metric",
+    "definition": "Contact Ratio base count representing the total volume used as denominator for contact ratio calculations",
+    "business_alias": "Contact Ratio Base Count"
+  },
+  {
+    "term": "Avg TAT (Days) Service Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Average turnaround time in days for service agents, calculated as total service TAT days divided by the number of tickets with TAT data",
+    "business_alias": "TAT also referred as Turnaround Time, TAT, also referred as Turnaround Time"
+  },
+  {
+    "term": "Bot - Active Sessions",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active bot ticket interactions where users remained engaged, calculated as: (Active Bot Tickets / Base Count) × 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Avg TAT (Days) MHD Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Average Turnaround Time in days for MHD agents, calculated as total MHD TAT days divided by the number of tickets with TAT data",
+    "business_alias": "Average Turnaround Time, TAT"
+  },
+  {
+    "term": "Bot L2 Issues",
+    "type": "Category",
+    "definition": "Second-level bot-related issues or problems that require escalation beyond initial bot handling",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_l2",
+    "type": "Dimension",
+    "definition": "Level 2 bot issue categorization used for grouping and analyzing different types of bot-related problems or escalations",
+    "business_alias": "Bot Level 2, L2 Bot Issues, L2 Bot Issues"
+  },
+  {
+    "term": "Top Bot L2 Issues",
+    "type": "Category",
+    "definition": "The most significant or frequently occurring Level 2 bot issues ranked by active ticket count.",
+    "business_alias": NaN
+  },
+  {
+    "term": "DSAT",
+    "type": "Synonym",
+    "definition": "Dissatisfaction, typically referring to customer dissatisfaction scores or negative feedback in customer service contexts",
+    "business_alias": "Dissatisfaction"
+  },
+  {
+    "term": "Bot Negative Response",
+    "type": "Metric",
+    "definition": "Total count of negative responses received from bot interactions, indicating customer dissatisfaction with automated service",
+    "business_alias": NaN
+  },
+  {
+    "term": "sum(bot_negative_response)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all negative bot responses, calculated by summing all bot_negative_response values",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot L2",
+    "type": "Category",
+    "definition": "Level 2 categorization of bot issues or bot interaction types used for grouping dissatisfaction reasons",
+    "business_alias": "Bot Level 2, bot_l2"
+  },
+  {
+    "term": "Top DSAT Reason",
+    "type": "Category",
+    "definition": "Ranking of primary causes for customer dissatisfaction, specifically related to bot interactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "bot_negative_response",
+    "type": "Metric",
+    "definition": "Count of negative responses or dissatisfied interactions from bot customer service sessions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Final MSAT %",
+    "type": "Metric / Calculated Field",
+    "definition": "Customer satisfaction percentage calculated as the number of happy/satisfied responses divided by total feedback responses, multiplied by 100. Formula: (SUM(happy) * 100 / SUM(feedback_given))",
+    "business_alias": "MSAT %, Customer Satisfaction Percentage, MSAT Percentage"
+  },
+  {
+    "term": "feedback_given",
+    "type": "Metric",
+    "definition": "Total count of all feedback responses (positive and negative) provided by users to the bot",
+    "business_alias": NaN
+  },
+  {
+    "term": "Happy",
+    "type": "Metric",
+    "definition": "Count of positive/satisfied customer feedback responses indicating customer satisfaction and happiness with the service. This metric tracks positive customer feedback responses across different contexts to measure overall customer satisfaction levels.",
+    "business_alias": "satisfied responses, Positive Feedback, Satisfied Responses, Happy Responses, Satisfied Users, Positive Responses"
+  },
+  {
+    "term": "cst_entity",
+    "type": "Dimension",
+    "definition": "Customer entity type that serves as both a categorization system for different business units or service categories and an entity identifier for different systems or services being evaluated. This dimension categorizes various customer service entities (excludes ivr-merchant, p4bsoundbox, all_others, p4bwealth) while also identifying specific systems such as p4bsoundbox and p4bAIBot for evaluation purposes.",
+    "business_alias": "Intent Category, Customer Service Entity, Customer Entity, customer service entity, customer entity, Service Entity"
+  },
+  {
+    "term": "Intent wise",
+    "type": "Category",
+    "definition": "Analysis or segmentation based on customer intent or purpose of interaction with the care/support system.",
+    "business_alias": "By Intent, Intent-based"
+  },
+  {
+    "term": "Intent",
+    "type": "Category",
+    "definition": "Customer service interaction categories or types that classify the purpose or reason for customer contact",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot to Service Passthrough (%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of bot interactions that are escalated to human service agents, calculated as (bot_to_service_ticket_count / bot_active_ticket_count) * 100",
+    "business_alias": "Bot Service Escalation Rate, Bot to Service Escalation Rate"
+  },
+  {
+    "term": "SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success Rate percentage calculated as (successful attempts / total attempts) * 100, measuring the effectiveness of function calls",
+    "business_alias": "Success Rate percentage"
+  },
+  {
+    "term": "Raise Service Request SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success rate percentage for raising service requests, calculated as (raiseservicerequest_success / raiseservicerequest_attempts) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Settlement & Payments SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success rate percentage for settlement and payment information retrieval, calculated as (get_settlement_and_payment_info_success / get_settlement_and_payment_info_attempts) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent Handover SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success rate percentage for agent handover processes, calculated as (agent_handover_success / agent_handover_attempts) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Check Soundbox HW SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success rate percentage for checking soundbox hardware, calculated as (checksoundboxhardware_success / checksoundboxhardware_attempts) * 100",
+    "business_alias": "Check Soundbox Hardware SR%"
+  },
+  {
+    "term": "Test Broadcast SR%",
+    "type": "Metric / Calculated Field",
+    "definition": "Success rate percentage for test broadcast functionality, calculated as (testbroadcast_success / testbroadcast_attempts) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Function Call Success Rates",
+    "type": "Category",
+    "definition": "Collection of success rate metrics measuring the effectiveness of different customer care functions including service requests, payments, agent handover, and hardware checks",
+    "business_alias": NaN
+  },
+  {
+    "term": "Soundbox",
+    "type": "Category",
+    "definition": "Hardware device that requires monitoring and testing, includes hardware checking and broadcast testing functions",
+    "business_alias": "SB"
+  },
+  {
+    "term": "IVR",
+    "type": "Category",
+    "definition": "Interactive Voice Response system - automated phone system that allows customers to interact with services through voice commands or keypad inputs.",
+    "business_alias": "Interactive Voice Response"
+  },
+  {
+    "term": "Phone",
+    "type": "Category",
+    "definition": "Communication channel representing voice-based customer interactions through telephone systems including traditional calls and IVR.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service Tickets Count (IVR)",
+    "type": "Metric",
+    "definition": "Total count of service tickets generated from Interactive Voice Response (IVR) system calls, representing customer service requests initiated through automated phone systems.",
+    "business_alias": NaN
+  },
+  {
+    "term": "ivr_call_to_service_ticket",
+    "type": "Metric",
+    "definition": "Number of service tickets created as a result of IVR calls",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent Tickets",
+    "type": "Metric",
+    "definition": "Total number of tickets escalated to human agents for assistance, representing cases that required human intervention beyond automated support. This includes all tickets or cases that required human agent intervention or handover from automated systems.",
+    "business_alias": "Agent Handover, AH Tickets, Agent Handover Tickets"
+  },
+  {
+    "term": "agent_ticket_count_phone",
+    "type": "Metric",
+    "definition": "Total count of tickets handled by agents through phone/voice channels",
+    "business_alias": "Phone Agent Tickets"
+  },
+  {
+    "term": "SUM(agent_ticket_count_phone)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of all phone-based agent tickets across selected time period and dimensions",
+    "business_alias": "Total Phone Agent Tickets"
+  },
+  {
+    "term": "Merchant Count",
+    "type": "Metric",
+    "definition": "Count of merchants who have interacted with or used IVR services",
+    "business_alias": NaN
+  },
+  {
+    "term": "SUM(ivr_merchant_count)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total aggregated count of merchants using IVR services, summed across weekly intervals",
+    "business_alias": NaN
+  },
+  {
+    "term": "Unique Merchant Count - IVR",
+    "type": "Metric / Calculated Field",
+    "definition": "Total sum of merchants who interacted through the Interactive Voice Response (IVR) system, aggregated weekly",
+    "business_alias": NaN
+  },
+  {
+    "term": "IVR Merchant Count",
+    "type": "Metric",
+    "definition": "Count of individual merchants using the Interactive Voice Response system for care services",
+    "business_alias": NaN
+  },
+  {
+    "term": "AVG Latency",
+    "type": "Metric / Calculated Field",
+    "definition": "Average of all latency measurements calculated using AVG(all_avg_latency), representing the mean response time in seconds",
+    "business_alias": NaN
+  },
+  {
+    "term": "Latency",
+    "type": "Metric",
+    "definition": "Time delay between a request being sent and the response being received, typically measured in milliseconds or seconds.",
+    "business_alias": "Response Time, Response Time, Request Delay"
+  },
+  {
+    "term": "Monthly",
+    "type": "Category",
+    "definition": "Time aggregation level grouping metrics by calendar month for trend analysis and reporting purposes.",
+    "business_alias": "Month-over-Month, Monthly Aggregation"
+  },
+  {
+    "term": "Year+Month",
+    "type": "Metric / Calculated Field",
+    "definition": "Combined temporal identifier calculated as Year multiplied by 100 plus Month number, used for chronological sorting.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Median Latency",
+    "type": "Metric",
+    "definition": "Average of median latency values measured in the healthcare system, representing the middle value of response times or delays aggregated by month",
+    "business_alias": NaN
+  },
+  {
+    "term": "Monthly Median Latency",
+    "type": "Metric / Calculated Field",
+    "definition": "Average of median latency values calculated for each month, showing the monthly trend of typical response times.",
+    "business_alias": NaN
+  },
+  {
+    "term": "P95 Latency",
+    "type": "Metric / Calculated Field",
+    "definition": "The 95th percentile latency measurement, representing the response time below which 95% of requests are completed, calculated as the average of p95_latency values over the time period",
+    "business_alias": "P95"
+  },
+  {
+    "term": "P99",
+    "type": "Metric / Calculated Field",
+    "definition": "Average of the 99th percentile latency values, calculated as AVG(p99_latency). Represents the average response time where 99% of requests are faster than this value.",
+    "business_alias": "P99 Latency, 99th Percentile Latency"
+  },
+  {
+    "term": "P99 Latency",
+    "type": "Metric",
+    "definition": "The 99th percentile of response times, indicating that 99% of requests complete faster than this threshold value.",
+    "business_alias": NaN
+  },
+  {
+    "term": "P95",
+    "type": "Metric / Calculated Field",
+    "definition": "95th percentile latency averaged over time periods, calculated as AVG(p95_latency)",
+    "business_alias": NaN
+  },
+  {
+    "term": "P90",
+    "type": "Metric / Calculated Field",
+    "definition": "Average of p90_latency values, representing the 90th percentile latency where 90% of requests complete faster than this measured time.",
+    "business_alias": "90th Percentile Latency, 90th Percentile"
+  },
+  {
+    "term": "P90 Latency",
+    "type": "Metric",
+    "definition": "Performance metric measuring the 90th percentile response time, indicating that 90% of system requests complete within this latency threshold.",
+    "business_alias": "90th Percentile Response Time, 90th Percentile Latency"
+  },
+  {
+    "term": "Sessions",
+    "type": "Metric",
+    "definition": "Count of distinct support tickets in the system, representing unique support interactions or cases",
+    "business_alias": NaN
+  },
+  {
+    "term": "CST",
+    "type": "Category",
+    "definition": "Customer Support Team - support tickets and interactions related to customer users (role_type = 1)",
+    "business_alias": "Customer Support Team"
+  },
+  {
+    "term": "Tickets",
+    "type": "Metric",
+    "definition": "Distinct count of support ticket IDs representing unique support cases or interactions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Question Language Code",
+    "type": "Dimension",
+    "definition": "The language selected or used for support questions, mapped from language codes (en, hi, te, etc.) to readable language names (English, Hindi, Telugu, etc.)",
+    "business_alias": NaN
+  },
+  {
+    "term": "Role Type",
+    "type": "Dimension",
+    "definition": "User classification where role_type = 1 indicates Customer users and role_type = 2 indicates Merchant users",
+    "business_alias": NaN
+  },
+  {
+    "term": "Support Language",
+    "type": "Category",
+    "definition": "Available languages for support including English, Hindi, Telugu, Marathi, Tamil, Kannada, Gujarati, Bengali, Malayalam, Punjabi, and Others",
+    "business_alias": NaN
+  },
+  {
+    "term": "Language Select",
+    "type": "Category",
+    "definition": "Language selection data showing the question language codes chosen during support ticket conversations, mapped to language names like English, Hindi, Telugu, etc.",
+    "business_alias": NaN
+  },
+  {
+    "term": "TAT(In Days)",
+    "type": "Metric / Calculated Field",
+    "definition": "Overall Turnaround Time calculated as total TAT days divided by total tickets with TAT data",
+    "business_alias": "TAT, Turnaround Time"
+  },
+  {
+    "term": "MHD (TAT)",
+    "type": "Metric / Calculated Field",
+    "definition": "MHD agent Turnaround Time calculated as sum of MHD TAT days divided by MHD tickets with TAT data",
+    "business_alias": "MHD Turnaround Time"
+  },
+  {
+    "term": "Service (TAT)",
+    "type": "Metric / Calculated Field",
+    "definition": "Service provider Turnaround Time calculated as sum of service TAT days divided by service tickets with TAT data",
+    "business_alias": "Service Turnaround Time"
+  },
+  {
+    "term": "Overall MSAT%",
+    "type": "Metric / Calculated Field",
+    "definition": "Overall customer satisfaction percentage calculated as total satisfied tickets divided by total tickets with feedback, multiplied by 100",
+    "business_alias": "MSAT, Customer Satisfaction Percentage"
+  },
+  {
+    "term": "Agent MSAT",
+    "type": "Metric / Calculated Field",
+    "definition": "MHD agent customer satisfaction percentage calculated as agent satisfied tickets divided by agent tickets with feedback, multiplied by 100",
+    "business_alias": "Agent Customer Satisfaction"
+  },
+  {
+    "term": "Service MSAT",
+    "type": "Metric / Calculated Field",
+    "definition": "Service provider customer satisfaction percentage calculated as service satisfied tickets divided by service tickets with feedback, multiplied by 100",
+    "business_alias": "Service Customer Satisfaction"
+  },
+  {
+    "term": "issue_l1",
+    "type": "Dimension",
+    "definition": "Primary level issue category classification for customer service tickets",
+    "business_alias": "Issue Level 1"
+  },
+  {
+    "term": "issue_l2",
+    "type": "Dimension",
+    "definition": "Secondary level issue category classification providing more detailed issue categorization",
+    "business_alias": "Issue Level 2"
+  },
+  {
+    "term": "Feedback Received %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of service tickets that received customer feedback, calculated as total feedback given divided by total tickets multiplied by 100",
+    "business_alias": "Response Rate %, Feedback Rate %"
+  },
+  {
+    "term": "MSAT %",
+    "type": "Metric / Calculated Field",
+    "definition": "Customer satisfaction percentage calculated from feedback responses. Represents the rate of satisfied customers by dividing positive/happy feedback responses by total feedback responses and multiplying by 100. Used across dashboards to measure satisfaction rates among service respondents.",
+    "business_alias": "Mobile Satisfaction %, Customer Satisfaction %, Member Satisfaction Rate, Member Satisfaction %, Mental Health Satisfaction %, Bot satisfaction rate, Monthly Satisfaction %, Customer Satisfaction Percentage, Mean Satisfaction, Customer Satisfaction Rate, Customer Satisfaction Score, Customer Satisfaction, MSAT"
+  },
+  {
+    "term": "Feedback Given",
+    "type": "Metric",
+    "definition": "Total count of sessions where users provided feedback or satisfaction ratings",
+    "business_alias": NaN
+  },
+  {
+    "term": "Care Dashboard Metrics",
+    "type": "Category",
+    "definition": "Collection of customer service and support metrics including sessions, agent handovers, and service tickets",
+    "business_alias": "MHD Metrics"
+  },
+  {
+    "term": "Intent wise Tickets Creation %",
+    "type": "Category",
+    "definition": "Percentage breakdown of ticket creation across different service intent categories, showing the distribution of customer service requests by business area",
+    "business_alias": NaN
+  },
+  {
+    "term": "Profile",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of profile-related tickets escalated to first-line defense, calculated as (profile FD tickets / total profile tickets) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Wealth",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of wealth management tickets escalated to first-line defense, calculated as (wealth FD tickets / total wealth tickets) * 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "SB Service Tickets",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of Soundbox service tickets escalated to first-line defense, calculated as (soundbox FD tickets / total soundbox tickets) * 100",
+    "business_alias": "Soundbox Service Tickets"
+  },
+  {
+    "term": "SB Agent Handover",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of Soundbox tickets that required handover from AI bot to human agent, calculated as AI bot forwarded tickets divided by total Soundbox tickets",
+    "business_alias": "Soundbox Agent Handover"
+  },
+  {
+    "term": "FD Tickets",
+    "type": "Metric",
+    "definition": "First deflection tickets or forwarded tickets that require escalation or additional handling beyond initial automated response. These are tickets escalated to human agents, often referred to as Front Desk tickets. The term encompasses tickets that cannot be resolved through initial automated systems and need human intervention or further escalation.",
+    "business_alias": "First Defense Tickets, First Desk Tickets, First Deflection Tickets, Forwarded Tickets, FD, Front Desk, Front Desk Tickets"
+  },
+  {
+    "term": "FetchMerchantDetails",
+    "type": "Metric",
+    "definition": "Total count of sessions where merchant details were fetched or retrieved from the system.",
+    "business_alias": NaN
+  },
+  {
+    "term": "AgentHandover",
+    "type": "Metric",
+    "definition": "Total number of attempts where customer interactions were transferred or handed over to human agents.",
+    "business_alias": NaN
+  },
+  {
+    "term": "RaiseServiceRequest",
+    "type": "Metric",
+    "definition": "Total number of attempts to raise or create service requests in the system.",
+    "business_alias": NaN
+  },
+  {
+    "term": "SettlementAndPaymentInfo",
+    "type": "Metric",
+    "definition": "Total number of attempts to retrieve settlement and payment information for merchants.",
+    "business_alias": NaN
+  },
+  {
+    "term": "CheckSoundboxHardware",
+    "type": "Metric",
+    "definition": "Total number of attempts to check or validate Soundbox hardware status.",
+    "business_alias": NaN
+  },
+  {
+    "term": "TestBroadcast",
+    "type": "Metric",
+    "definition": "Total number of attempts to perform test broadcasts on the system.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Function Call Metrics",
+    "type": "Category",
+    "definition": "Collection of metrics tracking various customer service function calls including merchant details retrieval, agent handovers, service requests, payment info, hardware checks, and test broadcasts.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Function Calls",
+    "type": "Category",
+    "definition": "Collection of various customer service function calls including merchant details fetching, agent handovers, service requests, payment information retrieval, hardware checks, and test broadcasts.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Total Tickets",
+    "type": "Metric",
+    "definition": "Complete count of customer service tickets created for each intent category",
+    "business_alias": NaN
+  },
+  {
+    "term": "AI Bot",
+    "type": "Category",
+    "definition": "Automated customer service system that handles initial ticket processing before potential handover to human agents",
+    "business_alias": "AIBot"
+  },
+  {
+    "term": "# Language Change",
+    "type": "Metric",
+    "definition": "Total count of language transitions aggregated by summing individual transition counts from the language transition data.",
+    "business_alias": "Language Change"
+  },
+  {
+    "term": "Language Change",
+    "type": "Synonym",
+    "definition": "# Language Change",
+    "business_alias": NaN
+  },
+  {
+    "term": "Language Transition",
+    "type": "Category",
+    "definition": "The specific type or category of language change being tracked, used as a grouping dimension for analyzing transition patterns.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Transition Count",
+    "type": "Metric",
+    "definition": "Individual count of language transition events that are aggregated to calculate total language changes.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot MSAT %",
+    "type": "Metric / Calculated Field",
+    "definition": "Customer satisfaction percentage for bot interactions, calculated as (Total bot happy responses * 100) divided by Total bot feedback given, representing the percentage of positive feedback for bot customer service interactions",
+    "business_alias": "Bot Satisfaction Percentage, also referred as Bot MSAT, Bot MSAT Percentage, Bot Satisfaction Rate, Bot Satisfaction Percentage, Bot Merchant Satisfaction Percentage"
+  },
+  {
+    "term": "bot_happy",
+    "type": "Metric",
+    "definition": "Total count of positive/satisfied feedback responses received from bot interactions",
+    "business_alias": "Bot Positive Feedback, Positive Bot Feedback"
+  },
+  {
+    "term": "bot_feedback_given",
+    "type": "Metric",
+    "definition": "Total count of sessions where users provided feedback to the bot",
+    "business_alias": "Total Bot Feedback, Bot Total Feedback"
+  },
+  {
+    "term": "Bot Feedback Given",
+    "type": "Metric",
+    "definition": "Total count of bot sessions where users provided feedback",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Happy",
+    "type": "Metric",
+    "definition": "Total count of positive/satisfied feedback responses from bot users",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Satisfaction Metrics",
+    "type": "Category",
+    "definition": "Collection of metrics measuring user satisfaction and engagement with bot services including feedback rates and satisfaction percentages",
+    "business_alias": NaN
+  },
+  {
+    "term": "fd_tickets",
+    "type": "Metric",
+    "definition": "Total count of tickets processed by the system",
+    "business_alias": "Freshdesk tickets"
+  },
+  {
+    "term": "agent_feedback_given",
+    "type": "Metric",
+    "definition": "Total count of feedback instances provided by agents, used as denominator for satisfaction calculations",
+    "business_alias": NaN
+  },
+  {
+    "term": "agent_happy",
+    "type": "Metric",
+    "definition": "Count of positive or satisfied feedback responses from agents indicating happy customer interactions.",
+    "business_alias": "Positive Agent Feedback"
+  },
+  {
+    "term": "active_sessions",
+    "type": "Metric",
+    "definition": "Total count of active user sessions with the bot system",
+    "business_alias": NaN
+  },
+  {
+    "term": "Intent wise Ticket",
+    "type": "Category",
+    "definition": "Customer service tickets categorized by customer intent or purpose of the interaction",
+    "business_alias": "Ticket by Intent"
+  },
+  {
+    "term": "Intent wise Ticket Only",
+    "type": "Category",
+    "definition": "Category of customer satisfaction metrics focused specifically on ticket-based interactions analyzed by customer intent.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service Feedback",
+    "type": "Metric",
+    "definition": "Total count of feedback responses provided by customers on service tickets.",
+    "business_alias": "Customer Feedback, Service Responses"
+  },
+  {
+    "term": "Service Happy",
+    "type": "Metric",
+    "definition": "Total count of positive or satisfied feedback responses from customers regarding service quality.",
+    "business_alias": "Positive Feedback, Satisfied Responses"
+  },
+  {
+    "term": "Service Feedback Given",
+    "type": "Metric",
+    "definition": "Total count of customer feedback responses received for service tickets",
+    "business_alias": NaN
+  },
+  {
+    "term": "Service Ticket Metrics",
+    "type": "Category",
+    "definition": "Collection of metrics related to customer service performance including feedback rates and satisfaction scores",
+    "business_alias": NaN
+  },
+  {
+    "term": "CTA Displayed #",
+    "type": "Metric",
+    "definition": "Total count of unique users who were shown a Call-to-Action (CTA) during the specified time period.",
+    "business_alias": "CTA Shown, Users Shown"
+  },
+  {
+    "term": "CTA Clicked #",
+    "type": "Metric",
+    "definition": "Total count of unique users who clicked on a Call-to-Action (CTA) during the specified time period.",
+    "business_alias": "CTA Engaged, Users Clicked"
+  },
+  {
+    "term": "CTR %",
+    "type": "Metric / Calculated Field",
+    "definition": "Click-through rate calculated as (CTA Clicked # × 100) ÷ CTA Displayed #, representing the percentage of users who clicked after being shown a CTA.",
+    "business_alias": "Click-Through Rate, Bot CTR, Click-through rate"
+  },
+  {
+    "term": "CTA",
+    "type": "Category",
+    "definition": "Call-to-Action elements displayed to users, representing interactive prompts designed to encourage specific user actions.",
+    "business_alias": "Call-to-Action"
+  },
+  {
+    "term": "Bot CTR",
+    "type": "Category",
+    "definition": "Bot Click-Through Rate metrics measuring user engagement with automated chat interface elements including CTA displays, clicks, and conversion rates",
+    "business_alias": "Chatbot Performance Metrics"
+  },
+  {
+    "term": "Week of the year",
+    "type": "Metric",
+    "definition": "The week number within a calendar year, used as a time dimension for tracking weekly performance trends",
+    "business_alias": NaN
+  },
+  {
+    "term": "IVR Contact Ratio (%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of total IVR calls relative to the contact ratio base count, calculated as (Total IVR Calls * 100) / Contact Ratio Base Count",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Contact Ratio(%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of bot tickets relative to the contact ratio base count, calculated as (Total Bot Tickets * 100) / Contact Ratio Base Count",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot MSAT(%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Bot satisfaction percentage based on positive responses, calculated as (Bot Positive Responses / Total Bot Responses) * 100",
+    "business_alias": "Bot Satisfaction Score, MSAT also referred as Customer Satisfaction, Bot Satisfaction Rate"
+  },
+  {
+    "term": "Bot to MHD Passthrough(%)",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of bot interactions that were escalated to MHD agents, calculated as (Agent Ticket Count Bot * 100) / Bot Active Ticket Count",
+    "business_alias": "Bot to MHD Escalation Rate, Bot MHD Escalation Rate"
+  },
+  {
+    "term": "Feedback % - MHD Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of MHD agent interactions that received customer feedback, calculated as (Agent Tickets Feedback Received * 100) / Agent Tickets For Response",
+    "business_alias": "MHD Agent Feedback Rate"
+  },
+  {
+    "term": "Agent Ticket Count - Bot (MHD & Service)",
+    "type": "Metric / Calculated Field",
+    "definition": "Total number of tickets escalated from bot to both MHD agents and service department, calculated as Agent Ticket Count Bot + Bot to Service Ticket Count",
+    "business_alias": "Total Agent Escalations, Total Bot Escalations"
+  },
+  {
+    "term": "Agent Ticket Count - Bot MHD",
+    "type": "Metric",
+    "definition": "Total number of tickets escalated from bot interactions specifically to MHD agents",
+    "business_alias": "Bot MHD Escalations, Bot to MHD Tickets, MHD Escalations"
+  },
+  {
+    "term": "Agent Ticket Count- Bot Service",
+    "type": "Metric",
+    "definition": "Total number of tickets escalated from bot interactions specifically to Service team agents",
+    "business_alias": "Service Escalations, Bot Service Escalations, Bot to Service Tickets"
+  },
+  {
+    "term": "MSAT(%) MHD Agent",
+    "type": "Metric / Calculated Field",
+    "definition": "MHD Agent satisfaction percentage based on positive feedback, calculated as (Agent Tickets MSAT Received / Agent Tickets Feedback Received) * 100",
+    "business_alias": "MSAT also referred as Customer Satisfaction, MHD Agent Satisfaction Rate, MHD Agent Satisfaction Score"
+  },
+  {
+    "term": "Passthrough",
+    "type": "Category",
+    "definition": "Process of escalating or transferring tickets from one service channel to another (e.g., from Bot to Agent)",
+    "business_alias": "Escalation, Transfer, Escalation Rate"
+  },
+  {
+    "term": "Feedback Percentage",
+    "type": "Category",
+    "definition": "Metrics tracking the percentage of service interactions that received customer feedback responses",
+    "business_alias": "Response Rate"
+  },
+  {
+    "term": "Month of the year",
+    "type": "Dimension",
+    "definition": "Time dimension representing the calendar month when customer service activities occurred",
+    "business_alias": "Monthly Period, Month"
+  },
+  {
+    "term": "Passthrough Rate",
+    "type": "Category",
+    "definition": "Metrics measuring the percentage of interactions escalated from one service channel to another (Bot to MHD, Bot to Service)",
+    "business_alias": "Escalation Rate"
+  },
+  {
+    "term": "AVG Eval Score %",
+    "type": "Metric / Calculated Field",
+    "definition": "Average evaluation score converted to percentage. Calculated as the average of avg_eval_score multiplied by 100.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Containment %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of customer sessions handled by bot without escalation to human agents. Calculated as (Total Active Sessions - FD Tickets) divided by Total Active Sessions, multiplied by 100.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bad Eval Share %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of evaluations marked as bad quality. Calculated as Bad Evaluation Scores divided by (Good + Bad Evaluation Scores), multiplied by 100.",
+    "business_alias": "Bad Evaluation Rate"
+  },
+  {
+    "term": "Sad",
+    "type": "Metric",
+    "definition": "Count of negative customer feedback responses indicating dissatisfaction.",
+    "business_alias": "Negative Feedback, Negative Responses"
+  },
+  {
+    "term": "Eval Score Good",
+    "type": "Metric",
+    "definition": "Number of evaluations classified as good quality.",
+    "business_alias": "Good Evaluations"
+  },
+  {
+    "term": "Eval Score Bad",
+    "type": "Metric",
+    "definition": "Number of evaluations classified as bad quality.",
+    "business_alias": "Bad Evaluations"
+  },
+  {
+    "term": "Quality Metrics",
+    "type": "Category",
+    "definition": "Collection of performance indicators measuring service quality including evaluation scores, bot containment, customer satisfaction, and evaluation quality distribution.",
+    "business_alias": "Service Quality KPIs"
+  },
+  {
+    "term": "Analyzed %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active sessions that progressed to analysis phase, calculated as (Analyzed Sessions / Active Sessions) * 100",
+    "business_alias": "Analyzed Percentage"
+  },
+  {
+    "term": "Eval Completed %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active sessions where evaluation was completed, calculated as (Total Evaluations Completed / Total Active Sessions) * 100",
+    "business_alias": "Evaluation Completion Rate"
+  },
+  {
+    "term": "Analyzed Sessions",
+    "type": "Metric",
+    "definition": "Total count of sessions that have been processed through the analysis phase of the MHD evaluation system.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Eval Completed",
+    "type": "Metric",
+    "definition": "Total count of sessions that have successfully completed the entire wealth evaluation process",
+    "business_alias": NaN
+  },
+  {
+    "term": "CST Entity",
+    "type": "Dimension",
+    "definition": "Entity type dimension for filtering data, includes p4bsoundbox and p4bAIBot",
+    "business_alias": NaN
+  },
+  {
+    "term": "positive_user_sentiment",
+    "type": "Metric",
+    "definition": "Count of users expressing positive sentiment towards the evaluated system or service",
+    "business_alias": NaN
+  },
+  {
+    "term": "negative_user_sentiment",
+    "type": "Metric",
+    "definition": "Count of users expressing negative sentiment towards the evaluated system or service",
+    "business_alias": NaN
+  },
+  {
+    "term": "neutral_user_sentiment",
+    "type": "Metric",
+    "definition": "Count of users expressing neutral sentiment towards the evaluated system or service",
+    "business_alias": NaN
+  },
+  {
+    "term": "Positive Change %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of positive user sentiment out of total user sentiment, calculated as sum of positive user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Negative Change %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of negative user sentiment out of total user sentiment, calculated as sum of negative user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "Neutral Change %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of neutral user sentiment out of total user sentiment, calculated as sum of neutral user sentiment divided by total sentiment (positive + negative + neutral) multiplied by 100",
+    "business_alias": NaN
+  },
+  {
+    "term": "User Sentiment Analysis",
+    "type": "Category",
+    "definition": "Collection of metrics measuring and analyzing user sentiment distribution including positive, negative, and neutral sentiment percentages",
+    "business_alias": "Final User Sentiment Analysis"
+  },
+  {
+    "term": "Final User Sentiment",
+    "type": "Category",
+    "definition": "Collection of metrics measuring different types of user sentiment changes including neutral, positive, and negative changes.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Neutral Change #",
+    "type": "Metric",
+    "definition": "Sum of neutral user sentiment changes aggregated by day, representing users whose sentiment remained unchanged or neutral.",
+    "business_alias": "Neutral Change Count"
+  },
+  {
+    "term": "Positive Change #",
+    "type": "Metric",
+    "definition": "Sum of positive user sentiment changes aggregated by day, representing users whose sentiment improved or became more favorable.",
+    "business_alias": "Positive Change Count"
+  },
+  {
+    "term": "Negative Change #",
+    "type": "Metric",
+    "definition": "Sum of negative user sentiment changes aggregated by day, representing users whose sentiment declined or became less favorable.",
+    "business_alias": "Negative Change Count"
+  },
+  {
+    "term": "User Sentiment",
+    "type": "Category",
+    "definition": "Collection of metrics measuring changes in user attitudes and feelings, including Positive Change #, Negative Change #, and Neutral Change #.",
+    "business_alias": NaN
+  },
+  {
+    "term": "MHD Eval",
+    "type": "Category",
+    "definition": "Evaluation dashboard category containing quality assessment metrics for service interactions, including empathy, resolution, and response relevance scores",
+    "business_alias": "Mobile Handheld Device Evaluation, Mental Health Dashboard Evaluation"
+  },
+  {
+    "term": "Bot Repetition %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of completed evaluations where the bot provided repetitive responses, calculated as (agent_response_repetition count / total eval_completed) * 100",
+    "business_alias": "Bot Response Repetition Rate"
+  },
+  {
+    "term": "Bot Failed %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of completed evaluations where the bot failed to execute function calls properly, calculated as (function_call_failed / eval_completed) * 100",
+    "business_alias": "Bot Function Failure Rate"
+  },
+  {
+    "term": "Intent Detection Failed %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of completed evaluations where the bot failed to correctly detect user intent, calculated as (intent_incoherence_count / total eval_completed) * 100",
+    "business_alias": "Intent Detection Failure Rate"
+  },
+  {
+    "term": "eval_completed",
+    "type": "Metric",
+    "definition": "Total number of bot evaluations that were successfully completed and can be used for performance analysis",
+    "business_alias": NaN
+  },
+  {
+    "term": "agent_response_repetition",
+    "type": "Metric",
+    "definition": "Count of instances where the bot agent provided repetitive or redundant responses during evaluations",
+    "business_alias": NaN
+  },
+  {
+    "term": "function_call_failed",
+    "type": "Metric",
+    "definition": "Count of instances where the bot failed to successfully execute required function calls during evaluations",
+    "business_alias": NaN
+  },
+  {
+    "term": "intent_incoherence_count",
+    "type": "Metric",
+    "definition": "Count of instances where the bot incorrectly detected or failed to detect user intent during evaluations",
+    "business_alias": NaN
+  },
+  {
+    "term": "Bot Performance Metrics",
+    "type": "Category",
+    "definition": "Collection of percentage-based metrics measuring different aspects of conversational bot failures including repetition, function failures, and intent detection issues",
+    "business_alias": NaN
+  },
+  {
+    "term": "Avg Empathy Score (synonyms: AVG Empathy Score)",
+    "type": "Metric / Calculated Field",
+    "definition": "Average empathy score across conversations, converted to percentage scale (0-100), measuring how well the AI demonstrates emotional understanding and appropriate responsiveness to customer emotions and concerns. This metric measures how empathetic the chatbot responses are, expressed as a percentage.",
+    "business_alias": "Average Empathy Score"
+  },
+  {
+    "term": "Avg Resolution Achieved (AVG Resolution Achieved)",
+    "type": "Metric / Calculated Field",
+    "definition": "Average resolution achievement score across all evaluations/sessions, converted to percentage format by multiplying the base average by 100. Measures how effectively customer issues are resolved and represents the average resolution achievement rate across all assessments.",
+    "business_alias": "Average Resolution Achieved, Average Resolution Achievement Rate"
+  },
+  {
+    "term": "Avg Response Relevance (also: AVG Response Relevance)",
+    "type": "Metric / Calculated Field",
+    "definition": "Average response relevance score across all evaluations, converted to percentage format by multiplying the base average by 100. Measures how relevant and appropriate bot responses are to user queries and customer inquiries.",
+    "business_alias": "Avg Response Relevance Score, Average Response Relevance, Average Response Relevance Score"
+  },
+  {
+    "term": "Soundbox Evaluation",
+    "type": "Category",
+    "definition": "Evaluation system for soundbox and AI bot customer service interactions, tracking quality metrics across multiple performance dimensions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Happy Feedback",
+    "type": "Metric",
+    "definition": "Total count of positive customer feedback responses received during sessions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Sad Feedback",
+    "type": "Metric",
+    "definition": "Total count of negative customer feedback responses received during sessions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Feedback Rate %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active sessions that resulted in customer feedback, calculated as (Happy Feedback + Sad Feedback) * 100 / Active Sessions.",
+    "business_alias": NaN
+  },
+  {
+    "term": "Agent Handover %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active sessions that were escalated to human agents, calculated as Agent Tickets * 100 / Active Sessions",
+    "business_alias": "Agent Handover Rate, AH %"
+  },
+  {
+    "term": "Service Ticket %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of active sessions that resulted in service ticket creation, calculated as Service Tickets * 100 / Active Sessions",
+    "business_alias": NaN
+  },
+  {
+    "term": "Final User Sentiment #",
+    "type": "Category",
+    "definition": "A grouping of metrics that tracks the count of users experiencing different types of sentiment changes, including neutral, positive, and negative changes.",
+    "business_alias": NaN
+  },
+  {
+    "term": "avg_empathy_score",
+    "type": "Metric",
+    "definition": "Base empathy score metric used in calculations, measuring empathy levels in customer service interactions before percentage conversion.",
+    "business_alias": NaN
+  },
+  {
+    "term": "avg_resolution_achieved",
+    "type": "Metric",
+    "definition": "Base resolution achieved metric from the database, representing raw resolution effectiveness scores before percentage conversion",
+    "business_alias": NaN
+  },
+  {
+    "term": "avg_response_relevance_score",
+    "type": "Metric",
+    "definition": "Base response relevance score metric from the soundbox evaluation data, used to calculate the average response relevance percentage",
+    "business_alias": NaN
+  },
+  {
+    "term": "MHD Evaluation Metrics",
+    "type": "Category",
+    "definition": "Collection of customer service evaluation metrics including empathy scores, resolution achievement, and response relevance used to assess service quality.",
+    "business_alias": "MHD Eval"
+  },
+  {
+    "term": "AVG Eval Score",
+    "type": "Metric / Calculated Field",
+    "definition": "Average evaluation score across all sessions, expressed as percentage (Average of eval scores * 100)",
+    "business_alias": "Average Evaluation Score"
+  },
+  {
+    "term": "+ve Sentiment Change %",
+    "type": "Metric / Calculated Field",
+    "definition": "Percentage of positive user sentiment changes calculated as (Positive sentiment count / Total sentiment changes) * 100",
+    "business_alias": "Positive Sentiment Change %, Positive Sentiment Change Rate"
+  },
+  {
+    "term": "AVG Topic Drift",
+    "type": "Metric / Calculated Field",
+    "definition": "Average topic drift score measuring how much conversations deviate from intended topics, expressed as percentage (Average of topic drift * 100)",
+    "business_alias": "Average Topic Drift Score"
+  },
+  {
+    "term": "LLM L1 Metrics",
+    "type": "Category",
+    "definition": "Primary level metrics for Large Language Model evaluation including performance, quality, satisfaction, and failure indicators",
+    "business_alias": "LLM Level 1 Metrics"
+  },
+  {
+    "term": "MHD Evaluation",
+    "type": "Category",
+    "definition": "Mental Health Detection evaluation process metrics including session analysis and completion tracking.",
+    "business_alias": "MHD Eval"
+  },
+  {
+    "term": "MHD Overall Eval Summary",
+    "type": "Category",
+    "definition": "Summary metrics tracking the evaluation workflow including Active Sessions, Analyzed Sessions, Eval Completed, and their completion percentages",
+    "business_alias": "MHD Evaluation Metrics"
   }
 ]

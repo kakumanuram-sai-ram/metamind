@@ -5,12 +5,179 @@ import json
 import os
 import sys
 import threading
-from typing import Dict, List, Optional
+import time
+import random
+from functools import wraps
+from typing import Dict, List, Optional, Callable, Any
 import dspy
 from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate import Evaluate
 import pandas as pd
 from config import LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
+
+
+# =============================================================================
+# RATE LIMIT HANDLING
+# =============================================================================
+
+def retry_on_rate_limit(
+    max_retries: int = 5,
+    initial_delay: float = 2.0,
+    max_delay: float = 60.0,
+    backoff_factor: float = 2.0,
+    jitter: bool = True
+) -> Callable:
+    """
+    Decorator to retry LLM calls on rate limit errors (429).
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds before first retry
+        max_delay: Maximum delay between retries
+        backoff_factor: Multiplier for exponential backoff
+        jitter: Add random jitter to prevent thundering herd
+    
+    Usage:
+        @retry_on_rate_limit(max_retries=5, initial_delay=2.0)
+        def my_llm_call():
+            return extractor(...)
+    """
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
+            last_exception = None
+            delay = initial_delay
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_str = str(e).lower()
+                    # Check for rate limit errors
+                    is_rate_limit = (
+                        '429' in error_str or
+                        'rate' in error_str and 'limit' in error_str or
+                        'too many' in error_str or
+                        'ratelimit' in error_str
+                    )
+                    
+                    if is_rate_limit and attempt < max_retries:
+                        last_exception = e
+                        # Add jitter to prevent thundering herd
+                        actual_delay = delay
+                        if jitter:
+                            actual_delay = delay * (0.5 + random.random())
+                        
+                        print(f"    ⏳ Rate limit hit, waiting {actual_delay:.1f}s before retry {attempt + 1}/{max_retries}...", flush=True)
+                        time.sleep(actual_delay)
+                        
+                        # Exponential backoff
+                        delay = min(delay * backoff_factor, max_delay)
+                    else:
+                        raise e
+            
+            # If we've exhausted retries, raise the last exception
+            if last_exception:
+                raise last_exception
+        
+        return wrapper
+    return decorator
+
+
+def call_llm_with_retry(
+    extractor: dspy.Module,
+    max_retries: int = 5,
+    initial_delay: float = 2.0,
+    **kwargs
+) -> Any:
+    """
+    Call a DSPy extractor with automatic retry on rate limit errors.
+    
+    Args:
+        extractor: DSPy module (e.g., dspy.ChainOfThought instance)
+        max_retries: Maximum retry attempts
+        initial_delay: Initial delay before retry
+        **kwargs: Arguments to pass to the extractor
+    
+    Returns:
+        Result from the extractor
+    
+    Example:
+        result = call_llm_with_retry(
+            table_extractor,
+            sql_query=sql,
+            chart_metadata=meta
+        )
+    """
+    last_exception = None
+    delay = initial_delay
+    max_delay = 60.0
+    backoff_factor = 2.0
+    
+    for attempt in range(max_retries + 1):
+        try:
+            return extractor(**kwargs)
+        except Exception as e:
+            error_str = str(e).lower()
+            # Check for rate limit errors
+            is_rate_limit = (
+                '429' in error_str or
+                'rate' in error_str and 'limit' in error_str or
+                'too many' in error_str or
+                'ratelimit' in error_str
+            )
+            
+            if is_rate_limit and attempt < max_retries:
+                last_exception = e
+                # Add jitter
+                actual_delay = delay * (0.5 + random.random())
+                
+                print(f"    ⏳ Rate limit hit, waiting {actual_delay:.1f}s before retry {attempt + 1}/{max_retries}...", flush=True)
+                time.sleep(actual_delay)
+                
+                # Exponential backoff
+                delay = min(delay * backoff_factor, max_delay)
+            else:
+                raise e
+    
+    if last_exception:
+        raise last_exception
+
+
+class TableNameExtractor(dspy.Signature):
+    """
+    Extract source table names from a SQL query.
+    
+    Instructions:
+    1. Identify ALL source tables referenced in the SQL query
+    2. Return table names in format: catalog.schema.table (e.g., hive.schema.table)
+    3. Handle quoted identifiers: "hive"."schema"."table" should become hive.schema.table
+    4. EXCLUDE CTEs (Common Table Expressions) and subquery aliases
+    5. Include tables from FROM, JOIN, and any other clauses
+    """
+    
+    sql_query: str = dspy.InputField(desc="SQL query to extract table names from")
+    
+    table_names: str = dspy.OutputField(desc="Comma-separated list of source table names in format catalog.schema.table. Remove quotes, lowercase all names. Example: hive.team_data.users,hive.team_data.orders")
+
+
+# Cache for TableNameExtractor
+_table_name_extractor_cache = {}
+
+def _get_dspy_table_name_extractor(api_key: str, model: str, base_url: str):
+    """Get cached DSPy TableNameExtractor"""
+    cache_key = (api_key, model, base_url)
+    if cache_key not in _table_name_extractor_cache:
+        lm = dspy.LM(
+            model=model,
+            api_key=api_key,
+            api_base=base_url,
+            temperature=0.0,
+            max_tokens=500
+        )
+        dspy.configure(lm=lm)
+        _table_name_extractor_cache[cache_key] = dspy.ChainOfThought(TableNameExtractor)
+    return _table_name_extractor_cache[cache_key]
 
 
 class TableColumnExtractor(dspy.Signature):
@@ -30,7 +197,7 @@ class TableColumnExtractor(dspy.Signature):
     chart_metadata: str = dspy.InputField(desc="Chart metadata including metrics and columns")
     
     tables_used: str = dspy.OutputField(desc="Comma-separated list of source table names in format catalog.schema.table (exclude CTEs, only actual source tables)")
-    original_columns: str = dspy.OutputField(desc="JSON object mapping table_name to list of original column names from that table. Only include columns that are actually referenced in the SQL, not computed/aliased columns.")
+    original_columns: str = dspy.OutputField(desc="JSON object mapping table_name to list of original column names from that table. Only include columns that are actually referenced in the SQL, not derived/computed/aliased columns.")
     column_aliases: str = dspy.OutputField(desc="JSON object mapping alias_name to original_column_name. Include computed columns like date_format(day_id,'Day %d') AS Day_ mapped to the source column 'day_id'")
 
 
@@ -89,6 +256,9 @@ class TermDefinitionExtractor(dspy.Signature):
     **Category**: Group of related metrics
     - Examples: User Engagement Metrics, CG conversion
     
+    **Dimensions**: Group of related metrics
+    - Examples: flow category, payment type, transaction category, etc.
+
     ## Critical Instructions
     
     ### DO:
@@ -311,6 +481,7 @@ class JoiningConditionExtractor(dspy.Signature):
     dashboard_title: str = dspy.InputField(desc="Dashboard title providing business context")
     
     joining_condition: str = dspy.OutputField(desc="Exact joining condition in format: table1.column = table2.column (e.g., table1.customer_id = table2.customer_id_payer). If no explicit join found, extract from WHERE clause or infer based on common column patterns.")
+    joining_type: str = dspy.OutputField(desc="Joining type: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN, etc. This should be as per the choice of table1 and table2. The format in which the joining_logic should be mentioned: {'join_type':'left_join','left_table':'table1','right_table':'table2','joining_reason':'table1 should be used as left table as this table contains the whole base of transactions'}")
     remarks: str = dspy.OutputField(desc="Detailed explanation of when and why to use this join, what business analysis it enables, and how it connects the data from both tables. Should be 2-3 sentences explaining the business context.")
 
 
@@ -330,12 +501,12 @@ class ColumnMetadataExtractor(dspy.Signature):
     3. Keep descriptions concise but informative (1-2 sentences typically)
     """
     
-    column_name: str = dspy.InputField(desc="Column name to describe")
-    table_name: str = dspy.InputField(desc="Table name containing this column")
+    column_name: str = dspy.InputField(desc="Column name as per the table_columns json")
+    table_name: str = dspy.InputField(desc="Table name containing this column as per the actual table name in the database in the format of catalog.schema.table")
     column_datatype: str = dspy.InputField(desc="Data type of the column")
     chart_labels_and_aliases: str = dspy.InputField(desc="JSON string with chart labels and aliases used for this column in the dashboard")
     derived_column_usage: str = dspy.InputField(desc="JSON string showing how this column is used in derived columns (derived column logic)")
-    sql_usage_context: str = dspy.InputField(desc="Sample SQL queries showing how this column is used")
+    sql_usage_context: str = dspy.InputField(desc="format of how this column is used in the sql query as per the sql_query json. Don't give the whole sql query, just the format of how this column is used in the sql query.")
     
     column_description: str = dspy.OutputField(desc="Clear, concise description of what the column represents and how it's used in business context (1-2 sentences)")
 
@@ -599,8 +770,9 @@ class DashboardTableColumnExtractor:
             'chart_name': chart.get('chart_name')
         }
         
-        # Use LLM to extract information
-        result = self.extractor(
+        # Use LLM to extract information (with retry on rate limit)
+        result = call_llm_with_retry(
+            self.extractor,
             sql_query=sql_query,
             chart_metadata=json.dumps(metadata, indent=2)
         )
@@ -652,8 +824,9 @@ class DashboardTableColumnExtractor:
             'chart_name': chart.get('chart_name')
         }
         
-        # Use LLM to extract information
-        result = self.source_extractor(
+        # Use LLM to extract information (with retry on rate limit)
+        result = call_llm_with_retry(
+            self.source_extractor,
             sql_query=sql_query,
             chart_metadata=json.dumps(metadata, indent=2)
         )
@@ -1154,8 +1327,9 @@ def extract_table_metadata_llm(
             if len(sql_queries_context) > 2000:
                 sql_queries_context = sql_queries_context[:2000] + '...'
             
-            # Call LLM
-            result = extractor(
+            # Call LLM (with retry on rate limit)
+            result = call_llm_with_retry(
+                extractor,
                 dashboard_title=dashboard_title,
                 chart_names_and_labels=chart_names_and_labels,
                 table_name=table_name,
@@ -1343,8 +1517,9 @@ def extract_column_metadata_llm(
             if len(sql_usage_context) > 1500:
                 sql_usage_context = sql_usage_context[:1500] + '...'
             
-            # Call LLM
-            result = extractor(
+            # Call LLM (with retry on rate limit)
+            result = call_llm_with_retry(
+                extractor,
                 column_name=column_name,
                 table_name=table_name,
                 column_datatype=variable_type or 'unknown',
@@ -1544,8 +1719,9 @@ def extract_joining_conditions_llm(
                 print(f"  Extracting join condition: {table1} <-> {table2} (Chart: {chart_name})...")
                 
                 try:
-                    # Call LLM to extract joining condition
-                    result = extractor(
+                    # Call LLM to extract joining condition (with retry on rate limit)
+                    result = call_llm_with_retry(
+                        extractor,
                         table1=table1,
                         table2=table2,
                         sql_query=sql_query,
@@ -1728,8 +1904,9 @@ def generate_filter_conditions_llm(
                 }
                 consolidated_context_json = json.dumps(consolidated_context, indent=2)
                 
-                # Call LLM with consolidated context
-                result = extractor(
+                # Call LLM with consolidated context (with retry on rate limit)
+                result = call_llm_with_retry(
+                    extractor,
                     chart_name=chart_name,
                     chart_metrics=chart_metrics_json,
                     sql_query=sql_query,
@@ -1804,8 +1981,9 @@ def generate_filter_conditions_llm(
             chart_metrics_json = json.dumps(metrics, indent=2)
             chart_filters_json = json.dumps(filters, indent=2)
             
-            # Call LLM with all charts context for consolidation
-            result = extractor(
+            # Call LLM with all charts context for consolidation (with retry on rate limit)
+            result = call_llm_with_retry(
+                extractor,
                 chart_name=chart_name,
                 chart_metrics=chart_metrics_json,
                 sql_query=sql_query,
@@ -1999,8 +2177,9 @@ def extract_term_definitions_llm(
     print(f"  Extracting term definitions from {len(charts)} charts...")
     
     try:
-        # Call LLM to extract all term definitions
-        result = extractor(
+        # Call LLM to extract all term definitions (with retry on rate limit)
+        result = call_llm_with_retry(
+            extractor,
             dashboard_title=dashboard_title,
             chart_names_and_labels=chart_names_json,
             sql_queries=sql_queries_json,
