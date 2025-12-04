@@ -33,7 +33,7 @@ class SQLToQuestionSignature(dspy.Signature):
         desc="A natural language question that a user might ask to get this data. "
              "The question should be clear, concise, and reflect what the chart shows. "
              "Do not include implementation details like table names or SQL syntax. "
-             "Focus on the business question being answered."
+             "Focus on the business question being answered. The question should be in the format of a question, not a statement. The question should expecting a response, as per the information the chart that way it is easy for the user to match the qusetion to the chart and get the data. Don't create the same kind of question again and again."
     )
 
 
